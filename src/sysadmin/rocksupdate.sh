@@ -1,3 +1,4 @@
+# ...............................................
 set_defaults () {
     user=`/bin/whoami`
     thisdir=`/bin/pwd`
@@ -37,6 +38,7 @@ set_defaults () {
 }
 
 
+# ...............................................
 download_updates () {
     baseurl=http://$base_addr
     osversion=7
@@ -44,6 +46,7 @@ download_updates () {
     rocks create mirror ${baseurl}/${osversion}/updates/x86_64/Packages/ rollname=Updates-CentOS-${osversion} version=${version}
 }
 
+# ...............................................
 get_package_name_version () {
     fname=$1
     
@@ -55,7 +58,7 @@ get_package_name_version () {
     echo $pkgname  $ver
 }
 
-
+# ...............................................
 # Find updates for installed packages
 find_needed_packages () {
     # these are filename prefixes
@@ -87,7 +90,9 @@ find_needed_packages () {
 }
 
 
+# ...............................................
 # main
+# ...............................................
 set_defaults
 download_updates
 delete_unecessary_packages

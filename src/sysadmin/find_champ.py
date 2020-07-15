@@ -3,8 +3,6 @@ import glob
 import os
 
 from sysadmin.find_version import parse_package_filename
-from cgitb import reset
-# ...............................................
 # ...............................................    
 def compare_elt(current, champ):
     """Return an integer indicating whether the current version number or string 
@@ -178,7 +176,7 @@ from find_champ import *
 
 
 pth = '/root/mirror.oss.ou.edu/centos/7/updates/x86_64/Packages/'
-basenames = ['bind-pkcs11-libs-9.11.4-16.P2.el7_8.2.x86_64.rpm',
+manyfnames = ['bind-pkcs11-libs-9.11.4-16.P2.el7_8.2.x86_64.rpm',
              'bind-pkcs11-libs-9.11.4-16.P2.el7.noarch.rpm',
              'bind-devel-9.11.4-16.i686.rpm',
              'bind-devel-9.11.4-16.el7.i686.rpm',
@@ -221,7 +219,7 @@ champ_basename = champ_file = None
 champ_all_parts = None
 champ_arch = None
 # possible_fnames = glob.glob(os.path.join(pth, '{}*rpm'.format(pkgname)))
-possible_fnames = [os.path.join(pth, bname for bname in basenames]
+possible_fnames = [os.path.join(pth, bname for bname in manyfnames]
 # for fname in possible_fnames:
 fname = possible_fnames[0]
 (file_pkgname, version_parts, release_parts, other_parts, arch) = find_version.parse_package_filename(fname)
