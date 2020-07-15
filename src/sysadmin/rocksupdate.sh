@@ -1,18 +1,18 @@
 set_defaults () {
     user=`/bin/whoami`
     thisdir=`/bin/pwd`
-    if [[ "$user" != "root" ]]; then 
-        echo 'rocksupdate must be run by root user'
-    fi
-    if [[ "$thisdir" != "/root" ]]; then 
-        'rocksupdate must be run in /root directory, not $thisdir'
-    fi
+#     if [[ "$user" != "root" ]]; then 
+#         echo 'rocksupdate must be run by root user'
+#     fi
+#     if [[ "$thisdir" != "/root" ]]; then 
+#         'rocksupdate must be run in /root directory, not $thisdir'
+#     fi
 
     base_addr=mirror.oss.ou.edu/centos
     osversion=7
     version=`date +%F`
 
-    DL_PATH=/root/${base_addr}/${osversion}/updates/x86_64/Packages
+    DL_PATH=${thisdir}/${base_addr}/${osversion}/updates/x86_64/Packages
     CONTRIB_PATH=/state/partition1/rocks/install/contrib/7.0/x86_64/RPMS
     FILE_START_IDX=$((${#DL_PATH} + 2))
     REGEX_PAT='(.+)(\-)(\d*.+)(\-)(.+)'
@@ -43,36 +43,6 @@ download_updates () {
     version=`date +%F`
     rocks create mirror ${baseurl}/${osversion}/updates/x86_64/Packages/ rollname=Updates-CentOS-${osversion} version=${version}
 }
-
-# 
-# find_latest_pkgfile () {
-#     pkgname=$1
-#     
-#     # find multiple versions of same update, plus pkgs starting with same name
-#     PKG_FILES=$DL_PATH/$pkgname*rpm
-#     pkg_count=${#PKG_FILES[@]}
-#     
-#     for currf in $PKG_FILES
-#         do
-#             file_pkgname_ver=`get_package_name_version $currf`            
-#             file_pkgname=`echo $file_pkgname_ver | awk '{print $1}'`
-#             if [ $file_pkgname = $pkgname ]; then
-#                 filelen=${#currf}            
-#                 base_file_name=$(echo $currf | cut -c$FILE_START_IDX-$filelen)
-#                 if [ -z ${latest_file} ] ; then
-#                     latest_file=$base_file_name
-#                     latest_ver=`$PYBIN $FIND_VERPY $base_file_name`
-#                 else
-#                     ver_output=`get_latest_version $base_file_name $latest_ver`
-#                     if [ $ver_output != 0 ]; then
-#                         latest_file=$base_file_name
-#                         latest_ver=`echo $ver_output`
-#                 fi
-#             fi
-#         done
-#         echo "Latest version of $pkgname is $latest_ver in $latest_file"
-#     echo $latest_file
-# }
 
 get_package_name_version () {
     fname=$1

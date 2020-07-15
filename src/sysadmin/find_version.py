@@ -98,10 +98,7 @@ def get_parts_starting_with(somestring, delimiter, desired='digit'):
     
 # ...............................................
 def parse_package_filename(fname):
-    basefname = os.path.basename(fname)
-    vermajor = verminor = verpatch = relmajor = relminor = relpatch = None
-    othermajor = otherminor = arch = None
-    
+    basefname = os.path.basename(fname)    
     pkgname, parts = get_parts_starting_with(
         basefname, PRIMARY_DELIMITER, desired='char')
     
@@ -125,7 +122,7 @@ def parse_package_filename(fname):
             tail_parts.extend(smpts)
         leftovers.extend(tail_parts)
     
-    print('pkgname {}, arch {}, othermeta {}'.format(pkgname, arch, othermeta))
+    print('pkgname {}, arch {}, leftovers {}'.format(pkgname, arch, leftovers))
     print ('version: {} {} {}'.format(versions[0], versions[1], versions[2])) 
     print ('release: {} {} {}'.format(releases[0], releases[1], releases[2])) 
     print ('el_ver: {} {}'.format(el_versions[0], el_versions[1]))

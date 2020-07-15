@@ -2,7 +2,8 @@ import argparse
 import glob
 import os
 
-from find_version import parse_package_filename
+from sysadmin.find_version import parse_package_filename
+from cgitb import reset
 # ...............................................
 # ...............................................    
 def compare_elt(current, champ):
@@ -21,6 +22,16 @@ def compare_elt(current, champ):
     Note:
         None is interpreted as smaller than not None
     """
+    try:
+        champ = int(champ)
+    except: 
+        pass
+    else:
+        try:
+            current = int(current)
+        except: 
+            champ = str(champ)
+    
     if champ is None:
         if current is None:
             return 0
@@ -52,25 +63,22 @@ def compare_elements(ver_current, ver_champ):
     """
     if len(ver_champ) not in (2,3) or len(ver_current) not in (2,3):
         raise Exception('Wrong number of version parts')
-    major_champ = minor_champ = patch_champ = None
-    major_curr = minor_curr = patch_curr = None
+    patch_curr = patch_champ = None
     try:
         major_champ, minor_champ, patch_champ = ver_champ
     except:
         major_champ, minor_champ = ver_champ[0], ver_champ[1]
-
     try:
         major_curr, minor_curr, patch_curr = ver_current
     except:
         major_curr, minor_curr = ver_current[0], ver_current[1]
-
-    res = compare_elt(major_curr, major_champ)
-    if res in (1, -1):
-        return res
-    # Major version is equal, check minor
-    else:
-        res = compare_elt(minor_curr, minor_champ)
-        return res
+    # Return non-equal version
+    for curr, champ in [(major_curr, major_champ), (minor_curr, minor_champ), 
+                        (patch_curr, patch_champ)]:
+        res = compare_elt(curr, champ)
+        if res in (1, -1):
+            return res
+    return res
 
 # ...............................................    
 def compare_all_parts(current_all_parts, champ_all_parts, architecture=None):
@@ -87,30 +95,36 @@ def compare_all_parts(current_all_parts, champ_all_parts, architecture=None):
         0 if current = champ
         -1 if current is smaller than champ
     """
-    ver_current, rel_current, other_current, arch_current = current_all_parts
-    ver_champ, rel_champ, other_champ, arch_champ = champ_all_parts    
+    ver_current, rel_current, el_current, arch_current = current_all_parts
+    ver_champ, rel_champ, el_champ, _ = champ_all_parts    
     
     if architecture is not None and architecture != arch_current:
         return -1
     else:
-        res = compare_elements(ver_current, ver_champ)
-        if res in (-1,1):
-            return res
-        # Versions are equal, check release
-        else:
-            res = compare_elements(rel_current, rel_champ)
-            if res in (-1,1):
+        for curr, champ in ((ver_current, ver_champ), (rel_current, rel_champ),
+                            (el_current, el_champ)):
+            res = compare_elements(curr, champ)
+            if res in (-1, 1):
                 return res
-            # Versions are equal, check release
-            else:
-                res = compare_elements(other_current, other_champ)
-                return res
-
+        return res
+    
 # ...............................................
 def find_latest_package_file(pkgname, pth, architecture=None):
+    """Return an integer indicating whether the current version indicators
+    (major/minor/patch of version, release, other) are larger, equal, or 
+    smaller than the reigning champ.
+    
+    Args:
+        ver_current: major, minor, patch values to be compared
+        ver_champ: major, minor, patch values to be compared against
+
+    Returns:
+        1 if current is larger than champ
+        0 if current = champ
+        -1 if current is smaller than champ
+    """
     champ_basename = champ_file = None
     champ_all_parts = None
-    champ_arch = None
     possible_fnames = glob.glob(os.path.join(pth, '{}*rpm'.format(pkgname)))
     for fname in possible_fnames:
         basefname = os.path.basename(fname)
@@ -123,14 +137,12 @@ def find_latest_package_file(pkgname, pth, architecture=None):
                 if architecture is None or architecture == arch:
                     champ_file = fname
                     champ_all_parts = current_all_parts
-                    champ_arch = arch
             else:
                 result = compare_all_parts(
                     current_all_parts, champ_all_parts, architecture=arch)
                 if result == 1:
                     champ_file = fname
                     champ_all_parts = current_all_parts
-                    champ_arch = arch
     if champ_file is not None:
         champ_basename = os.path.basename(champ_file)
     return champ_basename 
