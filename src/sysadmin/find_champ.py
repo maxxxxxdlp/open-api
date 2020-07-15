@@ -7,8 +7,8 @@ from cgitb import reset
 # ...............................................
 # ...............................................    
 def compare_elt(current, champ):
-    """Return an integer indicating whether the current version indicator is 
-    larger, equal, or smaller than the reigning champ.
+    """Return an integer indicating whether the current version number or string 
+    is larger, equal, or smaller than the reigning champ.
     
     Args:
         current: value to be compared
