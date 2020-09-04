@@ -33,26 +33,27 @@ out_fieldnames = [
 no_accepted_name_id = -999
 
 in_filename = '/tank/data/gbif/taxonomy/Taxon.tsv'
-out_filename = '/tank/data/gbif/taxonomy/canonical_to_accepted.csv'
+out_filename = '/tank/data/gbif/taxonomy/canonical_to_accepted_allranks.csv'
 
 rdr, inf = get_csv_dict_reader(
     in_filename, '\t', ENCODING, fieldnames=in_fieldnames)
 
-non_accepted_species = {}
-accepted_species = {}
+non_accepted_name = {}
+accepted_name = {}
 try:
     for rec in rdr:
-        if rec['taxonRank'] == 'species':
-            tid = rec['taxonID']
-            name = rec['canonicalName']
-            status = rec['taxonomicStatusnomenclaturalStatus']
-            accid = rec['acceptedNameUsageID']
-            if status == 'accepted':
-                accepted_species[tid] = name
-            elif accid:
-                non_accepted_species[tid] = (name, accid)
-            else:
-                non_accepted_species[tid] = (name, no_accepted_name_id)
+        rank = rec['taxonRank']
+#         if rank == 'species':
+        tid = rec['taxonID']
+        name = rec['canonicalName']
+        status = rec['taxonomicStatusnomenclaturalStatus']
+        accid = rec['acceptedNameUsageID']
+        if status == 'accepted':
+            accepted_name[tid] = name
+        elif accid:
+            non_accepted_name[tid] = (name, accid)
+        else:
+            non_accepted_name[tid] = (name, no_accepted_name_id)
 except Exception as e:
     print('Failed to read {}, {}'.format(in_filename, e))
 finally:
@@ -61,11 +62,12 @@ finally:
 wtr, outf = get_csv_writer(out_filename, ',', ENCODING, fmode='w')
 wtr.writerow(out_fieldnames)
 try:
-    for tid, accname in accepted_species.items():
+    for tid, accname in accepted_name.items():
         row = [accname, accname, tid, tid]
-    for tid, (naccname, accid) in non_accepted_species.items():
+        wtr.writerow(row)
+    for tid, (name, accid) in non_accepted_name.items():
         try:
-            accname = accepted_species[accid]
+            accname = accepted_name[accid]
         except:
             accname = ''
         row = [name, accname, tid, accid]
