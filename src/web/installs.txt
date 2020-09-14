@@ -1,0 +1,101 @@
+
+ot@badenov ~]# pip3 install cherrypy
+Collecting cherrypy
+  Downloading https://files.pythonhosted.org/packages/a8/f9/e11f893dcabe6bc222a1442bf5e14f0322a2d363c92910ed41947078a35a/CherryPy-18.6.0-py2.py3-none-any.whl (419kB)
+     |████████████████████████████████| 419kB 908kB/s 
+Collecting portend>=2.1.1 (from cherrypy)
+  Downloading https://files.pythonhosted.org/packages/d7/79/eee70a512bffe5ceb5008f8e3326581948f50ca393c3bcb4d557e4818bd1/portend-2.6-py2.py3-none-any.whl
+Collecting more-itertools (from cherrypy)
+  Downloading https://files.pythonhosted.org/packages/ec/f7/9c33f38577d9fb9b1aa60c0fd9961d09574f5d47d2b830e5183e6adfc8cc/more_itertools-8.5.0-py3-none-any.whl (44kB)
+     |████████████████████████████████| 51kB 4.3MB/s 
+Collecting jaraco.collections (from cherrypy)
+  Downloading https://files.pythonhosted.org/packages/fe/06/a89652069f0a13a33701714c0c8e0cc8656bf6d21b7c6b85fde86cf06ff6/jaraco.collections-3.0.0-py2.py3-none-any.whl
+Collecting cheroot>=8.2.1 (from cherrypy)
+  Downloading https://files.pythonhosted.org/packages/bd/39/942862090e73344fc60461449ae2755c71de4a8ce735174474dc283bfda7/cheroot-8.4.5-py2.py3-none-any.whl (92kB)
+     |████████████████████████████████| 102kB 3.6MB/s 
+Collecting zc.lockfile (from cherrypy)
+  Downloading https://files.pythonhosted.org/packages/6c/2a/268389776288f0f26c7272c70c36c96dcc0bdb88ab6216ea18e19df1fadd/zc.lockfile-2.0-py2.py3-none-any.whl
+Collecting tempora>=1.8 (from portend>=2.1.1->cherrypy)
+  Downloading https://files.pythonhosted.org/packages/b1/a3/c2bb79aa42ef7c56eec7f12a7d403b6b06b1194bf0736a93b120b5c680f2/tempora-4.0.0-py3-none-any.whl
+Collecting jaraco.classes (from jaraco.collections->cherrypy)
+  Downloading https://files.pythonhosted.org/packages/68/ce/8f43aa0d0f18120e687ae0192fe3168630040841a3e87bed93c5fe024dbe/jaraco.classes-3.1.0-py2.py3-none-any.whl
+Collecting jaraco.text (from jaraco.collections->cherrypy)
+  Downloading https://files.pythonhosted.org/packages/50/cd/6eda44738065e844bed8fae60a229b6c46f42d0ba8d48205e9fb57e254cd/jaraco.text-3.2.0-py2.py3-none-any.whl
+Collecting six>=1.7.0 (from jaraco.collections->cherrypy)
+  Downloading https://files.pythonhosted.org/packages/ee/ff/48bde5c0f013094d729fe4b0316ba2a24774b3ff1c52d924a8a4cb04078a/six-1.15.0-py2.py3-none-any.whl
+Collecting jaraco.functools (from cheroot>=8.2.1->cherrypy)
+  Downloading https://files.pythonhosted.org/packages/4f/2b/bbab94f3e461adaf3c7a3a25da0c67c91d8cf7a4ddae7096028601ff940f/jaraco.functools-3.0.1-py3-none-any.whl
+Requirement already satisfied: setuptools in /opt/python/lib/python3.6/site-packages/setuptools-41.2.0-py3.6.egg (from zc.lockfile->cherrypy) (41.2.0)
+Collecting pytz (from tempora>=1.8->portend>=2.1.1->cherrypy)
+  Downloading https://files.pythonhosted.org/packages/4f/a4/879454d49688e2fad93e59d7d4efda580b783c745fd2ec2a3adf87b0808d/pytz-2020.1-py2.py3-none-any.whl (510kB)
+     |████████████████████████████████| 512kB 3.0MB/s 
+Collecting importlib-resources; python_version < "3.7" (from jaraco.text->jaraco.collections->cherrypy)
+  Downloading https://files.pythonhosted.org/packages/ba/03/0f9595c0c2ef12590877f3c47e5f579759ce5caf817f8256d5dcbd8a1177/importlib_resources-3.0.0-py2.py3-none-any.whl
+Collecting zipp>=0.4; python_version < "3.8" (from importlib-resources; python_version < "3.7"->jaraco.text->jaraco.collections->cherrypy)
+  Downloading https://files.pythonhosted.org/packages/b2/34/bfcb43cc0ba81f527bc4f40ef41ba2ff4080e047acb0586b56b3d017ace4/zipp-3.1.0-py3-none-any.whl
+Installing collected packages: pytz, more-itertools, jaraco.functools, tempora, portend, jaraco.classes, six, zipp, importlib-resources, jaraco.text, jaraco.collections, cheroot, zc.lockfile, cherrypy
+Successfully installed cheroot-8.4.5 cherrypy-18.6.0 importlib-resources-3.0.0 jaraco.classes-3.1.0 jaraco.collections-3.0.0 jaraco.functools-3.0.1 jaraco.text-3.2.0 more-itertools-8.5.0 portend-2.6 pytz-2020.1 six-1.15.0 tempora-4.0.0 zc.lockfile-2.0 zipp-3.1.0
+WARNING: You are using pip version 19.2.3, however version 20.2.2 is available.
+You should consider upgrading via the 'pip install --upgrade pip' command.
+[root@badenov ~]# pip3 install --upgrade pip
+Collecting pip
+  Downloading https://files.pythonhosted.org/packages/5a/4a/39400ff9b36e719bdf8f31c99fe1fa7842a42fa77432e584f707a5080063/pip-20.2.2-py2.py3-none-any.whl (1.5MB)
+     |████████████████████████████████| 1.5MB 922kB/s 
+Installing collected packages: pip
+  Found existing installation: pip 19.2.3
+    Uninstalling pip-19.2.3:
+      Successfully uninstalled pip-19.2.3
+Successfully installed pip-20.2.2
+[root@badenov ~]# python3.6
+Python 3.6.2 (default, Dec  1 2017, 22:03:46) 
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-16)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import requests
+>>> 
+[root@badenov ~]# exit
+logout
+[astewart@badenov site-packages]$ cd
+[astewart@badenov ~]$ echo $PYTHONPATH 
+/opt/python/lib/python3.6/site-packages:/state/partition1/git/bison/src:/state/partition1/git/t-rex/src
+[astewart@badenov ~]$ cd /state/partition1/git/t-rex/
+[astewart@badenov t-rex]$ cd src/web/
+[astewart@badenov web]$ pytest test_tut12.py 
+bash: pytest: command not found...
+[astewart@badenov web]$ pytest -v test_tut12.py 
+bash: pytest: command not found...
+[astewart@badenov web]$ su -
+Password: 
+Last login: Fri Sep  4 10:02:46 CDT 2020 on pts/3
+bash: module: command not found...
+[root@badenov ~]# which python
+/bin/python
+[root@badenov ~]# module load opt-python
+[root@badenov ~]# pip3 install pytest
+Collecting pytest
+  Downloading pytest-6.0.1-py3-none-any.whl (270 kB)
+     |████████████████████████████████| 270 kB 1.0 MB/s 
+Requirement already satisfied: more-itertools>=4.0.0 in /opt/python/lib/python3.6/site-packages (from pytest) (8.5.0)
+Collecting py>=1.8.2
+  Downloading py-1.9.0-py2.py3-none-any.whl (99 kB)
+     |████████████████████████████████| 99 kB 1.3 MB/s 
+Collecting importlib-metadata>=0.12; python_version < "3.8"
+  Downloading importlib_metadata-1.7.0-py2.py3-none-any.whl (31 kB)
+Collecting iniconfig
+  Downloading iniconfig-1.0.1-py3-none-any.whl (4.2 kB)
+Collecting toml
+  Downloading toml-0.10.1-py2.py3-none-any.whl (19 kB)
+Collecting pluggy<1.0,>=0.12
+  Downloading pluggy-0.13.1-py2.py3-none-any.whl (18 kB)
+Collecting attrs>=17.4.0
+  Downloading attrs-20.1.0-py2.py3-none-any.whl (49 kB)
+     |████████████████████████████████| 49 kB 1.1 MB/s 
+Collecting packaging
+  Downloading packaging-20.4-py2.py3-none-any.whl (37 kB)
+Requirement already satisfied: zipp>=0.5 in /opt/python/lib/python3.6/site-packages (from importlib-metadata>=0.12; python_version < "3.8"->pytest) (3.1.0)
+Requirement already satisfied: six in /opt/python/lib/python3.6/site-packages (from packaging->pytest) (1.15.0)
+Collecting pyparsing>=2.0.2
+  Downloading pyparsing-2.4.7-py2.py3-none-any.whl (67 kB)
+     |████████████████████████████████| 67 kB 1.2 MB/s 
+Installing collected packages: py, importlib-metadata, iniconfig, toml, pluggy, attrs, pyparsing, packaging, pytest
+Successfully installed attrs-20.1.0 importlib-metadata-1.7.0 iniconfig-1.0.1 packaging-20.4 pluggy-0.13.1 py-1.9.0 pyparsing-2.4.7 pytest-6.0.1 toml-0.10.1
+
