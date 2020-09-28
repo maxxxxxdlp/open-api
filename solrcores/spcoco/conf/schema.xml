@@ -2,19 +2,19 @@
 <schema name="spcoco" version="0.1">
   
    <!-- Recommended fields for Solr -->
-   <field name="id" type="string" indexed="true" stored="true" />
-   <field name="_version_" type="long" indexed="true" stored="true" />
+   <!-- <field name="id" type="string" indexed="true" stored="true" /> -->
+   <!-- <field name="_version_" type="long" indexed="true" stored="true" /> -->
+   <!-- <uniqueKey>id</uniqueKey> -->
    
    <!-- Specify resolver fields -->
    <!-- =========================================== -->
-   
+   <!-- GUID -->
+   <uniqueKey type="solr.StrField" indexed="true" stored="true">occ_guid</uniqueKey>   
    <!-- Collection Information -->
    <field name="organization" type="solr.StrField" indexed="true" stored="true" />
    <field name="dataset" type="solr.StrField" indexed="true" stored="true" />
-   <field name="guid" type="solr.StrField" indexed="true" stored="true" />
    
    <!-- ARK metadata -->
-   <!-- DC = DublinCore -->
    <!-- similar to DC Creator, Contributor, Publisher -->
    <field name="who" type="solr.StrField" indexed="true" stored="true" />
    <!-- similar to DC Title -->
@@ -30,25 +30,18 @@
    <!-- redirection URL -->
    <field name="url" type="solr.StrField" indexed="true" stored="true" />
    <!-- persistence indicator? -->
-   <field name="persistence" type="solr.StrField" indexed="true" stored="true" />
-
-   <uniqueKey>id</uniqueKey>
-   
+   <field name="persistence" type="solr.StrField" indexed="true" stored="true" />   
+   <!-- dataset GUID for URL construction -->
+   <field name="dataset_guid" type="solr.StrField" indexed="true" stored="true" />
    
    <!-- Field types -->
-   <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate" />
-   <!-- New lat lon -->
-   <!-- <fieldType name="location" class="solr.LatLonPointSpatialField" docValues="true" />-->
-   
+   <!-- =========================================== -->
+   <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate" />   
    <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0" />
    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0" />
    <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" omitNorms="true" positionIncrementGap="0" />
-   
-   <!-- Although not explicity, the bbox field type needs this -->
-   <fieldType name="boolean" class="solr.BoolField" omitNorms="true" />
-   
-   <fieldType name="url" class="solr.StrField" sortMissingLast="true" />
+   <fieldType name="datetime" class="solr.TrieDateField" sortMissingLast="true" omitNorms="true" />
 
    <!-- Taxon name type -->
    <fieldType name="taxonname" class="solr.TextField" positionIncrementGap="100">
@@ -77,9 +70,6 @@
          <tokenizer class="solr.LowerCaseTokenizerFactory" />
       </analyzer>
    </fieldType>
-
-   
-   <fieldType name="datetime" class="solr.TrieDateField" sortMissingLast="true" omitNorms="true" />
    
    <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
@@ -95,7 +85,3 @@
    </fieldType>
 
 </schema>
-
-
-
-  

@@ -141,7 +141,7 @@ def get_header(filename):
     return header
 
 # .............................................................................
-def get_csv_reader(datafile, delimiter, encoding):
+def get_csv_reader(datafile, delimiter, encoding, quote_char=csv.QUOTE_NONE):
     try:
         f = open(datafile, 'r', encoding=encoding) 
         reader = csv.reader(f, delimiter=delimiter, escapechar='\\', 
@@ -180,7 +180,7 @@ def get_csv_writer(datafile, delimiter, encoding, fmode='w'):
 
 # .............................................................................
 def get_csv_dict_reader(datafile, delimiter, encoding, fieldnames=None, 
-                        ignore_quotes=True):
+                        quote_char=csv.QUOTE_NONE):
     '''
     ignore_quotes: no special processing of quote characters
     '''
@@ -190,14 +190,9 @@ def get_csv_dict_reader(datafile, delimiter, encoding, fieldnames=None,
             header = next(f)
             tmpflds = header.split(delimiter)
             fieldnames = [fld.strip() for fld in tmpflds]
-        if ignore_quotes:
-            dreader = csv.DictReader(
-                f, fieldnames=fieldnames, quoting=csv.QUOTE_NONE,
-                escapechar='\\', restkey=EXTRA_VALS_KEY, delimiter=delimiter)
-        else:
-            dreader = csv.DictReader(
-                f, fieldnames=fieldnames, restkey=EXTRA_VALS_KEY, 
-                escapechar='\\', delimiter=delimiter)
+        dreader = csv.DictReader(
+            f, fieldnames=fieldnames, quoting=quote_char,
+            escapechar='\\', restkey=EXTRA_VALS_KEY, delimiter=delimiter)
             
     except Exception as e:
         raise Exception('Failed to read or open {}, ({})'
@@ -308,7 +303,7 @@ def open_csv_files(infname, delimiter, encoding, ignore_quotes=True,
         
 
 # ...............................................
-def getLine(csvreader, recno):
+def get_line(csvreader, recno):
     ''' Return a line while keeping track of the line number and errors
     
     Args:
