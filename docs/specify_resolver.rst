@@ -14,3 +14,5 @@ Browse with testlogin
 Datasets and their IDs are listed in:: 
   http://preview.specifycloud.org/export/rss/
   
+also::
+  https://ichthyology.specify.ku.edu/export/rss/
