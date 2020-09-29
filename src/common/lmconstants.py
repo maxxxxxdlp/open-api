@@ -1,14 +1,14 @@
 SPECIFY_URL = 'http://preview.specifycloud.org/'
 PUBLIC_PREFIX = 'export'
 
-ARK_PREFIX = 'ARK:'
+ARK_PREFIX = 'ARK'
 REC_URL = '{}/{}/record'.format(SPECIFY_URL, PUBLIC_PREFIX)
 RSS_URL = '{}/{}/rss'.format(SPECIFY_URL, PUBLIC_PREFIX)
 EXPORT_URL = '{}/static/depository/export_feed'.format(SPECIFY_URL)
 DWC_URL = 'http://rs.tdwg.org/dwc'
 
 class DWCA:
-    NS = '\{{}/text/\}'.format(DWC_URL)
+    NS = '{http://rs.tdwg.org/dwc/text/}'
     META_FNAME = 'meta.xml'
     DATASET_META_FNAME = 'eml.xml'
     CORE_TYPE = '{}/terms/Occurrence'.format(DWC_URL)
@@ -250,7 +250,7 @@ class Idigbio:
     RECORD_INDEX_KEY = 'indexTerms'
     QUALIFIER = 'idigbio:'
     QFILTERS = {'basisofrecord': 'preservedspecimen'}
-    FILTERS = {'limit': Idigbio.SEARCH_LIMIT,
+    FILTERS = {'limit': 5000,
                'offset': 0,
                'no_attribution': False}
     

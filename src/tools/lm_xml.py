@@ -146,8 +146,8 @@ def tostringlist(element, encoding=None, method=None):
 
 
 # .............................................................................
-# Monkey patch to add support for CDATA
-ET._original_serialize_xml = ET._serialize_xml
+# # Monkey patch to add support for CDATA
+# ET._original_serialize_xml = ET._serialize_xml
 
 
 # .............................................................................
@@ -158,7 +158,8 @@ def _serialize_xml(write, elem, qnames, namespaces,
     if elem.tag == '![CDATA[':
         write('<{}{}]]>{}'.format(elem.tag, elem.txt, elem.tail))
         return None
-    return ET._original_serialize_xml(
+#     return ET._original_serialize_xml(
+    return ET._serialize_xml(
         write, elem, qnames, namespaces, short_empty_elements, **kwargs)
 
 

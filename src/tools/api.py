@@ -12,8 +12,7 @@ import requests
 
 from tools.lm_xml import fromstring, deserialize
 from common.lmconstants import (
-    BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, IdigbioQuery,
-    Itis, URL_ESCAPES, ENCODING)
+    BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING)
 from tools.ready_file import ready_filename
 
 
@@ -185,7 +184,8 @@ class APIQuery:
 
     # ...............................................
     def query_by_get(self, output_type='json'):
-        """Queries the API and sets 'output' attribute to a JSON object
+        """Queries the API and sets 'output' attribute to a JSON or 
+        ElementTree object.
         """
         self.output = None
         ret_code = None
@@ -208,8 +208,11 @@ class APIQuery:
                     output = response.content
                     self.output = deserialize(fromstring(output))
             elif output_type == 'xml':
-                output = response.text
-                self.output = deserialize(fromstring(output))
+                try:
+                    output = fromstring(response.text)
+                    self.output = output
+                except Exception as e:
+                    self.output = response.text
             else:
                 print(('Unrecognized output type {}'.format(output_type)))
         else:
@@ -920,89 +923,89 @@ class IdigbioAPI(APIQuery):
         fld_names.sort()
         return fld_names
 
-    # ...............................................
-    @staticmethod
-    def _count_idigbio_records(gbif_taxon_id):
-        """Count iDigBio records for a GBIF taxon id.
-        """
-        api = idigbio.json()
-        record_query = {
-            'taxonid': str(gbif_taxon_id), 'geopoint': {'type': 'exists'}}
-
-        try:
-            output = api.search_records(rq=record_query, limit=1, offset=0)
-        except Exception:
-            print('Failed on {}'.format(gbif_taxon_id))
-            total = 0
-        else:
-            total = output['itemCount']
-        return total
-
-    # ...............................................
-    def _get_idigbio_records(self, gbif_taxon_id, fields, writer,
-                             meta_output_file):
-        """Get records from iDigBio
-        """
-        api = idigbio.json()
-        limit = 100
-        offset = 0
-        curr_count = 0
-        total = 0
-        record_query = {'taxonid': str(gbif_taxon_id),
-                        'geopoint': {'type': 'exists'}}
-        while offset <= total:
-            try:
-                output = api.search_records(
-                    rq=record_query, limit=limit, offset=offset)
-            except Exception:
-                print('Failed on {}'.format(gbif_taxon_id))
-                total = 0
-            else:
-                total = output['itemCount']
-
-                # First gbifTaxonId where this data retrieval is successful,
-                # get and write header and metadata
-                if total > 0 and fields is None:
-                    print('Found data, writing data and metadata')
-                    fields = self._get_idigbio_fields(output['items'][0])
-                    # Write header in datafile
-                    writer.writerow(fields)
-                    # Write metadata file with column indices
-                    _meta = self._write_idigbio_metadata(
-                        fields, meta_output_file)
-
-                # Write these records
-                recs = output['items']
-                curr_count += len(recs)
-                print(('  Retrieved {} records, {} recs starting at {}'.format(
-                    len(recs), limit, offset)))
-                for rec in recs:
-                    rec_data = rec['indexTerms']
-                    vals = []
-                    for fld_name in fields:
-                        # Pull long, lat from geopoint
-                        if fld_name == 'dec_long':
-                            try:
-                                vals.append(rec_data['geopoint']['lon'])
-                            except KeyError:
-                                vals.append('')
-                        elif fld_name == 'dec_lat':
-                            try:
-                                vals.append(rec_data['geopoint']['lat'])
-                            except KeyError:
-                                vals.append('')
-                        # or just append verbatim
-                        else:
-                            try:
-                                vals.append(rec_data[fld_name])
-                            except KeyError:
-                                vals.append('')
-
-                    writer.writerow(vals)
-                offset += limit
-        print(('Retrieved {} of {} reported records for {}'.format(
-            curr_count, total, gbif_taxon_id)))
-        return curr_count, fields
+#     # ...............................................
+#     @staticmethod
+#     def _count_idigbio_records(gbif_taxon_id):
+#         """Count iDigBio records for a GBIF taxon id.
+#         """
+#         api = idigbio.json()
+#         record_query = {
+#             'taxonid': str(gbif_taxon_id), 'geopoint': {'type': 'exists'}}
+# 
+#         try:
+#             output = api.search_records(rq=record_query, limit=1, offset=0)
+#         except Exception:
+#             print('Failed on {}'.format(gbif_taxon_id))
+#             total = 0
+#         else:
+#             total = output['itemCount']
+#         return total
+# 
+#     # ...............................................
+#     def _get_idigbio_records(self, gbif_taxon_id, fields, writer,
+#                              meta_output_file):
+#         """Get records from iDigBio
+#         """
+#         api = idigbio.json()
+#         limit = 100
+#         offset = 0
+#         curr_count = 0
+#         total = 0
+#         record_query = {'taxonid': str(gbif_taxon_id),
+#                         'geopoint': {'type': 'exists'}}
+#         while offset <= total:
+#             try:
+#                 output = api.search_records(
+#                     rq=record_query, limit=limit, offset=offset)
+#             except Exception:
+#                 print('Failed on {}'.format(gbif_taxon_id))
+#                 total = 0
+#             else:
+#                 total = output['itemCount']
+# 
+#                 # First gbifTaxonId where this data retrieval is successful,
+#                 # get and write header and metadata
+#                 if total > 0 and fields is None:
+#                     print('Found data, writing data and metadata')
+#                     fields = self._get_idigbio_fields(output['items'][0])
+#                     # Write header in datafile
+#                     writer.writerow(fields)
+#                     # Write metadata file with column indices
+#                     _meta = self._write_idigbio_metadata(
+#                         fields, meta_output_file)
+# 
+#                 # Write these records
+#                 recs = output['items']
+#                 curr_count += len(recs)
+#                 print(('  Retrieved {} records, {} recs starting at {}'.format(
+#                     len(recs), limit, offset)))
+#                 for rec in recs:
+#                     rec_data = rec['indexTerms']
+#                     vals = []
+#                     for fld_name in fields:
+#                         # Pull long, lat from geopoint
+#                         if fld_name == 'dec_long':
+#                             try:
+#                                 vals.append(rec_data['geopoint']['lon'])
+#                             except KeyError:
+#                                 vals.append('')
+#                         elif fld_name == 'dec_lat':
+#                             try:
+#                                 vals.append(rec_data['geopoint']['lat'])
+#                             except KeyError:
+#                                 vals.append('')
+#                         # or just append verbatim
+#                         else:
+#                             try:
+#                                 vals.append(rec_data[fld_name])
+#                             except KeyError:
+#                                 vals.append('')
+# 
+#                     writer.writerow(vals)
+#                 offset += limit
+#         print(('Retrieved {} of {} reported records for {}'.format(
+#             curr_count, total, gbif_taxon_id)))
+#         return curr_count, fields
 
     # ...............................................
     def assemble_idigbio_data(self, taxon_ids, point_output_file,

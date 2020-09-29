@@ -6,6 +6,7 @@ import zipfile
 
 from tools.api import APIQuery
 from tools.readwrite import (get_csv_dict_reader, get_csv_dict_writer,  get_line)
+from tools.ready_file import ready_filename
 from tools.solr import post, query, update
 from common.lmconstants import (
     ARK_PREFIX, REC_URL, DWCA, ENCODING, SPCOCO_FIELDS)
@@ -29,7 +30,7 @@ rurl = '{}/{}/{}'.format(REC_URL, kufishtish, rec_uuid)
 
 # ......................................................
 def read_recs_for_solr(core_fname, solr_fname, ds_uuid, corefileinfo):
-    
+    success = True
     (ordered_fldnames, guid_idx, field_idxs, fld_delimiter, line_delimiter, 
      quote_char) = corefileinfo
     rdr, inf = get_csv_dict_reader(
@@ -68,9 +69,11 @@ def read_recs_for_solr(core_fname, solr_fname, ds_uuid, corefileinfo):
             wtr.write_record(solr_rec)
     except Exception as e:
         print('Failed to read or write {}'.format(e))
+        success = False
     finally:
         inf.close()
         outf.close()
+    return success
         
 # ......................................................
 def extract_dwca(zip_fname, extract_path=None):
@@ -85,50 +88,49 @@ def extract_dwca(zip_fname, extract_path=None):
             print('Unexpected filename {} in zipfile {}'.format(
                 zinfo.filename, zip_fname))
             break
-        # Check file extension and only unzip valid files
-        zfile.extract(zinfo)
+#         # Check file extension and only unzip valid files
+#         zfile.extract(zinfo)
 
 
 # ......................................................
 def get_dwca_urls(rss_url):
     urls = []
-    api = APIQuery.init_from_url(rss_url)
+    api = APIQuery(rss_url)
     api.query_by_get(output_type='xml')
-    output = api.output
-    
-    tree = ET.parse(output)
-    root = tree.getroot()
+    # API should return XML as ElementTree element
+    root = api.output
     elt = root.find('channel')
     ds_elts = elt.findall('item')
     for delt in ds_elts:
         url_elt = delt.find('link')
         if url_elt is not None:
-            urls.add(url_elt.text)
+            urls.append(url_elt.text)
     return urls
         
 # ......................................................
-def download_dwca(url, outpath):
-#     api = APIQuery.init_from_url(url)
-#     api.query_by_get(output_type='xml')
-#     output = api.output
+def download_dwca(url, baseoutpath):
     _, fname = os.path.split(url)
+    basename, _ = os.path.splitext(fname)
+    outpath = os.path.join(baseoutpath, basename)
     outfilename = os.path.join(outpath, fname)
-    ret_code = None
-    try:
-        response = requests.get(url)
-    except Exception as e:
+    success = ready_filename(outfilename, overwrite=False)
+    if success:
+        ret_code = None
         try:
-            ret_code = response.status_code
-            reason = response.reason
-        except AttributeError:
-            reason = 'Unknown Error'
-        print(('Failed on URL {}, code = {}, reason = {} ({})'.format(
-            url, ret_code, reason, str(e))))
-
-    output = response.content
-    with open(outfilename, 'wb') as outf:
-        outf.write(output)
-        
+            response = requests.get(url)
+        except Exception as e:
+            try:
+                ret_code = response.status_code
+                reason = response.reason
+            except AttributeError:
+                reason = 'Unknown Error'
+            print(('Failed on URL {}, code = {}, reason = {} ({})'.format(
+                url, ret_code, reason, str(e))))
+    
+        output = response.content
+        with open(outfilename, 'wb') as outf:
+            outf.write(output)
+    return outfilename
     
 
 # ......................................................
@@ -166,7 +168,9 @@ def find_core_fileinfo(meta_fname):
         fld_delimiter = core_elt.attrib['fieldsTerminatedBy']
         line_delimiter = core_elt.attrib['linesTerminatedBy']
         quote_char = core_elt.attrib['fieldsEnclosedBy']
-        core_fname = core_elt.find('{}files'.format(DWCA.NS)).find('{}location').text
+        core_files_elt = core_elt.find('{}files'.format(DWCA.NS))
+        core_loc_elt = core_files_elt.find('{}location'.format(DWCA.NS))
+        core_fname = core_loc_elt.text
         guid_idx = core_elt.find('{}id'.format(DWCA.NS)).attrib['index']
         field_elts = core_elt.findall('field')
         all_idxs = []
@@ -191,30 +195,46 @@ def main():
     parser = argparse.ArgumentParser(
         description=('Read a zipped DWCA file and index records into Solr.'))
     parser.add_argument(
-        '--zipname', type=str, default=None,
+        '--dwca_file', type=str, default=None,
         help='Zipped DWCA to process')
     parser.add_argument(
         '--ipt_rss', type=str, default=test_url,
         help='URL for IPT RSS feed with download link')    
     parser.add_argument(
-        '--outpath', type=str, default=os.getcwd(), 
+        '--outpath', type=str, default=os.getcwd(),
         help='Optional path for DWCA extraction')
     args = parser.parse_args()
     
-    if args.zipname is None:
-        urls = get_dwca_urls(args.ipt_rss)
-        for url in urls:
-            download_dwca(url, args.outpath)
-        
-    extract_dwca(args.zipname, extract_path=args.outpath)
+    zname = args.dwca_file
+    dwca_url = args.ipt_rss
+#     outpath = args.outpath
+    outpath = '/tank/data/specify'
     
-    meta_fname = os.path.join(args.outpath, DWCA.META_FNAME)
-    core_basename, core_fileinfo = find_core_fileinfo(meta_fname)
-    core_fname = os.path.join(args.outpath, core_basename)
-     
-    ds_uuid = get_dataset_uuid(meta_fname)
-     
-    csv_outfname = read_recs_for_solr(core_fname, ds_uuid, core_fileinfo)
+    zipfnames = []
+    if zname is not None:
+        zipfnames.append(zname)
+    else:        
+        urls = get_dwca_urls(dwca_url)
+        for url in urls:
+            outfilename = download_dwca(url, outpath)
+            zipfnames.append(outfilename)
+       
+    for zipfname in zipfnames:
+        extract_path, _ = os.path.split(zipfname)
+        meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
+        ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
+        if not os.path.exists(meta_fname):
+            extract_dwca(zipfname, extract_path=extract_path)
+        
+        # Read DWCA metadata
+        core_basename, core_fileinfo = find_core_fileinfo(meta_fname)
+        # Read dataset metadata        
+        ds_uuid = get_dataset_uuid(ds_meta_fname)
+         
+        # Read record metadata        
+        core_fname = os.path.join(extract_path, core_basename)
+        solr_outfname = os.path.join(extract_path, core_basename + '.solr')
+        csv_outfname = read_recs_for_solr(core_fname, solr_outfname, ds_uuid, core_fileinfo)
     
     
 
