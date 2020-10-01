@@ -1,20 +1,30 @@
 SPECIFY_URL = 'http://preview.specifycloud.org/'
 PUBLIC_PREFIX = 'export'
 
-ARK_PREFIX = 'ARK'
+ARK_PREFIX = 'http://spcoco.org/ark:/'
 REC_URL = '{}/{}/record'.format(SPECIFY_URL, PUBLIC_PREFIX)
 RSS_URL = '{}/{}/rss'.format(SPECIFY_URL, PUBLIC_PREFIX)
 EXPORT_URL = '{}/static/depository/export_feed'.format(SPECIFY_URL)
 DWC_URL = 'http://rs.tdwg.org/dwc'
+DWC_RECORD_TITLE = 'digital specimen object'
 
 class DWCA:
     NS = '{http://rs.tdwg.org/dwc/text/}'
     META_FNAME = 'meta.xml'
     DATASET_META_FNAME = 'eml.xml'
+    # Meta.xml element/attribute keys
+    DELIMITER_KEY = 'fieldsTerminatedBy'
+    LINE_DELIMITER_KEY = 'linesTerminatedBy'
+    QUOTE_CHAR_KEY = 'fieldsEnclosedBy'
+    LOCATION_KEY = 'location'
+    UUID_KEY = 'id'
+    
     CORE_TYPE = '{}/terms/Occurrence'.format(DWC_URL)
     CORE_FIELDS_OF_INTEREST = [
         'id',
         'institutionCode',
+        'collectionCode',
+        'datasetName',
         'basisOfRecord',
         'year',
         'month',
@@ -37,14 +47,11 @@ curl '{}{}'.format(http://preview.specifycloud.org/export/record/
 # .............................................................................
 SPCOCO_FIELDS = [
     # GUID and solr uniqueKey
-    'occ_guid',
-    # Collection Information
-    'organization',
+    'occurrence_guid',
     # pull dataset/alternateIdentfier from DWCA eml.xml
     'dataset_guid',
     # ARK metadata
     # similar to DC Creator, Contributor, Publisher
-    # pull dataset/title from DWCA eml.xml
     'who',
     # similar to DC Title
     'what',
@@ -53,12 +60,8 @@ SPCOCO_FIELDS = [
     # similar to DC Identifier, optional as this is the ARK
     'where',
     # Supplemental ARK metadata
-    # similar to DC ResourceType
-    'how',
     # redirection URL
-    'redirect_url',
-    # persistence indicator?
-    'persistence']
+    'url']
 
 # For parsing BISON Solr API response, updated Feb 2015
 class BISON:

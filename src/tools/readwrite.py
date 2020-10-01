@@ -180,7 +180,7 @@ def get_csv_writer(datafile, delimiter, encoding, fmode='w'):
 
 # .............................................................................
 def get_csv_dict_reader(datafile, delimiter, encoding, fieldnames=None, 
-                        quote_char=csv.QUOTE_NONE):
+                        quote_char=None):
     '''
     ignore_quotes: no special processing of quote characters
     '''
@@ -190,9 +190,14 @@ def get_csv_dict_reader(datafile, delimiter, encoding, fieldnames=None,
             header = next(f)
             tmpflds = header.split(delimiter)
             fieldnames = [fld.strip() for fld in tmpflds]
-        dreader = csv.DictReader(
-            f, fieldnames=fieldnames, quoting=quote_char,
-            escapechar='\\', restkey=EXTRA_VALS_KEY, delimiter=delimiter)
+        if quote_char is not None:
+            dreader = csv.DictReader(
+                f, fieldnames=fieldnames, quotechar=quote_char,
+                escapechar='\\', restkey=EXTRA_VALS_KEY, delimiter=delimiter)
+        else:
+            dreader = csv.DictReader(
+                f, fieldnames=fieldnames, quoting=csv.QUOTE_NONE,
+                escapechar='\\', restkey=EXTRA_VALS_KEY, delimiter=delimiter)
             
     except Exception as e:
         raise Exception('Failed to read or open {}, ({})'

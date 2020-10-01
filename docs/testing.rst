@@ -7,7 +7,7 @@ Testing T-Rex elements
   
   * make sure /opt/lifemapper/__init__.py exists
   * symlink t-rex/src dir to /opt/lifemapper/LmRex
-  * symlink t-rex/solrcores/* dirs to /share/lm/solr/cores/*
+  * symlink t-rex/solrcores/spcoco dirs to /var/solr/cores/
 
 * Options to populate solr data into newly linked core:
 
