@@ -1,37 +1,52 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <schema name="spcoco" version="0.1">
   
-   <!-- Recommended fields for Solr -->
-   <uniqueKey type="solr.StrField" indexed="true" stored="true">occurrence_guid</uniqueKey>   
-   <!-- <field name="_version_" type="long" indexed="true" stored="true" /> -->
    
+   <!-- =========================================== -->
    <!-- Specify resolver fields -->
    <!-- =========================================== -->
    <!-- GUIDs -->
-   <field name="occurrence_guid" type="solr.StrField" indexed="true" stored="true" />
-   <field name="dataset_guid" type="solr.StrField" indexed="true" stored="true" />
+   <field name="occurrence_guid" type="string" indexed="true" stored="true" />
+   <field name="dataset_guid" type="string" indexed="true" stored="true" />
    
    <!-- ARK metadata -->
    <!-- similar to DC Creator, Contributor, Publisher -->
    <!-- DWC institutionCode -->
-   <field name="who" type="solr.StrField" indexed="true" stored="true" />
+   <field name="who" type="string" indexed="true" stored="true" />
    
    <!-- similar to DC Title -->
    <!-- DWC basisOfRecord -->
-   <field name="what" type="solr.StrField" indexed="true" stored="true" />
+   <field name="what" type="string" indexed="true" stored="true" />
    
    <!-- similar to DC Date -->
    <!-- DWC yyyy-mm-dd (concatenated fields) -->
-   <field name="when" type="solr.StrField" indexed="true" stored="true" />
+   <field name="when" type="string" indexed="true" stored="true" />
    
    <!-- similar to DC Identifier, optional as this is the ARK -->
    <!-- ARK pointing to Specify resolver -->
-   <field name="where" type="solr.StrField" indexed="true" stored="true" />
+   <field name="where" type="string" indexed="true" stored="true" />
 
    <!-- Supplemental ARK metadata -->
    <!-- redirection URL -->
    <!-- URL pointing to Specify API -->
-   <field name="url" type="solr.StrField" indexed="true" stored="true" />
+   <field name="url" type="string" indexed="true" stored="true" />
       
+   <!-- =========================================== -->
+   <!-- Recommended fields for Solr -->
+   <!-- =========================================== -->
+   <uniqueKey type="string" indexed="true" stored="true">occurrence_guid</uniqueKey>   
+   <!-- <field name="_version_" type="long" indexed="true" stored="true" /> -->
+
+   <!-- =========================================== -->
+   <!-- Field types -->
+   <!-- =========================================== -->
+   <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+   <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0" />
+   <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0" />
+   <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" omitNorms="true" positionIncrementGap="0" />
+   
+   <!-- Although not explicity, the bbox field type needs this -->
+   <fieldType name="boolean" class="solr.BoolField" omitNorms="true" />
+
 
 </schema>
