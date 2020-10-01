@@ -3,10 +3,13 @@
   
    
    <!-- =========================================== -->
+   <!-- Recommended fields for Solr -->
+   <!-- =========================================== -->
+   <field name="id" type="string" indexed="true" stored="true" />
+   <field name="_version_" type="long" indexed="true" stored="true" />
+   <!-- =========================================== -->
    <!-- Specify resolver fields -->
    <!-- =========================================== -->
-   <!-- GUIDs -->
-   <field name="occurrence_guid" type="string" indexed="true" stored="true" />
    <field name="dataset_guid" type="string" indexed="true" stored="true" />
    
    <!-- ARK metadata -->
@@ -34,7 +37,7 @@
    <!-- =========================================== -->
    <!-- Recommended fields for Solr -->
    <!-- =========================================== -->
-   <uniqueKey type="string" indexed="true" stored="true">occurrence_guid</uniqueKey>   
+   <uniqueKey>id</uniqueKey>   
    <!-- <field name="_version_" type="long" indexed="true" stored="true" /> -->
 
    <!-- =========================================== -->
