@@ -5,8 +5,8 @@
    <!-- =========================================== -->
    <!-- Recommended fields for Solr -->
    <!-- =========================================== -->
-   <field name="id" type="string" indexed="true" stored="true" />
-   <field name="_version_" type="long" indexed="true" stored="true" />
+   <field name="id" type="idstring" indexed="true" stored="true" />
+   <field name="_version_" type="vlong" indexed="true" stored="true" />
    <!-- =========================================== -->
    <!-- Specify resolver fields -->
    <!-- =========================================== -->
@@ -43,13 +43,13 @@
    <!-- =========================================== -->
    <!-- Field types -->
    <!-- =========================================== -->
+   <!-- fieldTypes for uniqueKey and _version_ must be multiValued="false"  -->
+   <fieldType name="idstring" class="solr.StrField" multiValued="false" />
+   <fieldType name="vlong" class="solr.TrieLongField" multiValued="false" />
    <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0" />
    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0" />
-   <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" omitNorms="true" positionIncrementGap="0" />
-   
-   <!-- Although not explicity, the bbox field type needs this -->
+   <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" omitNorms="true" positionIncrementGap="0" />   
    <fieldType name="boolean" class="solr.BoolField" omitNorms="true" />
-
 
 </schema>
