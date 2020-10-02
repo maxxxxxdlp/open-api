@@ -2,6 +2,7 @@ import requests
 import subprocess
 
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
+SOLR_COMMAND = '/opt/solr/bin/solr'
 SOLR_SERVER = 'http://localhost:8983/solr/'
 ENCODING='utf-8'
 
@@ -9,9 +10,9 @@ ENCODING='utf-8'
 Defined solrcores in /var/solr/data/cores/
 """
 # ...............................................
-def _post_remote(collection, fname, headers={}):
+def _post_remote(collection, fname, solr_location=SOLR_SERVER, headers={}):
     response = output = None
-    url = '{}{}/update?commit=true'.format(SOLR_SERVER, collection)
+    url = '{}{}/update?commit=true'.format(solr_location, collection)
     # read doc as bytes
     with open(fname, 'rb', encoding=ENCODING) as in_file:
         data_bytes= in_file.read()
@@ -49,20 +50,40 @@ def _post_remote(collection, fname, headers={}):
 
 # .............................................................................
 def _post_local(collection, fname):
-    """Post a document to a Solr index."""
-    cmd = '{} -c {} '.format(SOLR_POST_COMMAND, collection, fname)
+    """Post a document to a Solr index.
+    
+    Args:
+        collection: name of the Solr collection to be posted to 
+        fname: Full path the file containing data to be indexed in Solr
+        solr_location: URL to solr instance (i.e. http://localhost:8983/solr)
+    """
+    cmd = '{} -c {} {} '.format(SOLR_POST_COMMAND, collection, fname)
     output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     return output
 
 # .............................................................................
-def post(collection, fname):
-    pass
+def post(collection, fname, solr_location=None, headers=None):
+    """Post a document to a Solr index.
+    
+    Args:
+        collection: name of the Solr collection to be posted to 
+        fname: Full path the file containing data to be indexed in Solr
+        solr_location: URL to solr instance (i.e. http://localhost:8983/solr)
+    """
+    if solr_location is not None:
+        _post_remote(collection, fname, solr_location, headers)
+    else:
+        _post_local(collection, fname)
 
+# .............................................................................
 def query(collection, qstring):
     url = '{}/{}/select?indent=on&q={}'.format(SOLR_SERVER, collection, qstring)
     cmd = 'curl {}'.format(url)
     output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     return output
     
+# .............................................................................
 def update(collection):
     update_url = '{}/{}/update'.format(SOLR_SERVER, collection)
+
+

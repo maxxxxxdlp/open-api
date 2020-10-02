@@ -9,12 +9,17 @@ Testing T-Rex elements
   * symlink t-rex/src dir to /opt/lifemapper/LmRex
   * symlink t-rex/solrcores/spcoco dirs to /var/solr/cores/
 
-* Options to populate solr data into newly linked core:
+* Solr commands at /opt/solr/bin/ (in PATH)
 
-  * /opt/solr/bin/solr -c spcoco t-rex/data/solrtest/*json
-  
-  
-  
-* Options to search: 
-  
-  * curl "http://localhost:8983/solr/spcoco/select?q=*.*"
+    * Create new core::
+      su -c "solr create -c spcoco -d /var/solr/cores/spcoco/conf -s 2 -rf 2" solr
+    
+    * Delete core::
+      solr delete -c spcoco
+      
+    * Options to populate solr data into newly linked core::
+      post -c spcoco t-rex/data/solrtest/*csv
+      
+    * Options to search: 
+      
+      * curl "http://localhost:8983/solr/spcoco/select?q=*.*"

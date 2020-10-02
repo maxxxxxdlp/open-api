@@ -3,6 +3,7 @@
 import glob
 from io import StringIO
 import os
+import shutil
 import zipfile
 
 SHP_EXT = 'shp'
@@ -81,6 +82,7 @@ def delete_file(file_name, delete_dir=False):
                     success = False
                     msg = 'Failed to remove {}, {}'.format(pth, str(e))
     return success, msg
+
 
 # .............................
 # def zip_files(fnames, zip_fname):

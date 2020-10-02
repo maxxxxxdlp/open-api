@@ -18,6 +18,8 @@ class DWCA:
     QUOTE_CHAR_KEY = 'fieldsEnclosedBy'
     LOCATION_KEY = 'location'
     UUID_KEY = 'id'
+    FLDMAP_KEY = 'fieldname_index_map'
+    FLDS_KEY = 'fieldnames'
     
     CORE_TYPE = '{}/terms/Occurrence'.format(DWC_URL)
     CORE_FIELDS_OF_INTEREST = [
@@ -45,9 +47,10 @@ curl '{}{}'.format(http://preview.specifycloud.org/export/record/
 """
 
 # .............................................................................
+# These fields must match the Solr core fields in spcoco/conf/schema.xml
 SPCOCO_FIELDS = [
     # GUID and solr uniqueKey
-    'occurrence_guid',
+    'id',
     # pull dataset/alternateIdentfier from DWCA eml.xml
     'dataset_guid',
     # ARK metadata

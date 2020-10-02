@@ -8,8 +8,7 @@ from tools.api import APIQuery
 from tools.readwrite import (
     get_csv_dict_reader, get_csv_dict_writer,  get_line)
 from tools.ready_file import ready_filename
-from tools.solr import (
-    post, query, update)
+from tools.solr import (post, query, update)
 from common.lmconstants import (
     ARK_PREFIX, DWC_RECORD_TITLE, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
 from symbol import term
@@ -52,7 +51,8 @@ def _get_date(dwc_rec):
 # ......................................................
 def read_recs_for_solr(fileinfo, ds_uuid, outpath):
     core_fname = os.path.join(outpath, fileinfo[DWCA.LOCATION_KEY])
-    solr_outfname = core_fname + '.solr'
+    core_fname_noext, _ = os.path.splitext(core_fname)
+    solr_outfname = core_fname_noext + '.solr.csv'
     
     delimiter = fileinfo[DWCA.DELIMITER_KEY]
     rdr, inf = get_csv_dict_reader(
@@ -122,12 +122,12 @@ def get_dwca_urls(rss_url):
     return urls
         
 # ......................................................
-def download_dwca(url, baseoutpath):
+def download_dwca(url, baseoutpath, overwrite=False):
     _, fname = os.path.split(url)
     basename, _ = os.path.splitext(fname)
     outpath = os.path.join(baseoutpath, basename)
     outfilename = os.path.join(outpath, fname)
-    success = ready_filename(outfilename, overwrite=False)
+    success = ready_filename(outfilename, overwrite=overwrite)
     if success:
         ret_code = None
         try:
@@ -171,6 +171,9 @@ def read_dataset_uuid(meta_fname):
 def read_core_fileinfo(meta_fname):
     """Reads meta.xml file for information about the core occurrence file
     
+    Args:
+        meta_fname: meta.xml file at the top level of a Darwin Core Archive
+        
     Returns:
         Dictionary of core occurrence file information, with keys matching the 
         names/tags in the meta.xml file:
@@ -221,19 +224,30 @@ def read_core_fileinfo(meta_fname):
             field_idxs[idx] = term
             field_idxs[term] = idx
         fileinfo[DWCA.UUID_KEY] = uuid_fldname
-        fileinfo['fieldname_index_map'] = field_idxs
+        fileinfo[DWCA.FLDMAP_KEY] = field_idxs
         # CSV file fieldnames ordered by column index
         all_idxs.sort()
         ordered_fldnames = []
         for i in all_idxs:
             ordered_fldnames.append(field_idxs[str(i)])
-        fileinfo['fieldnames'] = ordered_fldnames
+        fileinfo[DWCA.FLDS_KEY] = ordered_fldnames
             
     return fileinfo
 
+# ......................................................
+def post_csv_data(collection, fname):
+    """Posts csv with fields corresponding to named collection to Solr
+    
+    Args:
+        core_fname: Full path the CSV file containing data to be indexed in Solr
+        collection: name of the Solr collection to be posted to 
+    """
+    post(collection, fname)
+    
 # ...............................................
 def main():
     test_url = 'https://ichthyology.specify.ku.edu/export/rss/'
+    collection = 'spcoco'
     parser = argparse.ArgumentParser(
         description=('Read a zipped DWCA file and index records into Solr.'))
     parser.add_argument(
@@ -272,19 +286,12 @@ def main():
         core_fileinfo = read_core_fileinfo(meta_fname)
         # Read dataset metadata        
         ds_uuid = read_dataset_uuid(ds_meta_fname)
-         
+                 
         # Read record metadata
-        """
-        fileinfo[DWCA.LOCATION_KEY] = core_loc_elt.text
-        fileinfo[DWCA.DELIMITER_KEY] = core_elt.attrib[DWCA.DELIMITER_KEY]
-        fileinfo[DWCA.LINE_DELIMITER_KEY] = core_elt.attrib[DWCA.LINE_DELIMITER_KEY]
-        fileinfo[DWCA.QUOTE_CHAR_KEY] = core_elt.attrib[DWCA.QUOTE_CHAR_KEY]
-        fileinfo['fieldname_index_map'] = field_idxs
-        fileinfo['fieldnames'] = ordered_fldnames
-        """
         solr_fname = read_recs_for_solr(core_fileinfo, ds_uuid, extract_path)
-        print(solr_fname)
-    
+        post(collection, solr_fname)
+        print('Posted file {} to collection {}'.format(collection, solr_fname))
+        
 
 # .............................................................................
 if __name__ == '__main__':

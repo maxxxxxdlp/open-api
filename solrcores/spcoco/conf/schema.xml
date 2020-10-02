@@ -38,7 +38,6 @@
    <!-- Recommended fields for Solr -->
    <!-- =========================================== -->
    <uniqueKey>id</uniqueKey>   
-   <!-- <field name="_version_" type="long" indexed="true" stored="true" /> -->
 
    <!-- =========================================== -->
    <!-- Field types -->
