@@ -1,17 +1,17 @@
 import argparse
 import os
 import requests
+import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
 
-from tools.api import APIQuery
-from tools.readwrite import (
+from LmRex.tools.api import APIQuery
+from LmRex.tools.readwrite import (
     get_csv_dict_reader, get_csv_dict_writer,  get_line)
-from tools.ready_file import ready_filename
-from tools.solr import (post, query, update)
-from common.lmconstants import (
+from LmRex.tools.ready_file import ready_filename
+from LmRex.tools.solr import (post, query, query_guid, update)
+from LmRex.common.lmconstants import (
     ARK_PREFIX, DWC_RECORD_TITLE, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
-from symbol import term
 """
 Pull dataset/record guids from specify RSS
 """
@@ -28,6 +28,17 @@ rurl = '{}/{}/{}'.format(REC_URL, kufishtish, rec_uuid)
 # Read eml.xml for dataset UUID
 # Read occurrence.csv for specimen UUIDs
 # Write fields for solr to CSV
+# ......................................................
+def _get_server_addr():
+    output, _ = subprocess.Popen(
+        '/usr/bin/hostname', shell=True, stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE).communicate()
+    hn = output.strip()
+    parts = hn.split(b'.')
+    if parts[0] == b'notyeti-192':
+        return 'localhost'
+    else:
+        return hn
 
 # ......................................................
 def _get_date(dwc_rec):
@@ -108,7 +119,7 @@ def extract_dwca(zip_fname, extract_path=None):
 
 # ......................................................
 def get_dwca_urls(rss_url):
-    urls = []
+    datasets = {}
     api = APIQuery(rss_url)
     api.query_by_get(output_type='xml')
     # API should return XML as ElementTree element
@@ -116,10 +127,11 @@ def get_dwca_urls(rss_url):
     elt = root.find('channel')
     ds_elts = elt.findall('item')
     for delt in ds_elts:
+        ds_guid_elt = delt.find('id')
         url_elt = delt.find('link')
-        if url_elt is not None:
-            urls.append(url_elt.text)
-    return urls
+        if ds_guid_elt is not None and url_elt is not None:
+            datasets[ds_guid_elt.text] = {'url': url_elt.text}
+    return datasets
         
 # ......................................................
 def download_dwca(url, baseoutpath, overwrite=False):
@@ -265,33 +277,51 @@ def main():
     dwca_url = args.ipt_rss
 #     outpath = args.outpath
     outpath = '/tank/data/specify'
-    
+    guids = [
+        '2c1becd5-e641-4e83-b3f5-76a55206539a', 
+        'a413b456-0bff-47da-ab26-f074d9be5219',
+        'fa7dd78f-8c91-49f5-b01c-f61b3d30caee']
+    addr = _get_server_addr()    
     zipfnames = []
     if zname is not None:
         zipfnames.append(zname)
     else:        
-        urls = get_dwca_urls(dwca_url)
-        for url in urls:
-            outfilename = download_dwca(url, outpath)
-            zipfnames.append(outfilename)
-       
-    for zipfname in zipfnames:
-        extract_path, _ = os.path.split(zipfname)
-        meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
-        ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
-        if not os.path.exists(meta_fname):
-            extract_dwca(zipfname, extract_path=extract_path)
+        datasets = get_dwca_urls(dwca_url)
+        for guid, meta in datasets.items():
+            try:
+                url = meta['url']
+            except:
+                print('Failed to get URL for IPT dataset {}'.format(guid))
+            else:
+                zipfname = download_dwca(url, outpath)
+                meta['filename'] = zipfname
+                datasets[guid] = meta
         
-        # Read DWCA metadata
+    for guid, meta in datasets.items():
+        try:
+            zipfname = meta['filename']
+        except:
+            print('Failed to download data for IPT dataset {}'.format(guid))
+        else:
+            extract_path, _ = os.path.split(zipfname)
+            meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
+            ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
+            if not os.path.exists(meta_fname):
+                extract_dwca(zipfname, extract_path=extract_path)
+         
+        # Read DWCA and dataset metadata
         core_fileinfo = read_core_fileinfo(meta_fname)
-        # Read dataset metadata        
-        ds_uuid = read_dataset_uuid(ds_meta_fname)
-                 
-        # Read record metadata
-        solr_fname = read_recs_for_solr(core_fileinfo, ds_uuid, extract_path)
-        post(collection, solr_fname)
+        dwca_guid = read_dataset_uuid(ds_meta_fname)
+        if dwca_guid != guid:
+            print('DWCA meta.xml guid {} conflicts with RSS reported guid {}')
+                  
+        # Read record metadata, dwca_guid takes precedence
+        solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
+        post(collection, solr_fname, solr_location=addr)
         print('Posted file {} to collection {}'.format(collection, solr_fname))
-        
+
+    for guid in guids:
+        res = query_guid(collection, guid)
 
 # .............................................................................
 if __name__ == '__main__':

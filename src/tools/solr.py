@@ -1,18 +1,20 @@
+import json
 import requests
 import subprocess
 
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_COMMAND = '/opt/solr/bin/solr'
-SOLR_SERVER = 'http://localhost:8983/solr/'
 ENCODING='utf-8'
 
 """
 Defined solrcores in /var/solr/data/cores/
 """
+
 # ...............................................
-def _post_remote(collection, fname, solr_location=SOLR_SERVER, headers={}):
+def _post_remote(collection, fname, solr_location='localhost', headers={}):
     response = output = None
-    url = '{}{}/update?commit=true'.format(solr_location, collection)
+    solr_endpt = 'http://{}:8983/solr'.format(solr_location)
+    url = '{}/{}/update?commit=true'.format(solr_endpt, collection)
     # read doc as bytes
     with open(fname, 'rb', encoding=ENCODING) as in_file:
         data_bytes= in_file.read()
@@ -76,14 +78,35 @@ def post(collection, fname, solr_location=None, headers=None):
         _post_local(collection, fname)
 
 # .............................................................................
-def query(collection, qstring):
-    url = '{}/{}/select?indent=on&q={}'.format(SOLR_SERVER, collection, qstring)
+def query_guid(collection, guid):
+    output = query(collection, 'id:{}'.format(guid))
+    jtemp = output.json()
+    response = jtemp['response']
+    if response['numFound'] == 1: 
+        ret = response['docs'][0]
+    return ret
+    
+# .............................................................................
+def query(collection, qstr):
+    url = '{}/{}/select?q={}'.format(SOLR_SERVER, collection, qstr)
     cmd = 'curl {}'.format(url)
     output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     return output
-    
+
 # .............................................................................
 def update(collection):
-    update_url = '{}/{}/update'.format(SOLR_SERVER, collection)
+    url = '{}/{}/update'.format(SOLR_SERVER, collection)
+    cmd = 'curl {}'.format(url)
+    output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    return output
 
 
+
+"""
+Post:
+/opt/solr/bin/post -c spcoco /state/partition1/git/t-rex/data/solrtest/occurrence.solr.csv
+
+Query:
+curl http://localhost:8983/solr/spcoco/select?q=occurrence_guid:47d04f7e-73fa-4cc7-b50a-89eeefdcd162
+curl http://notyeti-192.lifemapper.org:8983/solr/spcoco/select?q=*:*
+"""
