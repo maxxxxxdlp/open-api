@@ -26,7 +26,7 @@ class APIQuery:
     DELIMITER = GBIF.DATA_DUMP_DELIMITER
     GBIF_MISSING_KEY = 'unmatched_gbif_ids'
 
-    def __init__(self, base_url, q_key=None, q_filters=None,
+    def __init__(self, base_url, q_key='q', q_filters=None,
                  other_filters=None, filter_string=None, headers=None):
         """
         @summary Constructor for the APIQuery class

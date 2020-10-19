@@ -260,6 +260,7 @@ def post_csv_data(collection, fname):
 def main():
     test_url = 'https://ichthyology.specify.ku.edu/export/rss/'
     collection = 'spcoco'
+    solr_location = 'notyeti-192.lifemapper.org'
     parser = argparse.ArgumentParser(
         description=('Read a zipped DWCA file and index records into Solr.'))
     parser.add_argument(
@@ -325,8 +326,8 @@ def main():
         post(collection, solr_fname, solr_location=addr)
         print('Posted file {} to collection {}'.format(solr_fname, collection))
 
-    for guid in guids:
-        res = query_guid(collection, guid)
+    for oguid in occguids:
+        res = query_guid(collection, oguid, solr_location=solr_location)
 
 # .............................................................................
 if __name__ == '__main__':
@@ -343,7 +344,7 @@ from LmRex.tools.api import APIQuery
 from LmRex.tools.readwrite import (
     get_csv_dict_reader, get_csv_dict_writer,  get_line)
 from LmRex.tools.ready_file import ready_filename
-from LmRex.tools.solr import (post, query, query_guid, update)
+from LmRex.tools.solr import *
 from LmRex.common.lmconstants import (
     ARK_PREFIX, DWC_RECORD_TITLE, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
 from LmRex.spcoco.resolve import *
@@ -388,10 +389,20 @@ for guid, meta in datasets.items():
         meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
         ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
         if not os.path.exists(meta_fname):
-            print('Extracting {}'.format(zipfname)
+            print('Extracting {}'.format(zipfname))
             extract_dwca(zipfname, extract_path=extract_path)
-     
-     
+        
+        # Read DWCA and dataset metadata
+        core_fileinfo = read_core_fileinfo(meta_fname)
+        dwca_guid = read_dataset_uuid(ds_meta_fname)
+        if dwca_guid != guid:
+            print('DWCA meta.xml guid {} conflicts with RSS reported guid {}')
+                  
+        # Read record metadata, dwca_guid takes precedence
+        solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
+        post(collection, solr_fname, solr_location=solr_location)
+        print('Posted file {} to collection {}'.format(solr_fname, collection))
+
 guid = '8f79c802-a58c-447f-99aa-1d6a0790825a'
 meta = datasets[guid]
 zipfname = meta['filename']
@@ -399,26 +410,26 @@ extract_path, _ = os.path.split(zipfname)
 meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
 ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
 
-# Read DWCA and dataset metadata
-core_fileinfo = read_core_fileinfo(meta_fname)
-dwca_guid = read_dataset_uuid(ds_meta_fname)
-if dwca_guid != guid:
-    print('DWCA meta.xml guid {} conflicts with RSS reported guid {}')
-              
-# Read record metadata, dwca_guid takes precedence
-solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
 
-solr_location='localhost'
+solr_location = 'notyeti-192.lifemapper.org'
 headers={}
 response = output = None
-solr_endpt = 'http://{}:8983/solr'.format(solr_location)
-url = '{}/{}/update?commit=true'.format(solr_endpt, collection)
+post(collection, solr_fname, solr_location=solr_location)
 
-post(collection, solr_fname, solr_location=addr)
+
+allrecs = query(collection, filters={}, solr_location=solr_location)
+
 
 print('Posted file {} to collection {}'.format(collection, solr_fname))
 
-for oguid in occguids:
-    res = query_guid(collection, oguid)
+
+
+res = query_guid(collection, oguid, solr_location=solr_location)
+
+
+solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
+api = APIQuery(solr_endpt, q_filters=filters)
+api.query_by_get()
+output  = api.output
 
 """

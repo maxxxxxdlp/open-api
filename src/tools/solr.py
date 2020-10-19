@@ -2,6 +2,8 @@ import json
 import requests
 import subprocess
 
+from LmRex.tools.api import APIQuery
+
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_COMMAND = '/opt/solr/bin/solr'
 CURL_COMMAND = '/usr/bin/curl'
@@ -80,7 +82,18 @@ def post(collection, fname, solr_location=None, headers=None):
 
 # .............................................................................
 def query_guid(collection, guid, solr_location='localhost'):
-    output = query(collection, 'id:{}'.format(guid), solr_location=solr_location)
+    """
+    Query a Specify resolver index and return results for an occurrence in 
+    JSON format.
+    
+    Args:
+        collection: name of the Solr index
+        guid: Unique identifier for record of interest
+        solr_location: FQDN or IP of the Solr server or 'localhost' 
+        
+    """
+    filters = {'id': guid}
+    output = query(collection, filters=filters, solr_location=solr_location)
     jtemp = output.json()
     response = jtemp['response']
     if response['numFound'] == 1: 
@@ -88,11 +101,14 @@ def query_guid(collection, guid, solr_location='localhost'):
     return ret
     
 # .............................................................................
-def query(collection, qstr, solr_location='localhost'):
-    solr_endpt = 'http://{}:8983/solr'.format(solr_location)
-    url = '{}/{}/select?q={}'.format(solr_endpt, collection, qstr)
-    cmd = '{} {}'.format(CURL_COMMAND, url)
-    output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+def query(collection, filters={'*': '*'}, solr_location='localhost'):
+    """
+    Query a solr index and return results in JSON format
+    """
+    solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
+    api = APIQuery(solr_endpt, q_filters=filters)
+    api.query_by_get()
+    output  = api.output
     return output
 
 # .............................................................................
