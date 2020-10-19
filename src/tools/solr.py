@@ -4,6 +4,7 @@ import subprocess
 
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_COMMAND = '/opt/solr/bin/solr'
+CURL_COMMAND = '/usr/bin/curl'
 ENCODING='utf-8'
 
 """
@@ -15,11 +16,11 @@ def _post_remote(collection, fname, solr_location='localhost', headers={}):
     response = output = None
     solr_endpt = 'http://{}:8983/solr'.format(solr_location)
     url = '{}/{}/update?commit=true'.format(solr_endpt, collection)
-    # read doc as bytes
-    with open(fname, 'rb', encoding=ENCODING) as in_file:
-        data_bytes= in_file.read()
+    with open(fname, 'r', encoding=ENCODING) as in_file:
+        data = in_file.read()
+        
     try:
-        response = requests.post(url, json=data_bytes, headers=headers)
+        response = requests.post(url, json=data, headers=headers)
     except Exception as e:
         if response is not None:
             retcode = response.status_code
@@ -78,8 +79,8 @@ def post(collection, fname, solr_location=None, headers=None):
         _post_local(collection, fname)
 
 # .............................................................................
-def query_guid(collection, guid):
-    output = query(collection, 'id:{}'.format(guid))
+def query_guid(collection, guid, solr_location='localhost'):
+    output = query(collection, 'id:{}'.format(guid), solr_location=solr_location)
     jtemp = output.json()
     response = jtemp['response']
     if response['numFound'] == 1: 
@@ -87,16 +88,17 @@ def query_guid(collection, guid):
     return ret
     
 # .............................................................................
-def query(collection, qstr):
-    url = '{}/{}/select?q={}'.format(SOLR_SERVER, collection, qstr)
-    cmd = 'curl {}'.format(url)
+def query(collection, qstr, solr_location='localhost'):
+    solr_endpt = 'http://{}:8983/solr'.format(solr_location)
+    url = '{}/{}/select?q={}'.format(solr_endpt, collection, qstr)
+    cmd = '{} {}'.format(CURL_COMMAND, url)
     output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     return output
 
 # .............................................................................
 def update(collection):
     url = '{}/{}/update'.format(SOLR_SERVER, collection)
-    cmd = 'curl {}'.format(url)
+    cmd = '{} {}'.format(CURL_COMMAND, url)
     output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     return output
 

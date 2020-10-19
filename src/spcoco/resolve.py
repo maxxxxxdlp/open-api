@@ -80,7 +80,7 @@ def read_recs_for_solr(fileinfo, ds_uuid, outpath):
             who_val = dwc_rec['datasetName']
             
             for fld in SPCOCO_FIELDS:
-                if fld == 'occurrence_guid':
+                if fld == 'id':
                     solr_rec[fld] = occ_uuid
                 elif fld == 'dataset_guid':
                     solr_rec[fld] = ds_uuid
@@ -277,10 +277,15 @@ def main():
     dwca_url = args.ipt_rss
 #     outpath = args.outpath
     outpath = '/tank/data/specify'
-    guids = [
+    occguids = [
         '2c1becd5-e641-4e83-b3f5-76a55206539a', 
         'a413b456-0bff-47da-ab26-f074d9be5219',
-        'fa7dd78f-8c91-49f5-b01c-f61b3d30caee']
+        'fa7dd78f-8c91-49f5-b01c-f61b3d30caee',
+        'db1af4fe-1ed3-11e3-bfac-90b11c41863e',
+        'dbe1622c-1ed3-11e3-bfac-90b11c41863e',
+        'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
+        'dc92869c-1ed3-11e3-bfac-90b11c41863e',
+        '21ac6644-5c55-44fd-b258-67eb66ea231d']
     addr = _get_server_addr()    
     zipfnames = []
     if zname is not None:
@@ -318,7 +323,7 @@ def main():
         # Read record metadata, dwca_guid takes precedence
         solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
         post(collection, solr_fname, solr_location=addr)
-        print('Posted file {} to collection {}'.format(collection, solr_fname))
+        print('Posted file {} to collection {}'.format(solr_fname, collection))
 
     for guid in guids:
         res = query_guid(collection, guid)
@@ -327,3 +332,93 @@ def main():
 if __name__ == '__main__':
     main()
 
+"""
+import os
+import requests
+import subprocess
+import xml.etree.ElementTree as ET
+import zipfile
+
+from LmRex.tools.api import APIQuery
+from LmRex.tools.readwrite import (
+    get_csv_dict_reader, get_csv_dict_writer,  get_line)
+from LmRex.tools.ready_file import ready_filename
+from LmRex.tools.solr import (post, query, query_guid, update)
+from LmRex.common.lmconstants import (
+    ARK_PREFIX, DWC_RECORD_TITLE, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
+from LmRex.spcoco.resolve import *
+
+test_url = 'https://ichthyology.specify.ku.edu/export/rss/'
+collection = 'spcoco'
+occguids = [
+        '2c1becd5-e641-4e83-b3f5-76a55206539a', 
+        'a413b456-0bff-47da-ab26-f074d9be5219',
+        'fa7dd78f-8c91-49f5-b01c-f61b3d30caee',
+        'db1af4fe-1ed3-11e3-bfac-90b11c41863e',
+        'dbe1622c-1ed3-11e3-bfac-90b11c41863e',
+        'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
+        'dc92869c-1ed3-11e3-bfac-90b11c41863e',
+        '21ac6644-5c55-44fd-b258-67eb66ea231d']
+        
+zname = None
+dwca_url = test_url
+
+outpath = '/tmp'
+
+addr = _get_server_addr()    
+
+datasets = get_dwca_urls(dwca_url)
+for guid, meta in datasets.items():
+    try:
+        url = meta['url']
+    except:
+        print('Failed to get URL for IPT dataset {}'.format(guid))
+    else:
+        zipfname = download_dwca(url, outpath)
+        meta['filename'] = zipfname
+        datasets[guid] = meta
+
+for guid, meta in datasets.items():
+    try:
+        zipfname = meta['filename']
+    except:
+        print('Failed to download data for IPT dataset {}'.format(guid))
+    else:
+        extract_path, _ = os.path.split(zipfname)
+        meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
+        ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
+        if not os.path.exists(meta_fname):
+            print('Extracting {}'.format(zipfname)
+            extract_dwca(zipfname, extract_path=extract_path)
+     
+     
+guid = '8f79c802-a58c-447f-99aa-1d6a0790825a'
+meta = datasets[guid]
+zipfname = meta['filename']
+extract_path, _ = os.path.split(zipfname)
+meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
+ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
+
+# Read DWCA and dataset metadata
+core_fileinfo = read_core_fileinfo(meta_fname)
+dwca_guid = read_dataset_uuid(ds_meta_fname)
+if dwca_guid != guid:
+    print('DWCA meta.xml guid {} conflicts with RSS reported guid {}')
+              
+# Read record metadata, dwca_guid takes precedence
+solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
+
+solr_location='localhost'
+headers={}
+response = output = None
+solr_endpt = 'http://{}:8983/solr'.format(solr_location)
+url = '{}/{}/update?commit=true'.format(solr_endpt, collection)
+
+post(collection, solr_fname, solr_location=addr)
+
+print('Posted file {} to collection {}'.format(collection, solr_fname))
+
+for oguid in occguids:
+    res = query_guid(collection, oguid)
+
+"""
