@@ -5,13 +5,13 @@ import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
 
-from LmRex.tools.api import APIQuery
+from LmRex.tools.api import APIQuery, GbifAPI, IdigbioAPI
 from LmRex.tools.readwrite import (
     get_csv_dict_reader, get_csv_dict_writer,  get_line)
-from LmRex.tools.ready_file import ready_filename
+from LmRex.tools.ready_file import ready_filename, delete_file
 from LmRex.tools.solr import (post, query, query_guid, update)
 from LmRex.common.lmconstants import (
-    ARK_PREFIX, DWC_RECORD_TITLE, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
+    ARK_PREFIX, GBIF, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
 """
 Pull dataset/record guids from specify RSS
 """
@@ -33,9 +33,9 @@ def _get_server_addr():
     output, _ = subprocess.Popen(
         '/usr/bin/hostname', shell=True, stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE).communicate()
-    hn = output.strip()
-    parts = hn.split(b'.')
-    if parts[0] == b'notyeti-192':
+    hn = output.strip().decode(ENCODING)
+    parts = hn.split('.')
+    if parts[0] == 'notyeti-192':
         return 'localhost'
     else:
         return hn
@@ -60,48 +60,57 @@ def _get_date(dwc_rec):
     return coll_date
 
 # ......................................................
-def read_recs_for_solr(fileinfo, ds_uuid, outpath):
+def read_recs_for_solr(fileinfo, ds_uuid, outpath, overwrite=True):
+    """
+    Note: 
+        Produces data requiring http post to contain 
+        headers={'Content-Type': 'text/csv'}
+    """
+    content_type = 'text/csv'
     core_fname = os.path.join(outpath, fileinfo[DWCA.LOCATION_KEY])
     core_fname_noext, _ = os.path.splitext(core_fname)
     solr_outfname = core_fname_noext + '.solr.csv'
     
-    delimiter = fileinfo[DWCA.DELIMITER_KEY]
-    rdr, inf = get_csv_dict_reader(
-        core_fname, delimiter, ENCODING, fieldnames=fileinfo['fieldnames'], 
-        quote_char=fileinfo[DWCA.QUOTE_CHAR_KEY])
-    wtr, outf = get_csv_dict_writer(
-        solr_outfname, delimiter, ENCODING, SPCOCO_FIELDS, fmode='w')
-    try:
-        wtr.writeheader()
-        for dwc_rec in rdr:
-            solr_rec = {}
-            occ_uuid = dwc_rec[fileinfo[DWCA.UUID_KEY]]
-            coll_date = _get_date(dwc_rec)
-            who_val = dwc_rec['datasetName']
-            
-            for fld in SPCOCO_FIELDS:
-                if fld == 'id':
-                    solr_rec[fld] = occ_uuid
-                elif fld == 'dataset_guid':
-                    solr_rec[fld] = ds_uuid
-                elif fld == 'who':
-                    solr_rec[fld] = who_val
-                elif fld == 'what':
-                    solr_rec[fld] = dwc_rec['basisOfRecord']
-                elif fld == 'when':
-                    solr_rec[fld] = coll_date
-                elif fld == 'where':
-                    solr_rec[fld] =  '{}{}'.format(ARK_PREFIX, occ_uuid)
-                elif fld == 'url':
-                    solr_rec[fld] = '{}/{}/{}'.format(REC_URL, ds_uuid, occ_uuid)
-            wtr.writerow(solr_rec)
-    except Exception as e:
-        print('Failed to read or write {}'.format(e))
-    finally:
-        inf.close()
-        outf.close()
+    if os.path.exists(solr_outfname) and overwrite is True:
+        _, _ = delete_file(solr_outfname)
+    if not os.path.exists(solr_outfname):
+        delimiter = fileinfo[DWCA.DELIMITER_KEY]
+        rdr, inf = get_csv_dict_reader(
+            core_fname, delimiter, ENCODING, fieldnames=fileinfo['fieldnames'], 
+            quote_char=fileinfo[DWCA.QUOTE_CHAR_KEY])
+        wtr, outf = get_csv_dict_writer(
+            solr_outfname, delimiter, ENCODING, SPCOCO_FIELDS, fmode='w')
+        try:
+            wtr.writeheader()
+            for dwc_rec in rdr:
+                solr_rec = {}
+                occ_uuid = dwc_rec[fileinfo[DWCA.UUID_KEY]]
+                coll_date = _get_date(dwc_rec)
+                who_val = dwc_rec['datasetName']
+                
+                for fld in SPCOCO_FIELDS:
+                    if fld == 'id':
+                        solr_rec[fld] = occ_uuid
+                    elif fld == 'dataset_guid':
+                        solr_rec[fld] = ds_uuid
+                    elif fld == 'who':
+                        solr_rec[fld] = who_val
+                    elif fld == 'what':
+                        solr_rec[fld] = dwc_rec['basisOfRecord']
+                    elif fld == 'when':
+                        solr_rec[fld] = coll_date
+                    elif fld == 'where':
+                        solr_rec[fld] =  '{}{}'.format(ARK_PREFIX, occ_uuid)
+                    elif fld == 'url':
+                        solr_rec[fld] = '{}/{}/{}'.format(REC_URL, ds_uuid, occ_uuid)
+                wtr.writerow(solr_rec)
+        except Exception as e:
+            print('Failed to read or write {}'.format(e))
+        finally:
+            inf.close()
+            outf.close()
 
-    return solr_outfname
+    return solr_outfname, content_type
         
 # ......................................................
 def extract_dwca(zip_fname, extract_path=None):
@@ -270,14 +279,13 @@ def main():
         '--ipt_rss', type=str, default=test_url,
         help='URL for IPT RSS feed with download link')    
     parser.add_argument(
-        '--outpath', type=str, default=os.getcwd(),
+        '--outpath', type=str, default='/tmp',
         help='Optional path for DWCA extraction')
     args = parser.parse_args()
     
     zname = args.dwca_file
     dwca_url = args.ipt_rss
-#     outpath = args.outpath
-    outpath = '/tank/data/specify'
+    outpath = args.outpath
     occguids = [
         '2c1becd5-e641-4e83-b3f5-76a55206539a', 
         'a413b456-0bff-47da-ab26-f074d9be5219',
@@ -287,47 +295,75 @@ def main():
         'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
+    
     addr = _get_server_addr()    
-    zipfnames = []
-    if zname is not None:
-        zipfnames.append(zname)
-    else:        
-        datasets = get_dwca_urls(dwca_url)
-        for guid, meta in datasets.items():
-            try:
-                url = meta['url']
-            except:
-                print('Failed to get URL for IPT dataset {}'.format(guid))
-            else:
-                zipfname = download_dwca(url, outpath)
-                meta['filename'] = zipfname
-                datasets[guid] = meta
-        
-    for guid, meta in datasets.items():
-        try:
-            zipfname = meta['filename']
-        except:
-            print('Failed to download data for IPT dataset {}'.format(guid))
-        else:
-            extract_path, _ = os.path.split(zipfname)
-            meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
-            ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
-            if not os.path.exists(meta_fname):
-                extract_dwca(zipfname, extract_path=extract_path)
-         
-        # Read DWCA and dataset metadata
-        core_fileinfo = read_core_fileinfo(meta_fname)
-        dwca_guid = read_dataset_uuid(ds_meta_fname)
-        if dwca_guid != guid:
-            print('DWCA meta.xml guid {} conflicts with RSS reported guid {}')
-                  
-        # Read record metadata, dwca_guid takes precedence
-        solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
-        post(collection, solr_fname, solr_location=addr)
-        print('Posted file {} to collection {}'.format(solr_fname, collection))
-
+#     if zname is not None:
+#         datasets = {'unknown_guid': {'filename': zname}}
+#     else:        
+#         datasets = get_dwca_urls(dwca_url)
+#         for guid, meta in datasets.items():
+#             try:
+#                 url = meta['url']
+#             except:
+#                 print('Failed to get URL for IPT dataset {}'.format(guid))
+#             else:
+#                 zipfname = download_dwca(url, outpath)
+#                 meta['filename'] = zipfname
+#                 datasets[guid] = meta
+#         
+#     fixme = []
+#     for tmp_guid, meta in datasets.items():
+#         try:
+#             zipfname = meta['filename']
+#         except:
+#             print('Failed to download data for IPT dataset {}'.format(guid))
+#         else:
+#             extract_path, _ = os.path.split(zipfname)
+#             meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
+#             ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
+#             if not os.path.exists(meta_fname):
+#                 extract_dwca(zipfname, extract_path=extract_path)
+#          
+#         # Read DWCA and dataset metadata
+#         core_fileinfo = read_core_fileinfo(meta_fname)
+#         dwca_guid = read_dataset_uuid(ds_meta_fname)
+#         # Save new guid for update of datasets dict 
+#         # if zname argument is provided, we have dataset without guid from download site
+#         if dwca_guid != tmp_guid:
+#             print('DWCA meta.xml guid {} conflicts with reported guid {}')
+#             # new/obsolete guid pair
+#             fixme.append((dwca_guid, tmp_guid))
+#                   
+#         # Read record metadata, dwca_guid takes precedence
+#         solr_fname, content_type = read_recs_for_solr(
+#             core_fileinfo, dwca_guid, extract_path, overwrite=False)
+#         if dwca_guid == '8f79c802-a58c-447f-99aa-1d6a0790825a':
+#             retcode, output = post(
+#                 collection, solr_fname, solr_location=solr_location, 
+#                 headers={'Content-Type': content_type})
+#             print('Posted, code {}, file {} to collection {}'.format(
+#                 retcode, solr_fname, collection))
+#     
+#     for new_obsolete_pair in fixme:
+#         # Remove invalid key
+#         meta = datasets.pop(new_obsolete_pair[1])
+#         # Add value back with updated key
+#         datasets[new_obsolete_pair[0]] = meta
+    api = GbifAPI(service=GBIF.OCCURRENCE_SERVICE)
     for oguid in occguids:
-        res = query_guid(collection, oguid, solr_location=solr_location)
+        api.clear_all()
+        doc = query_guid(collection, oguid, solr_location=solr_location)
+        print('{}: {}'.format(oguid, doc))
+        recs = GbifAPI.get_specify_record_by_guid(oguid)
+        print('Returned {} GBIF recs for Specify guid {}'.format(len(recs), oguid))
+        for r in recs:
+            print('Returned {} with {} issues from collection {}'.format(
+                r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
+            print()
+        recs = IdigbioAPI.get_specify_record_by_guid(oguid)
+        print('Returned {} iDB recs for Specify guid {}'.format(len(recs), oguid))
+        
+        
 
 # .............................................................................
 if __name__ == '__main__':
@@ -403,15 +439,26 @@ for guid, meta in datasets.items():
         post(collection, solr_fname, solr_location=solr_location)
         print('Posted file {} to collection {}'.format(solr_fname, collection))
 
+guid = '56caf05f-1364-4f24-85f6-0c82520c2792'
+
+solr_location = 'notyeti-192.lifemapper.org'
+
 guid = '8f79c802-a58c-447f-99aa-1d6a0790825a'
 meta = datasets[guid]
 zipfname = meta['filename']
 extract_path, _ = os.path.split(zipfname)
 meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
 ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
+core_fileinfo = read_core_fileinfo(meta_fname)
+dwca_guid = read_dataset_uuid(ds_meta_fname)
+if dwca_guid != guid:
+    print('DWCA meta.xml guid {} conflicts with RSS reported guid {}')
+
+solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
+post(collection, solr_fname, solr_location=solr_location)
+print('Posted file {} to collection {}'.format(solr_fname, collection))
 
 
-solr_location = 'notyeti-192.lifemapper.org'
 headers={}
 response = output = None
 post(collection, solr_fname, solr_location=solr_location)
@@ -431,5 +478,6 @@ solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
 api = APIQuery(solr_endpt, q_filters=filters)
 api.query_by_get()
 output  = api.output
+
 
 """

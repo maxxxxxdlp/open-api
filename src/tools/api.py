@@ -674,6 +674,31 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
+    def get_specify_record_by_guid(guid):
+        """Return GBIF occurrences for this occurrenceId.  This should retrieve 
+        a single record originally from Specify.
+        """
+        recs = []
+        gbif_api = GbifAPI(
+            service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+            other_filters={'occurrenceID': guid})
+
+        try:
+            gbif_api.query()
+        except Exception:
+            print('Failed on {}'.format(guid))
+            curr_count = 0
+        else:
+            # First query, report count
+            gbif_total = gbif_api.output['count']
+            print(('Found {} recs for key {}'.format(
+                gbif_total, guid)))
+            recs = gbif_api.output['results']
+            
+        return recs
+
+    # ...............................................
+    @staticmethod
     def _get_fld_vals(big_rec):
         rec = {}
         for fld_name in GbifAPI.NameMatchFieldnames:
@@ -923,6 +948,29 @@ class IdigbioAPI(APIQuery):
         fld_names.sort()
         return fld_names
 
+    # ...............................................
+    @staticmethod
+    def get_specify_record_by_guid(guid):
+        """Return iDigBio occurrences for this occurrenceId.  This should retrieve 
+        a single record originally from Specify.
+        """
+        recs = []
+        api = IdigbioAPI(q_filters={'occurrenceid': guid})
+
+        try:
+            api.query()
+        except Exception:
+            print('Failed on {}'.format(guid))
+            curr_count = 0
+        else:
+            # First query, report count
+            total = api.output['count']
+            print(('Found {} recs for key {}'.format(
+                total, guid)))
+            recs = api.output['results']
+            
+        return recs
+
 #     # ...............................................
 #     @staticmethod
 #     def _count_idigbio_records(gbif_taxon_id):
@@ -1155,3 +1203,8 @@ def test_idigbio_taxon_ids():
 # .............................................................................
 if __name__ == '__main__':
     pass
+
+
+"""
+https://api.gbif.org/v1/occurrence/search?occurrenceId=dbe1622c-1ed3-11e3-bfac-90b11c41863e
+"""

@@ -15,14 +15,15 @@ Defined solrcores in /var/solr/data/cores/
 
 # ...............................................
 def _post_remote(collection, fname, solr_location='localhost', headers={}):
-    response = output = None
+    response = output = retcode = None
     solr_endpt = 'http://{}:8983/solr'.format(solr_location)
-    url = '{}/{}/update?commit=true'.format(solr_endpt, collection)
+    url = '{}/{}/update'.format(solr_endpt, collection)
+    params = {'commit' : 'true'}
     with open(fname, 'r', encoding=ENCODING) as in_file:
         data = in_file.read()
         
     try:
-        response = requests.post(url, json=data, headers=headers)
+        response = requests.post(url, data=data, params=params, headers=headers)
     except Exception as e:
         if response is not None:
             retcode = response.status_code
@@ -30,6 +31,7 @@ def _post_remote(collection, fname, solr_location='localhost', headers={}):
             print('Failed on URL {} ({})'.format(url, str(e)))
     else:
         if response.ok:
+            retcode = response.status_code
             try:
                 output = response.json()
             except Exception as e:
@@ -50,7 +52,7 @@ def _post_remote(collection, fname, solr_location='localhost', headers={}):
             else:
                 print('Failed on URL {} ({}: {})'
                         .format(url, retcode, reason))
-    return output
+    return retcode, output
 
 
 # .............................................................................
@@ -75,10 +77,12 @@ def post(collection, fname, solr_location=None, headers=None):
         fname: Full path the file containing data to be indexed in Solr
         solr_location: URL to solr instance (i.e. http://localhost:8983/solr)
     """
+    retcode = 0
     if solr_location is not None:
-        _post_remote(collection, fname, solr_location, headers)
+        retcode, output = _post_remote(collection, fname, solr_location, headers)
     else:
-        _post_local(collection, fname)
+        output = _post_local(collection, fname)
+    return retcode, output
 
 # .............................................................................
 def query_guid(collection, guid, solr_location='localhost'):
@@ -94,8 +98,7 @@ def query_guid(collection, guid, solr_location='localhost'):
     """
     filters = {'id': guid}
     output = query(collection, filters=filters, solr_location=solr_location)
-    jtemp = output.json()
-    response = jtemp['response']
+    response = output['response']
     if response['numFound'] == 1: 
         ret = response['docs'][0]
     return ret
@@ -107,13 +110,13 @@ def query(collection, filters={'*': '*'}, solr_location='localhost'):
     """
     solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
     api = APIQuery(solr_endpt, q_filters=filters)
-    api.query_by_get()
+    api.query_by_get(output_type='json')
     output  = api.output
     return output
 
 # .............................................................................
-def update(collection):
-    url = '{}/{}/update'.format(SOLR_SERVER, collection)
+def update(collection, solr_location='localhost'):
+    url = '{}/{}/update'.format(solr_location, collection)
     cmd = '{} {}'.format(CURL_COMMAND, url)
     output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     return output

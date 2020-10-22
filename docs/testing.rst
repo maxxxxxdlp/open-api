@@ -12,13 +12,14 @@ Testing T-Rex elements
 * Solr commands at /opt/solr/bin/ (in PATH)
 
     * Create new core::
-      su -c "solr create -c spcoco -d /var/solr/cores/spcoco/conf -s 2 -rf 2" solr
+      su -c "/opt/solr/bin/solr create -c spcoco -d /var/solr/cores/spcoco/conf -s 2 -rf 2" solr
     
     * Delete core::
-      solr delete -c spcoco
+      /opt/solr/bin/solr delete -c spcoco
       
     * Options to populate solr data into newly linked core::
-      post -c spcoco t-rex/data/solrtest/*csv
+      * /opt/solr/bin/post -c spcoco t-rex/data/solrtest/*csv
+      * curl -c spcoco t-rex/data/solrtest/*csv
       
     * Options to search: 
       
