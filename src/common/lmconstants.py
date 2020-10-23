@@ -248,6 +248,7 @@ class Idigbio:
     RECORDSETS_POSTFIX = 'recordsets'
     SEARCH_LIMIT = 5000
     ID_FIELD = 'uuid'
+    SPECIFY_GUID_FIELD = 'occurrenceid'
     LINK_FIELD = 'idigbiourl'
     GBIFID_FIELD = 'taxonid'
     BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
@@ -255,6 +256,7 @@ class Idigbio:
     RECORD_CONTENT_KEY = 'data'
     RECORD_INDEX_KEY = 'indexTerms'
     QUALIFIER = 'idigbio:'
+    QKEY = 'rq'
     QFILTERS = {'basisofrecord': 'preservedspecimen'}
     FILTERS = {'limit': 5000,
                'offset': 0,

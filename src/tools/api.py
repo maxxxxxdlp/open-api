@@ -244,11 +244,12 @@ class APIQuery:
         # Post parameters
         else:
             all_params = self._other_filters.copy()
-            all_params[self._q_key] = self._q_filters
-            query_as_string = json.dumps(all_params)
+            if self._q_filters:
+                all_params[self._q_key] = self._q_filters
+            query_as_string = urllib.parse.urlencode(all_params)
+            url = self.base_url + '/?' + query_as_string
             try:
-                response = requests.post(
-                    self.base_url, data=query_as_string, headers=self.headers)
+                response = requests.post(url, headers=self.headers)
             except Exception as e:
                 try:
                     ret_code = response.status_code
@@ -679,22 +680,21 @@ class GbifAPI(APIQuery):
         a single record originally from Specify.
         """
         recs = []
-        gbif_api = GbifAPI(
+        api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'occurrenceID': guid})
 
         try:
-            gbif_api.query()
+            api.query()
         except Exception:
             print('Failed on {}'.format(guid))
             curr_count = 0
         else:
             # First query, report count
-            gbif_total = gbif_api.output['count']
-            print(('Found {} recs for key {}'.format(
-                gbif_total, guid)))
-            recs = gbif_api.output['results']
-            
+            total = api.output['count']
+            print(('Found {} GBIF recs for Specify occurrenceId {}'.format(
+                total, guid)))
+            recs = api.output['results']
         return recs
 
     # ...............................................
@@ -875,19 +875,17 @@ class IdigbioAPI(APIQuery):
         idig_search_url = '/'.join((
             Idigbio.SEARCH_PREFIX, Idigbio.SEARCH_POSTFIX,
             Idigbio.OCCURRENCE_POSTFIX))
+        all_q_filters = {}
+        all_other_filters = {}
 
-        # Add/replace Q filters to defaults for this instance
-        all_q_filters = copy(Idigbio.QFILTERS)
         if q_filters:
             all_q_filters.update(q_filters)
 
-        # Add/replace other filters to defaults for this instance
-        all_other_filters = copy(Idigbio.FILTERS)
         if other_filters:
             all_other_filters.update(other_filters)
 
         APIQuery.__init__(
-            self, idig_search_url, q_key='rq', q_filters=all_q_filters,
+            self, idig_search_url, q_key=Idigbio.QKEY, q_filters=all_q_filters,
             other_filters=all_other_filters, filter_string=filter_string,
             headers=headers)
 
@@ -934,6 +932,32 @@ class IdigbioAPI(APIQuery):
 
     # ...............................................
     @staticmethod
+    def get_specify_record_by_guid(guid):
+        """Return iDigBio occurrences for this occurrenceId.  This should retrieve 
+        a single record originally from Specify.
+        """
+        recs = []
+        qf = {Idigbio.QKEY: 
+              '{"' + Idigbio.SPECIFY_GUID_FIELD + '":"' + guid + '"}'}
+#               '{"{}":"{}"}'.format(Idigbio.SPECIFY_GUID_FIELD, guid)}
+        api = IdigbioAPI(other_filters=qf)
+
+        try:
+            api.query()
+        except Exception:
+            print('Failed on {}'.format(guid))
+            curr_count = 0
+        else:
+            recs = []
+            if api.output is not None:
+                total = api.output['itemCount']
+                print(('Found {} iDigBio recs for Specify occurrenceId {}'.format(
+                    total, guid)))
+                recs = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
+        return recs
+
+    # ...............................................
+    @staticmethod
     def _write_idigbio_metadata(orig_fld_names, meta_f_name):
         pass
 
@@ -947,29 +971,6 @@ class IdigbioAPI(APIQuery):
         fld_names.extend(['dec_lat', 'dec_long'])
         fld_names.sort()
         return fld_names
-
-    # ...............................................
-    @staticmethod
-    def get_specify_record_by_guid(guid):
-        """Return iDigBio occurrences for this occurrenceId.  This should retrieve 
-        a single record originally from Specify.
-        """
-        recs = []
-        api = IdigbioAPI(q_filters={'occurrenceid': guid})
-
-        try:
-            api.query()
-        except Exception:
-            print('Failed on {}'.format(guid))
-            curr_count = 0
-        else:
-            # First query, report count
-            total = api.output['count']
-            print(('Found {} recs for key {}'.format(
-                total, guid)))
-            recs = api.output['results']
-            
-        return recs
 
 #     # ...............................................
 #     @staticmethod
@@ -1207,4 +1208,20 @@ if __name__ == '__main__':
 
 """
 https://api.gbif.org/v1/occurrence/search?occurrenceId=dbe1622c-1ed3-11e3-bfac-90b11c41863e
+url = 'https://search.idigbio.org/v2/search/records/?rq={%22occurrenceid%22%3A%22a413b456-0bff-47da-ab26-f074d9be5219%22}'
+
+
+
+def assemble_fstring(filters):
+    if filter_string is not None:
+        for replace_str, with_str in URL_ESCAPES:
+            filter_string = filter_string.replace(replace_str, with_str)
+    else:
+        all_filters = self._other_filters.copy()
+        if self._q_filters:
+            q_val = self._assemble_q_val(self._q_filters)
+            all_filters[self._q_key] = q_val
+        filter_string = self._assemble_key_val_filters(all_filters)
+    return filter_string
+
 """

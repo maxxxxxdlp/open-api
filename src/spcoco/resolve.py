@@ -296,7 +296,7 @@ def main():
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
     
-    addr = _get_server_addr()    
+#     addr = _get_server_addr()    
 #     if zname is not None:
 #         datasets = {'unknown_guid': {'filename': zname}}
 #     else:        
@@ -349,20 +349,29 @@ def main():
 #         meta = datasets.pop(new_obsolete_pair[1])
 #         # Add value back with updated key
 #         datasets[new_obsolete_pair[0]] = meta
-    api = GbifAPI(service=GBIF.OCCURRENCE_SERVICE)
-    for oguid in occguids:
-        api.clear_all()
-        doc = query_guid(collection, oguid, solr_location=solr_location)
-        print('{}: {}'.format(oguid, doc))
-        recs = GbifAPI.get_specify_record_by_guid(oguid)
-        print('Returned {} GBIF recs for Specify guid {}'.format(len(recs), oguid))
-        for r in recs:
-            print('Returned {} with {} issues from collection {}'.format(
-                r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
-            print()
-        recs = IdigbioAPI.get_specify_record_by_guid(oguid)
-        print('Returned {} iDB recs for Specify guid {}'.format(len(recs), oguid))
-        
+#     for oguid in occguids:
+#         doc = query_guid(collection, oguid, solr_location=solr_location)
+#         print('{}: {}'.format(oguid, doc))
+#         recs = GbifAPI.get_specify_record_by_guid(oguid)
+#         for r in recs:
+#             print('  Returned {} with {} issues from collection {}'.format(
+#                 r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
+#         recs = IdigbioAPI.get_specify_record_by_guid(oguid)
+#         print()
+    
+    oguid = occguids[0]
+    doc = query_guid(collection, oguid, solr_location=solr_location)
+    print('{}: {}'.format(oguid, doc))
+    recs = GbifAPI.get_specify_record_by_guid(oguid)
+    for r in recs:
+        print('  Returned {} with {} issues from collection {}'.format(
+            r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
+    recs = IdigbioAPI.get_specify_record_by_guid(oguid)
+    for r in recs:
+        print('  Returned {} with {} issues from collection {}'.format(
+            r['data']['dwc:scientificName'], len(r['indexTerms']['flags']), 
+            r['data']['dwc:collectionCode']))
+
         
 
 # .............................................................................
