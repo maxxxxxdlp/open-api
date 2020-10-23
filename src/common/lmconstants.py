@@ -155,6 +155,12 @@ class BisonQuery:
 #     }
 
 # ......................................................
+class SPECIFY:
+    """Specify constants enumeration
+    """
+    DATA_DUMP_DELIMITER = '\t'
+    
+# ......................................................
 class GBIF:
     """GBIF constants enumeration
     """

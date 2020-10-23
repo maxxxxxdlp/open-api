@@ -15,7 +15,7 @@ from common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING)
 from tools.ready_file import ready_filename
 
-
+JSON_HEADERS = {'Content-Type': 'application/json'}
 # .............................................................................
 class APIQuery:
     """Class to query APIs and return results.
@@ -1199,6 +1199,50 @@ def test_idigbio_taxon_ids():
 
     out_f.close()
     return idig_list
+
+# .............................................................................
+class SpecifyPortalAPI(APIQuery):
+    """Class to query Specify portal APIs and return results
+    """
+    # ...............................................
+    def __init__(self, url=None):
+        """Constructor for SpecifyAPI class
+        """
+        headers = {'Content-Type': 'application/json'}
+        if url is None:
+            url = 'http://preview.specifycloud.org/export/record'
+        APIQuery.__init__(self, url)
+
+    # ...............................................
+    @staticmethod
+    def get_specify_record_from_url(url):
+        """Return GBIF occurrences for this occurrenceId.  This should retrieve 
+        a single record originally from Specify.
+        """
+#         dwc = 'http://rs.tdwg.org/dwc/terms/'
+#         dc = 'http://purl.org/dc/terms/'
+        rec = {}
+        api = APIQuery(base_url, headers=JSON_HEADERS)
+
+        try:
+            api.query_by_get()
+        except Exception:
+            print('Failed on {}'.format(guid))
+            curr_count = 0
+        else:
+            if api.output is not None:
+                # list of 2-item lists with FQ fieldname, value
+                core = api.output['core']
+                for fld, val in core:
+                    start = fld.rfind('/')
+                    shortfld =fld[start+1:]
+                    namesp = fld[:start]
+                    rec[shortfld] = val
+                # list of dictionaries of extensions, key = extension name, 
+                #     val = record in format like core
+                exts = api.output['extensions']
+                print(('Found rec for Specify occurrenceId {}'.format(guid)))
+        return rec
 
 
 # .............................................................................

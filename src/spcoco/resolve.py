@@ -361,6 +361,10 @@ def main():
     
     oguid = occguids[0]
     doc = query_guid(collection, oguid, solr_location=solr_location)
+    ds_guid = doc['dataset_guid']
+    portal_url = doc['url']
+#     'http://preview.specifycloud.org//export/record/56caf05f-1364-4f24-85f6-0c82520c2792/4b650ec9-6bfc-4fd5-bb82-5fe9f345d62b'
+    orec = APIQuery.init_from_url(portal_url)
     print('{}: {}'.format(oguid, doc))
     recs = GbifAPI.get_specify_record_by_guid(oguid)
     for r in recs:
@@ -379,6 +383,16 @@ if __name__ == '__main__':
     main()
 
 """
+curl 'https://collections.biodiversity.ku.edu/KU_Fish_tissue/select?indent=on&wt=json' 
+-H 'Content-Type: application/json'   
+--data-binary '{"query":"(guid:4b650ec9\\-6bfc\\-4fd5\\-bb82\\-5fe9f345d62b)"}' 
+
+query collection:
+https://collections.biodiversity.ku.edu/KU_Fish_tissue/select?q=guid%3A4b650ec9-6bfc-4fd5-bb82-5fe9f345d62b
+
+query portal:
+http://preview.specifycloud.org//export/record/56caf05f-1364-4f24-85f6-0c82520c2792/4b650ec9-6bfc-4fd5-bb82-5fe9f345d62b
+
 import os
 import requests
 import subprocess
@@ -394,6 +408,7 @@ from LmRex.common.lmconstants import (
     ARK_PREFIX, DWC_RECORD_TITLE, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
 from LmRex.spcoco.resolve import *
 
+solr_location = 'notyeti-192.lifemapper.org'
 test_url = 'https://ichthyology.specify.ku.edu/export/rss/'
 collection = 'spcoco'
 occguids = [
@@ -405,88 +420,24 @@ occguids = [
         'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
-        
-zname = None
-dwca_url = test_url
-
-outpath = '/tmp'
-
-addr = _get_server_addr()    
-
-datasets = get_dwca_urls(dwca_url)
-for guid, meta in datasets.items():
-    try:
-        url = meta['url']
-    except:
-        print('Failed to get URL for IPT dataset {}'.format(guid))
-    else:
-        zipfname = download_dwca(url, outpath)
-        meta['filename'] = zipfname
-        datasets[guid] = meta
-
-for guid, meta in datasets.items():
-    try:
-        zipfname = meta['filename']
-    except:
-        print('Failed to download data for IPT dataset {}'.format(guid))
-    else:
-        extract_path, _ = os.path.split(zipfname)
-        meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
-        ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
-        if not os.path.exists(meta_fname):
-            print('Extracting {}'.format(zipfname))
-            extract_dwca(zipfname, extract_path=extract_path)
-        
-        # Read DWCA and dataset metadata
-        core_fileinfo = read_core_fileinfo(meta_fname)
-        dwca_guid = read_dataset_uuid(ds_meta_fname)
-        if dwca_guid != guid:
-            print('DWCA meta.xml guid {} conflicts with RSS reported guid {}')
-                  
-        # Read record metadata, dwca_guid takes precedence
-        solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
-        post(collection, solr_fname, solr_location=solr_location)
-        print('Posted file {} to collection {}'.format(solr_fname, collection))
-
-guid = '56caf05f-1364-4f24-85f6-0c82520c2792'
-
-solr_location = 'notyeti-192.lifemapper.org'
-
-guid = '8f79c802-a58c-447f-99aa-1d6a0790825a'
-meta = datasets[guid]
-zipfname = meta['filename']
-extract_path, _ = os.path.split(zipfname)
-meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
-ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
-core_fileinfo = read_core_fileinfo(meta_fname)
-dwca_guid = read_dataset_uuid(ds_meta_fname)
-if dwca_guid != guid:
-    print('DWCA meta.xml guid {} conflicts with RSS reported guid {}')
-
-solr_fname = read_recs_for_solr(core_fileinfo, dwca_guid, extract_path)
-post(collection, solr_fname, solr_location=solr_location)
-print('Posted file {} to collection {}'.format(solr_fname, collection))
 
 
-headers={}
-response = output = None
-post(collection, solr_fname, solr_location=solr_location)
+oguid = occguids[0]
+doc = query_guid(collection, oguid, solr_location=solr_location)
+ds_guid = doc['dataset_guid'][0]
+portal_url = doc['url'][0]
+orec = APIQuery.init_from_url(portal_url)
+print('{}: {}'.format(oguid, doc))
+recs = GbifAPI.get_specify_record_by_guid(oguid)
+for r in recs:
+    print('  Returned {} with {} issues from collection {}'.format(
+        r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
 
-
-allrecs = query(collection, filters={}, solr_location=solr_location)
-
-
-print('Posted file {} to collection {}'.format(collection, solr_fname))
-
-
-
-res = query_guid(collection, oguid, solr_location=solr_location)
-
-
-solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
-api = APIQuery(solr_endpt, q_filters=filters)
-api.query_by_get()
-output  = api.output
+recs = IdigbioAPI.get_specify_record_by_guid(oguid)
+for r in recs:
+    print('  Returned {} with {} issues from collection {}'.format(
+        r['data']['dwc:scientificName'], len(r['indexTerms']['flags']), 
+        r['data']['dwc:collectionCode']))
 
 
 """
