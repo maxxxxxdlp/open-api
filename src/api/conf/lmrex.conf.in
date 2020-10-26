@@ -1,0 +1,31 @@
+# Apache config, fill and place in /etc/httpd/conf.d/
+
+# prefork MPM
+<IfModule prefork.c>
+StartServers       3
+MinSpareServers    1
+MaxSpareServers    3
+ServerLimit       15
+MaxClients        10
+MaxRequestsPerChild  50
+</IfModule>
+
+# For t-rex roll
+<VirtualHost *:80>
+
+
+# Custom logs
+LogLevel debug
+CustomLog @LMSCRATCHDISK@/log/apache/lmrex_access combined
+ErrorLog  @LMSCRATCHDISK@/log/apache/lmrex_error
+
+# Root for lifemapper content
+RewriteEngine on
+
+<Directory "@LMHOME@/LmRex/web/">
+    Require all granted
+</Directory>
+
+# Favicon.ico and robots.txt
+
+</VirtualHost>
