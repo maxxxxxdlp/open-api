@@ -96,12 +96,13 @@ def query_guid(collection, guid, solr_location='localhost'):
         solr_location: FQDN or IP of the Solr server or 'localhost' 
         
     """
+    doc = {}
     filters = {'id': guid}
     output = query(collection, filters=filters, solr_location=solr_location)
     response = output['response']
     if response['numFound'] == 1: 
-        ret = response['docs'][0]
-    return ret
+        doc = response['docs'][0]
+    return doc
     
 # .............................................................................
 def query(collection, filters={'*': '*'}, solr_location='localhost'):
