@@ -1,4 +1,4 @@
-# Apache config, fill and place in /etc/httpd/conf.d/
+# Apache config, fill vars, rename, and place in /etc/httpd/conf.d/
 
 # prefork MPM
 <IfModule prefork.c>
@@ -22,7 +22,7 @@ ErrorLog  @LMSCRATCHDISK@/log/apache/lmrex_error
 # Root for lifemapper content
 RewriteEngine on
 
-<Directory "@LMHOME@/LmRex/web/">
+<Directory "@LMHOME@/LmRex/api/">
     Require all granted
 </Directory>
 

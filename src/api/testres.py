@@ -10,7 +10,11 @@ solr_location = 'notyeti-192.lifemapper.org'
 class SpecifyArk:
     exposed = True
     
-    def GET(self, guid=None):
+    def __init__(self, content):
+        self.content = content
+    
+    def GET(self, guid=None):    
+
         if guid is None:
             total = count_docs_in_solr(collection, solr_location)
             return('Specify has {} resolvable guids'.format(total))
