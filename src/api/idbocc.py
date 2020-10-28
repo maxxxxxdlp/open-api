@@ -2,6 +2,7 @@ import cherrypy
 
 from LmRex.tools.api import IdigbioAPI
 
+# .............................................................................
 @cherrypy.expose
 class IDBOcc:
 
@@ -19,6 +20,7 @@ class IDBOcc:
                 return recs
 
 
+# .............................................................................
 if __name__ == '__main__':
     """
     Call with 

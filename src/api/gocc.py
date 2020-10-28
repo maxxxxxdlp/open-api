@@ -2,6 +2,7 @@ import cherrypy
 
 from LmRex.tools.api import GbifAPI
 
+# .............................................................................
 @cherrypy.expose
 class GOcc:
 
@@ -18,7 +19,7 @@ class GOcc:
             else:
                 return recs
 
-
+# .............................................................................
 if __name__ == '__main__':
     """
     Call with 

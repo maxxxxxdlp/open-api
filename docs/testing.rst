@@ -6,8 +6,9 @@ Testing T-Rex elements
   appropriate places on lmcore testing VM
   
   * make sure /opt/lifemapper/__init__.py exists
-  * symlink t-rex/src dir to /opt/lifemapper/LmRex
-  * symlink t-rex/solrcores/spcoco dirs to /var/solr/cores/
+  * symlink t-rex/src dir to /opt/lifemapper/LmRex  
+    su -c "ln -s /state/partition1/git/t-rex/solrcores/spcoco /var/solr/cores/
+  * symlink (as solr user) t-rex/solrcores/spcoco dirs to /var/solr/cores/
 
 * Solr commands at /opt/solr/bin/ (in PATH)
 

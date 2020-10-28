@@ -3,10 +3,10 @@ import cherrypy
 from LmRex.spcoco.resolve import (count_docs_in_solr)
 from LmRex.tools.solr import (query_guid)
 
-
 collection = 'spcoco'
 solr_location = 'notyeti-192.lifemapper.org'
 
+# .............................................................................
 @cherrypy.expose
 class SpecifyArk:
 
@@ -23,6 +23,7 @@ class SpecifyArk:
                 return('No Specify doc with the occurrenceId {} :-('.format(occid))
 
 
+# .............................................................................
 if __name__ == '__main__':
     """
     Call with 
