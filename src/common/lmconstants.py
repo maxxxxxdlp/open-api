@@ -8,6 +8,16 @@ EXPORT_URL = '{}/static/depository/export_feed'.format(SPECIFY_URL)
 DWC_URL = 'http://rs.tdwg.org/dwc'
 DWC_RECORD_TITLE = 'digital specimen object'
 
+TEST_GUIDS = [
+    '2c1becd5-e641-4e83-b3f5-76a55206539a', 
+    'a413b456-0bff-47da-ab26-f074d9be5219',
+    'fa7dd78f-8c91-49f5-b01c-f61b3d30caee',
+    'db1af4fe-1ed3-11e3-bfac-90b11c41863e',
+    'dbe1622c-1ed3-11e3-bfac-90b11c41863e',
+    'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
+    'dc92869c-1ed3-11e3-bfac-90b11c41863e',
+    '21ac6644-5c55-44fd-b258-67eb66ea231d']
+
 class DWCA:
     NS = '{http://rs.tdwg.org/dwc/text/}'
     META_FNAME = 'meta.xml'

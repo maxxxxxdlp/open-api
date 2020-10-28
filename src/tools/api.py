@@ -9,11 +9,10 @@ import urllib
 import requests
 
 # import idigbio
-
 from tools.lm_xml import fromstring, deserialize
-from common.lmconstants import (
+from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING)
-from tools.ready_file import ready_filename
+from LmRex.tools.ready_file import ready_filename
 
 JSON_HEADERS = {'Content-Type': 'application/json'}
 # .............................................................................
@@ -1222,12 +1221,12 @@ class SpecifyPortalAPI(APIQuery):
 #         dwc = 'http://rs.tdwg.org/dwc/terms/'
 #         dc = 'http://purl.org/dc/terms/'
         rec = {}
-        api = APIQuery(base_url, headers=JSON_HEADERS)
+        api = APIQuery(url, headers=JSON_HEADERS)
 
         try:
             api.query_by_get()
         except Exception:
-            print('Failed on {}'.format(guid))
+            print('Failed on {}'.format(url))
             curr_count = 0
         else:
             if api.output is not None:
@@ -1241,7 +1240,7 @@ class SpecifyPortalAPI(APIQuery):
                 # list of dictionaries of extensions, key = extension name, 
                 #     val = record in format like core
                 exts = api.output['extensions']
-                print(('Found rec for Specify occurrenceId {}'.format(guid)))
+                print(('Found rec for Specify occurrenceId {}'.format(url)))
         return rec
 
 
