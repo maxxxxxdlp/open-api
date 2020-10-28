@@ -1,4 +1,5 @@
 # Apache config, fill vars, rename, and place in /etc/httpd/conf.d/
+# Link primary API dir under /var/html
 
 # prefork MPM
 <IfModule prefork.c>
@@ -22,8 +23,12 @@ ErrorLog  @LMSCRATCHDISK@/log/apache/lmrex_error
 # Root for lifemapper content
 RewriteEngine on
 
-<Directory "@LMHOME@/LmRex/api/">
-    Require all granted
+# Specify resolver
+Alias /api "@LMHOME@/LmRex/api/"
+<Directory "@LMHOME@/LmRex/api">
+   Options FollowSymLinks Indexes
+   AllowOverride None
+   Require all granted
 </Directory>
 
 # Favicon.ico and robots.txt

@@ -8,12 +8,13 @@ collection = 'spcoco'
 solr_location = 'notyeti-192.lifemapper.org'
 
 class SpecifyArk:
-    exposed = True
     
-    def __init__(self, content):
-        self.content = content
-    
-    def GET(self, guid=None):    
+    @cherrypy.expose
+    def index(self):
+        return 'Hello world'
+        
+    @cherrypy.expose    
+    def generate(self, guid=None):    
 
         if guid is None:
             total = count_docs_in_solr(collection, solr_location)
@@ -27,14 +28,13 @@ class SpecifyArk:
 
     
 if __name__ == '__main__':
-    
-    cherrypy.tree.mount(
-        SpecifyArk(), '/api/spcoco',
-        {'/':
-            {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
-        }
-    )
-
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+    cherrypy.quickstart(SpecifyArk())
+#     cherrypy.tree.mount(
+#         SpecifyArk(), '/api',
+#         {'/':
+#             {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
+#         }
+#     )
+#     cherrypy.engine.start()
+#     cherrypy.engine.block()
 
