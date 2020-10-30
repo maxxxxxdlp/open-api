@@ -19,7 +19,10 @@ if __name__ == '__main__':
         '/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()} 
         }
     
-    cherrypy.config.update(CHERRYPY_CONFIG_FILE)
+#     cherrypy.config.update(CHERRYPY_CONFIG_FILE)
+    cherrypy.config.update({'server.socket_port': 80,
+                            'server.socket_host': '129.237.201.192'})
+
     # ARK service
     cherrypy.tree.mount(SpecifyArk(), '/api/sparks', conf)
 
@@ -31,7 +34,7 @@ if __name__ == '__main__':
     cherrypy.tree.mount(SPOcc(), '/api/spocc', conf)
     
     # Linkages service
-    cherrypy.tree.mount(Tentacles(), '/api/tentacle', conf)
+    cherrypy.tree.mount(Tentacles(), '/api/tentacles', conf)
 
     cherrypy.engine.start()
     cherrypy.engine.block()

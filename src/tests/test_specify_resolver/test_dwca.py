@@ -5,7 +5,6 @@ import time
 
 from spcoco.resolve import *
 from common.lmconstants import (DWCA)
-from builtins import False
 
 
 TEST_SPECIFY_RSS = 'https://ichthyology.specify.ku.edu/export/rss/'

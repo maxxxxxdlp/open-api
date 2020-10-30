@@ -57,7 +57,7 @@ class Tentacles:
             recs, count_only=count_only)
         # iDigBio copy/s of Specify Record
         idbocc = IDBOcc()
-        recs = idbocc.get_gbif_rec(occid)
+        recs = idbocc.get_idb_rec(occid)
         all_output['iDigBio Records'] = self.assemble_output(
             recs, count_only=count_only)
 
