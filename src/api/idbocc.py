@@ -5,20 +5,34 @@ from LmRex.tools.api import IdigbioAPI
 # .............................................................................
 @cherrypy.expose
 class IDBOcc:
+    
+    # ...............................................
+    def get_idb_rec(self, occid):
+        recs = IdigbioAPI.get_specify_record_by_guid(occid)
+        if len(recs) == 0:
+            return {'spcoco.error': 
+                    'No iDigBio records with the occurrenceId {}'.format(occid)}
+        elif len(recs) == 1:
+            return recs[0]
+        else:
+            return recs
 
+    # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None):
+        """Get a one or more iDigBio records for a Specify GUID or 
+        info/error message.
+        
+        Args:
+            occid: a Specify occurrence GUID, from the occurrenceId field
+        Return:
+            one dictionary or a list of dictionaries.  Each dictionary contains
+            a message or iDigBio record corresponding to the Specify GUID
+        """
         if occid is None:
-            return('S^n iDigBio occurrence resolution is online')
+            return {'message': 'S^n iDigBio occurrence resolution is online'}
         else:
-            recs = IdigbioAPI.get_specify_record_by_guid(occid)
-            if len(recs) == 0:
-                return('No records with the occurrenceId {} :-('.format(occid))
-            elif len(recs) == 1:
-                return recs[0]
-            else:
-                return recs
-
+            return self.get_idb_rec(occid)
 
 # .............................................................................
 if __name__ == '__main__':

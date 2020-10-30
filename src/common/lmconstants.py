@@ -1,10 +1,20 @@
-SPECIFY_URL = 'http://preview.specifycloud.org/'
-PUBLIC_PREFIX = 'export'
+import os
 
-ARK_PREFIX = 'http://spcoco.org/ark:/'
-REC_URL = '{}/{}/record'.format(SPECIFY_URL, PUBLIC_PREFIX)
-RSS_URL = '{}/{}/rss'.format(SPECIFY_URL, PUBLIC_PREFIX)
-EXPORT_URL = '{}/static/depository/export_feed'.format(SPECIFY_URL)
+APP_PATH = '/opt/lifemapper'
+CONFIG_DIR = 'config'
+# http://<specify7-server>/export/record/<dataset_guid>/<occurrence_guid>
+TEST_SPECIFY7_SERVER = 'http://preview.specifycloud.org'
+TEST_SPECIFY7_RSS_URL = '{}/export/rss'.format(TEST_SPECIFY7_SERVER)
+# TEST_SPECIFY7_EXPORT_URL = '{}/static/depository/export_feed'.format(TEST_SPECIFY7_SERVER)
+
+# For saving Specify7 server URL (used to download individual records)
+SPECIFY7_SERVER_KEY = 'specify7-server'
+SPECIFY7_RECORD_ENDPOINT = 'export/record'
+
+KU_IPT_RSS_URL = 'http://ipt.nhm.ku.edu:8080/ipt/rss.do'
+ICH_RSS_URL = 'https://ichthyology.specify.ku.edu/export/rss'
+
+SPECIFY_ARK_PREFIX = 'http://spcoco.org/ark:/'
 DWC_URL = 'http://rs.tdwg.org/dwc'
 DWC_RECORD_TITLE = 'digital specimen object'
 
@@ -17,6 +27,8 @@ TEST_GUIDS = [
     'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
     'dc92869c-1ed3-11e3-bfac-90b11c41863e',
     '21ac6644-5c55-44fd-b258-67eb66ea231d']
+
+CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, CONFIG_DIR, 'cherrypy.conf')
 
 class DWCA:
     NS = '{http://rs.tdwg.org/dwc/text/}'
@@ -73,7 +85,7 @@ SPCOCO_FIELDS = [
     # similar to DC Identifier, optional as this is the ARK
     'where',
     # Supplemental ARK metadata
-    # redirection URL
+    # redirection URL to specify7-server
     'url']
 
 # For parsing BISON Solr API response, updated Feb 2015

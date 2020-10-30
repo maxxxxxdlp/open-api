@@ -9,7 +9,7 @@ import urllib
 import requests
 
 # import idigbio
-from tools.lm_xml import fromstring, deserialize
+from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING)
 from LmRex.tools.ready_file import ready_filename
@@ -1214,7 +1214,7 @@ class SpecifyPortalAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_specify_record_from_url(url):
+    def get_specify_record(url):
         """Return GBIF occurrences for this occurrenceId.  This should retrieve 
         a single record originally from Specify.
         """
@@ -1229,18 +1229,7 @@ class SpecifyPortalAPI(APIQuery):
             print('Failed on {}'.format(url))
             curr_count = 0
         else:
-            if api.output is not None:
-                # list of 2-item lists with FQ fieldname, value
-                core = api.output['core']
-                for fld, val in core:
-                    start = fld.rfind('/')
-                    shortfld =fld[start+1:]
-                    namesp = fld[:start]
-                    rec[shortfld] = val
-                # list of dictionaries of extensions, key = extension name, 
-                #     val = record in format like core
-                exts = api.output['extensions']
-                print(('Found rec for Specify occurrenceId {}'.format(url)))
+            rec = api.output
         return rec
 
 

@@ -9,9 +9,15 @@ from LmRex.tools.api import APIQuery, GbifAPI, IdigbioAPI
 from LmRex.tools.readwrite import (
     get_csv_dict_reader, get_csv_dict_writer,  get_line)
 from LmRex.tools.ready_file import ready_filename, delete_file
-from LmRex.tools.solr import (post, query, query_guid, update)
+import LmRex.tools.solr as spsolr
 from LmRex.common.lmconstants import (
-    ARK_PREFIX, GBIF, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
+    SPECIFY_ARK_PREFIX, GBIF, DWCA, ENCODING, TEST_SPECIFY7_SERVER, 
+    SPECIFY7_RECORD_ENDPOINT, SPECIFY7_SERVER_KEY, SPCOCO_FIELDS, 
+    ICH_RSS_URL, KU_IPT_RSS_URL)
+
+
+INCR_KEY = 0
+
 """
 Pull dataset/record guids from specify RSS
 """
@@ -21,7 +27,8 @@ kufish = '8f79c802-a58c-447f-99aa-1d6a0790825a'
 # 'kuit-dwca'
 kufishtish = '56caf05f-1364-4f24-85f6-0c82520c2792'
 rec_uuid = '98fb49e0-591b-469e-99af-117b0bfdd7ee'
-rurl = '{}/{}/{}'.format(REC_URL, kufishtish, rec_uuid)
+rurl = '{}/{}/{}/{}'.format(
+    TEST_SPECIFY7_SERVER, SPECIFY7_RECORD_ENDPOINT, kufishtish, rec_uuid)
 
 # Read RSS feed for download link
 # Download and unzip DWCA
@@ -61,12 +68,20 @@ def _get_date(dwc_rec):
 
 def count_docs_in_solr(collection, solr_location=None):
     count = -1
-    output = query(collection, solr_location=solr_location)
+    output = spsolr.query(collection, solr_location=solr_location)
     try:
         count = output['response']['numFound']
     except Exception as e:
         print('Failed to return count {}'.format(e))
     return count
+
+# ......................................................
+def _is_guid(idstr):
+    try:
+        int(idstr.replace('-', ''), 16)
+        return True
+    except:
+        return False
 
 # ......................................................
 def read_recs_for_solr(fileinfo, ds_uuid, outpath, overwrite=True):
@@ -75,51 +90,65 @@ def read_recs_for_solr(fileinfo, ds_uuid, outpath, overwrite=True):
         Produces data requiring http post to contain 
         headers={'Content-Type': 'text/csv'}
     """
+    count = 0
+    out_delimiter = ','
     content_type = 'text/csv'
     core_fname = os.path.join(outpath, fileinfo[DWCA.LOCATION_KEY])
     core_fname_noext, _ = os.path.splitext(core_fname)
     solr_outfname = core_fname_noext + '.solr.csv'
+    specify_record_server = fileinfo[SPECIFY7_SERVER_KEY]
     
     if os.path.exists(solr_outfname) and overwrite is True:
         _, _ = delete_file(solr_outfname)
     if not os.path.exists(solr_outfname):
-        delimiter = fileinfo[DWCA.DELIMITER_KEY]
+        in_delimiter = fileinfo[DWCA.DELIMITER_KEY]
         rdr, inf = get_csv_dict_reader(
-            core_fname, delimiter, ENCODING, fieldnames=fileinfo['fieldnames'], 
+            core_fname, in_delimiter, ENCODING, fieldnames=fileinfo['fieldnames'], 
             quote_char=fileinfo[DWCA.QUOTE_CHAR_KEY])
+        # Tabs ok?
         wtr, outf = get_csv_dict_writer(
-            solr_outfname, delimiter, ENCODING, SPCOCO_FIELDS, fmode='w')
+            solr_outfname, out_delimiter, ENCODING, SPCOCO_FIELDS, fmode='w')
         try:
             wtr.writeheader()
             for dwc_rec in rdr:
                 solr_rec = {}
-                occ_uuid = dwc_rec[fileinfo[DWCA.UUID_KEY]]
-                coll_date = _get_date(dwc_rec)
-                who_val = dwc_rec['datasetName']
-                
-                for fld in SPCOCO_FIELDS:
-                    if fld == 'id':
-                        solr_rec[fld] = occ_uuid
-                    elif fld == 'dataset_guid':
-                        solr_rec[fld] = ds_uuid
-                    elif fld == 'who':
-                        solr_rec[fld] = who_val
-                    elif fld == 'what':
-                        solr_rec[fld] = dwc_rec['basisOfRecord']
-                    elif fld == 'when':
-                        solr_rec[fld] = coll_date
-                    elif fld == 'where':
-                        solr_rec[fld] =  '{}{}'.format(ARK_PREFIX, occ_uuid)
-                    elif fld == 'url':
-                        solr_rec[fld] = '{}/{}/{}'.format(REC_URL, ds_uuid, occ_uuid)
-                wtr.writerow(solr_rec)
+                try:
+                    count += 1
+                    occ_uuid = dwc_rec[fileinfo[DWCA.UUID_KEY]]
+                    if not _is_guid(occ_uuid):
+                        if count > 1:
+                            print('Line {} does not contain a GUID in id field'
+                                  .format(count))
+                    else:
+                        coll_date = _get_date(dwc_rec)
+                        who_val = dwc_rec['datasetName']
+                        
+                        for fld in SPCOCO_FIELDS:
+                            if fld == 'id':
+                                solr_rec[fld] = occ_uuid
+                            elif fld == 'dataset_guid':
+                                solr_rec[fld] = ds_uuid
+                            elif fld == 'who':
+                                solr_rec[fld] = who_val
+                            elif fld == 'what':
+                                solr_rec[fld] = dwc_rec['basisOfRecord']
+                            elif fld == 'when':
+                                solr_rec[fld] = coll_date
+                            elif fld == 'where':
+                                solr_rec[fld] =  '{}{}'.format(SPECIFY_ARK_PREFIX, occ_uuid)
+                            elif fld == 'url':
+                                solr_rec[fld] = '{}/{}/{}'.format(
+                                    specify_record_server, ds_uuid, occ_uuid)                        
+                        wtr.writerow(solr_rec)
+                except Exception as e:
+                    print('Rec {}: failed {}'.format(count, e))
         except Exception as e:
-            print('Failed to read or write {}'.format(e))
+            print ('Failed to read/write file {}: {}'.format(core_fname, e))
         finally:
             inf.close()
             outf.close()
 
-    return solr_outfname, content_type
+    return solr_outfname, content_type, count
         
 # ......................................................
 def extract_dwca(zip_fname, extract_path=None):
@@ -128,15 +157,20 @@ def extract_dwca(zip_fname, extract_path=None):
     for zinfo in zfile.infolist():
         _, ext = os.path.splitext(zinfo.filename)
         # Check file extension and only unzip valid files
-        if ext in ['.xml', '.csv']:
+        if ext in ['.xml', '.csv', '.txt']:
             zfile.extract(zinfo, path=extract_path)
         else:
             print('Unexpected filename {} in zipfile {}'.format(
                 zinfo.filename, zip_fname))
-            break
 
 # ......................................................
-def get_dwca_urls(rss_url):
+def get_dwca_urls(rss_url, isIPT):
+    if isIPT:
+        ds_ident_key = 'title'
+        link_key = '{http://ipt.gbif.org/}dwca'
+    else:
+        ds_ident_key = 'id'
+        link_key = 'link'
     datasets = {}
     api = APIQuery(rss_url)
     api.query_by_get(output_type='xml')
@@ -145,18 +179,34 @@ def get_dwca_urls(rss_url):
     elt = root.find('channel')
     ds_elts = elt.findall('item')
     for delt in ds_elts:
-        ds_guid_elt = delt.find('id')
-        url_elt = delt.find('link')
-        if ds_guid_elt is not None and url_elt is not None:
-            datasets[ds_guid_elt.text] = {'url': url_elt.text}
+        ds_id_elt = delt.find(ds_ident_key)
+        url_elt = delt.find(link_key)
+        if url_elt is not None:
+            if ds_id_elt is None:
+                INCR_KEY += 1
+                ds_key_val = str(INCR_KEY)
+            else:
+                ds_key_val = ds_id_elt.text
+            datasets[ds_key_val] = {'url': url_elt.text}
     return datasets
-        
+    
 # ......................................................
 def download_dwca(url, baseoutpath, overwrite=False):
-    _, fname = os.path.split(url)
-    basename, _ = os.path.splitext(fname)
-    outpath = os.path.join(baseoutpath, basename)
-    outfilename = os.path.join(outpath, fname)
+    if url.endswith('.zip'):
+        _, fname = os.path.split(url)
+        basename, _ = os.path.splitext(fname)
+        outpath = os.path.join(baseoutpath, basename)
+        outfilename = os.path.join(outpath, fname)
+    else:
+        # IPT link does not contain filename
+        idx = url.find('r=')
+        tmp = url[idx+2:]
+        parts = tmp.split('&')
+        if len(parts) == 1:
+            name = tmp
+        else:
+            name = '.'.join(parts)
+        outfilename = os.path.join(baseoutpath, name, '{}.zip'.format(name))
     success = ready_filename(outfilename, overwrite=overwrite)
     if success:
         ret_code = None
@@ -176,10 +226,9 @@ def download_dwca(url, baseoutpath, overwrite=False):
             outf.write(output)
     return outfilename
     
-
 # ......................................................
 def read_dataset_uuid(meta_fname):
-    uuid = None
+    idstr = None
     if os.path.split(meta_fname)[1] != 'eml.xml':
         print ('Expected filename eml.xml at {}'.format(meta_fname))
         return ''
@@ -189,13 +238,21 @@ def read_dataset_uuid(meta_fname):
     id_elts = elt.findall('alternateIdentifier')
     for ie in id_elts:
         idstr = ie.text
-        try:
-            int(idstr.replace('-', ''), 16)
-            uuid = idstr
+        if _is_guid(idstr):
             break
-        except:
-            pass
-    return uuid
+    return idstr
+
+# ......................................................
+def _fix_char(ch):
+    if not ch:
+        ch = None
+    elif ch == '\\t':
+        ch = '\t'
+    elif ch == '\\n':
+        ch = '\n'
+    elif ch == '':
+        ch = None
+    return ch
         
 # ......................................................
 def read_core_fileinfo(meta_fname):
@@ -227,27 +284,35 @@ def read_core_fileinfo(meta_fname):
         core_loc_elt = core_files_elt.find('{}{}'.format(DWCA.NS, DWCA.LOCATION_KEY))
         fileinfo[DWCA.LOCATION_KEY] = core_loc_elt.text
         # CSV file structure
-        fileinfo[DWCA.DELIMITER_KEY] = core_elt.attrib[DWCA.DELIMITER_KEY]
-        fileinfo[DWCA.LINE_DELIMITER_KEY] = core_elt.attrib[DWCA.LINE_DELIMITER_KEY]
-        fileinfo[DWCA.QUOTE_CHAR_KEY] = core_elt.attrib[DWCA.QUOTE_CHAR_KEY]
+        fileinfo[DWCA.DELIMITER_KEY] = _fix_char(
+            core_elt.attrib[DWCA.DELIMITER_KEY])
+        fileinfo[DWCA.LINE_DELIMITER_KEY] = _fix_char(
+            core_elt.attrib[DWCA.LINE_DELIMITER_KEY])
+        quote_char = _fix_char(
+            core_elt.attrib[DWCA.QUOTE_CHAR_KEY])
+        fileinfo[DWCA.QUOTE_CHAR_KEY] = quote_char
         # CSV file fields/indices
         # Dictionary of field --> index, index --> field
         # UUID key and index
         uuid_idx = core_elt.find('{}{}'.format(
             DWCA.NS, DWCA.UUID_KEY)).attrib['index']
-        # The uuid_idx index --> fieldname term 
-        # Keys will include both 'id' and fieldname term --> uuid_idx
+        # The uuid_idx index --> fieldname 
+        #     plus fieldname --> uuid_idx 
         field_idxs[DWCA.UUID_KEY] = uuid_idx
+        field_idxs[uuid_idx] = DWCA.UUID_KEY
+        all_idxs = [int(uuid_idx)]
         # Rest of fields and indices        
         field_elts = core_elt.findall('{}field'.format(DWCA.NS))
-        all_idxs = []
         startidx = len(DWCA.NS)-1
+        # Default UUID fieldname
+        uuid_fldname = DWCA.UUID_KEY
         for celt in field_elts:
             tmp = celt.attrib['term']
             # strip namespace url from term
             startidx = tmp.rfind('/') + 1
             term = tmp[startidx:]
             idx = celt.attrib['index']
+            # Correct UUID fieldname
             if idx == uuid_idx:
                 uuid_fldname = term
             all_idxs.append(int(idx))
@@ -264,19 +329,16 @@ def read_core_fileinfo(meta_fname):
             
     return fileinfo
 
-# ......................................................
-def post_csv_data(collection, fname):
-    """Posts csv with fields corresponding to named collection to Solr
-    
-    Args:
-        core_fname: Full path the CSV file containing data to be indexed in Solr
-        collection: name of the Solr collection to be posted to 
-    """
-    post(collection, fname)
-    
+# ...............................................
+def get_specify_server(dwca_url):
+    prefix = 'http://'
+    tmp = dwca_url.lstrip(prefix)
+    stop = tmp.find('/')
+    specify_url = prefix + tmp[:stop]
+    return specify_url
+
 # ...............................................
 def main():
-    rss_url = 'https://ichthyology.specify.ku.edu/export/rss/'
     collection = 'spcoco'
     solr_location = 'notyeti-192.lifemapper.org'
     parser = argparse.ArgumentParser(
@@ -285,15 +347,15 @@ def main():
         '--dwca_file', type=str, default=None,
         help='Zipped DWCA to process')
     parser.add_argument(
-        '--ipt_rss', type=str, default=rss_url,
-        help='URL for IPT RSS feed with download link')    
+        '--rss', type=str, default=ICH_RSS_URL,
+        help='URL for RSS feed with download links')    
     parser.add_argument(
         '--outpath', type=str, default='/tmp',
         help='Optional path for DWCA extraction')
     args = parser.parse_args()
     
     zname = args.dwca_file
-    dwca_url = args.ipt_rss
+    dwca_url = args.rss
     outpath = args.outpath
     occguids = [
         '2c1becd5-e641-4e83-b3f5-76a55206539a', 
@@ -305,11 +367,17 @@ def main():
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
     
-    addr = _get_server_addr()    
+    isIPT = (dwca_url.find('http://ipt') == 0)
+    if dwca_url is not None and not isIPT:
+        # Assumes the base RSS/DWCA url is the Specify server
+        specify_url = TEST_SPECIFY7_SERVER
+    else:
+        specify_url = 'unknown_url'
+        
     if zname is not None:
         datasets = {'unknown_guid': {'filename': zname}}
     else:        
-        datasets = get_dwca_urls(dwca_url)
+        datasets = get_dwca_urls(dwca_url, isIPT)
         for guid, meta in datasets.items():
             try:
                 url = meta['url']
@@ -319,8 +387,6 @@ def main():
                 zipfname = download_dwca(url, outpath)
                 meta['filename'] = zipfname
                 datasets[guid] = meta
-         
-    solr_doc_count = count_docs_in_solr(collection, solr_location=solr_location)
     fixme = []
     for tmp_guid, meta in datasets.items():
         try:
@@ -336,23 +402,30 @@ def main():
           
         # Read DWCA and dataset metadata
         core_fileinfo = read_core_fileinfo(meta_fname)
+        core_fileinfo[SPECIFY7_SERVER_KEY] = specify_url
         dwca_guid = read_dataset_uuid(ds_meta_fname)
         # Save new guid for update of datasets dict 
         # if zname argument is provided, we have dataset without guid from download site
         if dwca_guid != tmp_guid:
-            print('DWCA meta.xml guid {} conflicts with reported guid {}')
+            print('DWCA meta.xml guid {} conflicts with reported guid {}'
+                  .format(dwca_guid, tmp_guid))
             # new/obsolete guid pair
             fixme.append((dwca_guid, tmp_guid))
                    
-        # Read record metadata, dwca_guid takes precedence
-        solr_fname, content_type = read_recs_for_solr(
-            core_fileinfo, dwca_guid, extract_path, overwrite=False)
-        if solr_doc_count != 53766:
-            retcode, output = post(
-                collection, solr_fname, solr_location=solr_location, 
-                headers={'Content-Type': content_type})
-            print('Posted, code {}, file {} to collection {}'.format(
-                retcode, solr_fname, collection))
+#         # Read record metadata, dwca_guid takes precedence
+#         solr_fname, content_type, rec_count = read_recs_for_solr(
+#             core_fileinfo, dwca_guid, extract_path, overwrite=False)         
+#         start_count = count_docs_in_solr(collection, solr_location=solr_location)
+# 
+#         # Post
+#         retcode, output = spsolr.post(
+#             collection, solr_fname, solr_location=solr_location, 
+#             headers={'Content-Type': content_type})
+# 
+#         # Report old/new solr index count
+#         end_count = count_docs_in_solr(collection, solr_location=solr_location)
+#         print('Posted, code {}, {} recs in file {} to {}, {} --> {} docs'.format(
+#             retcode, rec_count, solr_fname, collection, start_count, end_count))
      
     for new_obsolete_pair in fixme:
         # Remove invalid key
@@ -360,7 +433,7 @@ def main():
         # Add value back with updated key
         datasets[new_obsolete_pair[0]] = meta
     for oguid in occguids:
-        doc = query_guid(collection, oguid, solr_location=solr_location)
+        doc = spsolr.query_guid(collection, oguid, solr_location=solr_location)
         print('{}: {}'.format(oguid, doc))
         grecs = GbifAPI.get_specify_record_by_guid(oguid)
         for r in grecs:
@@ -380,34 +453,12 @@ if __name__ == '__main__':
     main()
 
 """
-curl 'https://collections.biodiversity.ku.edu/KU_Fish_tissue/select?indent=on&wt=json' 
--H 'Content-Type: application/json'   
---data-binary '{"query":"(guid:4b650ec9\\-6bfc\\-4fd5\\-bb82\\-5fe9f345d62b)"}' 
-
 query collection:
 https://collections.biodiversity.ku.edu/KU_Fish_tissue/select?q=guid%3A4b650ec9-6bfc-4fd5-bb82-5fe9f345d62b
 
 query portal:
 http://preview.specifycloud.org//export/record/56caf05f-1364-4f24-85f6-0c82520c2792/4b650ec9-6bfc-4fd5-bb82-5fe9f345d62b
 
-import os
-import requests
-import subprocess
-import xml.etree.ElementTree as ET
-import zipfile
-
-from LmRex.tools.api import APIQuery
-from LmRex.tools.readwrite import (
-    get_csv_dict_reader, get_csv_dict_writer,  get_line)
-from LmRex.tools.ready_file import ready_filename
-from LmRex.tools.solr import *
-from LmRex.common.lmconstants import (
-    ARK_PREFIX, DWC_RECORD_TITLE, DWCA, ENCODING, REC_URL, SPCOCO_FIELDS)
-from LmRex.spcoco.resolve import *
-
-solr_location = 'notyeti-192.lifemapper.org'
-test_url = 'https://ichthyology.specify.ku.edu/export/rss/'
-collection = 'spcoco'
 occguids = [
         '2c1becd5-e641-4e83-b3f5-76a55206539a', 
         'a413b456-0bff-47da-ab26-f074d9be5219',
@@ -417,24 +468,6 @@ occguids = [
         'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
-
-
 oguid = occguids[0]
-doc = query_guid(collection, oguid, solr_location=solr_location)
-ds_guid = doc['dataset_guid'][0]
-portal_url = doc['url'][0]
-orec = APIQuery.init_from_url(portal_url)
-print('{}: {}'.format(oguid, doc))
-recs = GbifAPI.get_specify_record_by_guid(oguid)
-for r in recs:
-    print('  Returned {} with {} issues from collection {}'.format(
-        r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
-
-recs = IdigbioAPI.get_specify_record_by_guid(oguid)
-for r in recs:
-    print('  Returned {} with {} issues from collection {}'.format(
-        r['data']['dwc:scientificName'], len(r['indexTerms']['flags']), 
-        r['data']['dwc:collectionCode']))
-
 
 """

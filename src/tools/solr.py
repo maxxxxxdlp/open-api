@@ -52,6 +52,8 @@ def _post_remote(collection, fname, solr_location='localhost', headers={}):
             else:
                 print('Failed on URL {} ({}: {})'
                         .format(url, retcode, reason))
+                print('Full response:')
+                print(response.text)
     return retcode, output
 
 

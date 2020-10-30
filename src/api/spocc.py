@@ -1,38 +1,40 @@
 import cherrypy
+import json
 
-from LmRex.tools.api import GbifAPI
+from LmRex.tools.api import SpecifyPortalAPI
+from LmRex.api.sparks import SpecifyArk
 
 # .............................................................................
 @cherrypy.expose
-class GOcc:
-    
+class SPOcc:
+
     # ...............................................
-    def get_gbif_rec(self, occid):
-        recs = GbifAPI.get_specify_record_by_guid(occid)
-        if len(recs) == 0:
-            return {'spcoco.error': 
-                    'No GBIF records with the occurrenceId {}'.format(occid)}
-        elif len(recs) == 1:
-            return recs[0]
+    def get_specify_rec(self, occid):
+        spark = SpecifyArk()
+        rec = spark.get_specify_arc_rec(occid=occid)
+        try:
+            url = rec['url']
+        except Exception as e:
+            pass
         else:
-            return recs
+            rec = SpecifyPortalAPI.get_specify_record(url)
+        return rec
 
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None):
-        """Get a one or more GBIF records for a Specify GUID or 
-        info/error message.
+        """Get a one Specify record for a Specify GUID or info/error message.
         
         Args:
             occid: a Specify occurrence GUID, from the occurrenceId field
         Return:
-            one dictionary or a list of dictionaries.  Each dictionary contains
-            a message or GBIF record corresponding to the Specify GUID
+            one dictionary containing a message or Specify record corresponding 
+            to the Specify GUID
         """
         if occid is None:
             return {'spcoco.message': 'S^n GBIF occurrence resolution is online'}
         else:
-            return self.get_gbif_rec(occid)
+            return self.get_specify_rec(occid)
 
 # .............................................................................
 if __name__ == '__main__':
@@ -41,7 +43,7 @@ if __name__ == '__main__':
         curl http://127.0.0.1:8080/api/gocc/2c1becd5-e641-4e83-b3f5-76a55206539a
     """
     cherrypy.tree.mount(
-        GOcc(), '/api/gocc',
+        SPOcc(), '/api/spocc',
         {'/':
             {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
          }

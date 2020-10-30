@@ -1,0 +1,19 @@
+; This is the Lifemapper CherryPy configuration file.
+; See: http://docs.cherrypy.org/en/latest/config.html
+
+[global]
+log.error_file: '@LMSCRATCHDISK@/log/cherrypyErrors.log'
+log.access_file: '@LMSCRATCHDISK@/log/cherrypyAccess.log'
+response.timeout: 1000000
+tools.CORS.on : True
+tools.encode.encoding: 'utf-8'
+tools.encode.on: True
+tools.etags.autotags: True
+tools.sessions.on: True
+tools.sessions.storage_class: cherrypy.lib.sessions.FileSession
+tools.sessions.storage_path: '@LMSCRATCHDISK@/sessions'
+tools.sessions.timeout: 20160
+tools.sessions.locking: 'implicit'
+environment: 'embedded'
+server.socket_port: 80
+server.socket_host: @PUBLIC_FQDN@
