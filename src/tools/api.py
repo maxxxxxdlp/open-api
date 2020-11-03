@@ -13,7 +13,6 @@ from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING)
 from LmRex.tools.ready_file import ready_filename
-from builtins import None
 
 JSON_HEADERS = {'Content-Type': 'application/json'}
 # .............................................................................
