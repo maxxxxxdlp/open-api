@@ -7,7 +7,7 @@ from LmRex.api.sparks import SpecifyArk
 
 # .............................................................................
 @cherrypy.expose
-class Tentacles:
+class Testp:
     
     # ...............................................
     def _assemble_output(self, records, count_only):
@@ -35,7 +35,7 @@ class Tentacles:
         return svc_output
     
     # ...............................................
-    def get_records(self, occid, count_only):
+    def _get_records(self, occid, count_only):
         all_output = {}
         # Specify ARK Record
         spark = SpecifyArk()
@@ -65,20 +65,20 @@ class Tentacles:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None):
+    def pull_records(self, occid=None):
         if occid is None:
             return {'message': 'S^n occurrence tentacles are online'}
         else:
-            return self.get_records(occid, True)
+            return self._get_records(occid, True)
 
 # .............................................................................
 if __name__ == '__main__':
     """
     Call with 
-        curl http://127.0.0.1:8080/api/tentacles/2c1becd5-e641-4e83-b3f5-76a55206539a
+        curl http://127.0.0.1:8080/api/testp/get_records?occid=2c1becd5-e641-4e83-b3f5-76a55206539a
     """
     cherrypy.tree.mount(
-        Tentacles(), '/api/tentacles',
+        Testp(), '/api/testp',
         {'/':
             {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
          }

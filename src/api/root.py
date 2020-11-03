@@ -1,6 +1,7 @@
 """This module provides REST services for service objects"""
 import cherrypy
 
+from LmRex.api.gacname import GAcName
 from LmRex.api.gocc import GOcc
 from LmRex.api.idbocc import IDBOcc
 from LmRex.api.spocc import SPOcc
@@ -32,6 +33,10 @@ if __name__ == '__main__':
 
     # Specify service
     cherrypy.tree.mount(SPOcc(), '/api/spocc', conf)
+    
+    # GBIF accepted name(s) service
+    cherrypy.tree.mount(GAcName(), '/api/gacname', conf)
+    
     
     # Linkages service
     cherrypy.tree.mount(Tentacles(), '/api/tentacles', conf)

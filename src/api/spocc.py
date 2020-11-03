@@ -40,7 +40,7 @@ class SPOcc:
 if __name__ == '__main__':
     """
     Call with 
-        curl http://127.0.0.1:8080/api/gocc/2c1becd5-e641-4e83-b3f5-76a55206539a
+        curl http://127.0.0.1:8080/api/spocc/2c1becd5-e641-4e83-b3f5-76a55206539a
     """
     cherrypy.tree.mount(
         SPOcc(), '/api/spocc',

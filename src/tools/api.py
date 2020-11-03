@@ -13,6 +13,7 @@ from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING)
 from LmRex.tools.ready_file import ready_filename
+from builtins import None
 
 JSON_HEADERS = {'Content-Type': 'application/json'}
 # .............................................................................
@@ -709,14 +710,11 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_accepted_names(name_str, kingdom=None):
+    def match_accepted_name(name_str, kingdom=None):
         """Return closest accepted species in GBIF backbone taxonomy
 
         Note:
             This function uses the name search API
-
-        Todo:
-            Rename function to match_accepted_name
         """
         good_names = []
         name_clean = name_str.strip()
@@ -801,13 +799,49 @@ class GbifAPI(APIQuery):
                         url, ret_code, reason)))
         return output
 
+# ...............................................
+    @staticmethod
+    def parse_name(self, namestr):
+        """
+        Return a dictionary 
+        """
+        output = self._postJsonToParser(GBIF_BATCH_PARSER_URL, indata)
+        if output is not None:
+            for rec in output:
+                canname = None
+                kingdom = None
+                # Retrieve kingdom to help identify accepted name
+                try:
+                    kingdom = rec['kingdom']
+                except Exception as e:
+                    print('Missing kingdom in output record')
+                # Get scientific name, should match namestr
+                try:
+                    sciname = rec['scientificName']
+                except Exception as e:
+                    print('Missing scientificName in output record')
+                    sciname = namestr
+                else:
+                    if rec['parsed'] is True:
+                        try:
+                            canname = rec['canonicalName']
+                        except KeyError as e:
+                            print('Missing canonicalName in output record')
+                        except Exception as e:
+                            print('Failed writing output record, err: {}'
+                                  .format(str(e)))
+                parsed_names[sciname] = (canname, kingdom)
+        return [sci_name, can_name, kingdom]
+
     # ...............................................
     @staticmethod
-    def parse_names(filename=None):
+    def parse_names(names=[], filename=None):
         """Return dictionary of given, and clean taxon name for namestrings
+        
+        Note:
+            Accepts either a list of names, a filename containing names, or both.
         """
         if os.path.exists(filename):
-            names = []
             with open(filename, 'r', encoding=ENCODING) as in_file:
                 for line in in_file:
                     names.append(line.strip())
@@ -824,14 +858,19 @@ class GbifAPI(APIQuery):
 
         if output:
             for rec in output:
-                if rec['parsed'] is True:
-                    try:
-                        sci_name = rec['scientificName']
-                        can_name = rec['canonicalName']
-                    except KeyError as key_err:
-                        print('Missing scientific or canonicalName in record')
-                    except Exception as err:
-                        print(('Failed, err: {}'.format(str(err))))
+                try:
+                    sci_name = rec['scientificName']
+                except Exception as err:
+                    print('Missing scientificName in record')
+                else:
+                    if rec['parsed'] is False:
+                        can_name = None
+                    else:
+                        try:
+                            can_name = rec['canonicalName']
+                        except Exception as err:
+                            print('Missing canonicalName in record')
+                            can_name = None
                     clean_names[sci_name] = can_name
 
         return clean_names
