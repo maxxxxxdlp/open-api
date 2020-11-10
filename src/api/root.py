@@ -34,8 +34,9 @@ if __name__ == '__main__':
     # Specify service
     cherrypy.tree.mount(SPOcc(), '/api/spocc', conf)
     
-    # GBIF accepted name(s) service
+    # GBIF, ITIS name(s) services
     cherrypy.tree.mount(GAcName(), '/api/gacname', conf)
+    cherrypy.tree.mount(GAcName(), '/api/itname', conf)
     
     
     # Linkages service

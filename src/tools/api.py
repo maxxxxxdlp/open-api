@@ -2,19 +2,19 @@
 """
 from copy import copy
 import csv
-import json
 import os
-import urllib
-
 import requests
+import urllib
+import xml.etree.ElementTree as ET
+
 
 # import idigbio
 from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
-    BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING)
+    BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING,
+    JSON_HEADERS)
 from LmRex.tools.ready_file import ready_filename
 
-JSON_HEADERS = {'Content-Type': 'application/json'}
 # .............................................................................
 class APIQuery:
     """Class to query APIs and return results.
@@ -110,8 +110,8 @@ class APIQuery:
     # ...............................................
     def _assemble_filter_string(self, filter_string=None):
         if filter_string is not None:
-            for replace_str, with_str in URL_ESCAPES:
-                filter_string = filter_string.replace(replace_str, with_str)
+            for oldstr, newstr in URL_ESCAPES:
+                filter_string = filter_string.replace(oldstr, newstr)
         else:
             all_filters = self._other_filters.copy()
             if self._q_filters:
@@ -126,6 +126,7 @@ class APIQuery:
         for k, val in of_dict.items():
             if isinstance(val, bool):
                 val = str(val).lower()
+            # works for GBIF and iDigBio (no manual escaping)
             of_dict[k] = str(val).encode(ENCODING)
         filter_string = urllib.parse.urlencode(of_dict)
         return filter_string
@@ -220,8 +221,7 @@ class APIQuery:
 
     # ...........    ....................................
     def query_by_post(self, output_type='json', file=None):
-        """Perform a POST request.
-        """
+        """Perform a POST request."""
         self.output = None
         # Post a file
         if file is not None:
@@ -417,31 +417,99 @@ class BisonAPI(APIQuery):
 
 # .............................................................................
 class ItisAPI(APIQuery):
-    """Class to query BISON APIs and return results
+    """Class to pull data from the ITIS Solr or Web service, documentation at:
+        https://www.itis.gov/solr_documentation.html and 
+        https://www.itis.gov/web_service.html
     """
 
     # ...............................................
-    def __init__(self, other_filters=None):
-        """Constructor for ItisAPI class
+    def __init__(self, base_url, service=None, q_filters={}, other_filters={}):
+        """Constructor for ItisAPI class.
+        
+        Args:
+            base_url: Base URL for the ITIS Solr or Web service
+            service: Indicator for which ITIS Web service to address
+            q_filters:
+            other_filters:
+            
+        Note:
+            ITIS Solr service does not have nested services
         """
+        other_filters['wt'] = 'json'
+        if service is not None:
+            base_url = '{}/{}'.format(base_url, service)
         APIQuery.__init__(
-            self, Itis.TAXONOMY_HIERARCHY_URL, other_filters=other_filters)
+            self, base_url, q_filters=q_filters, other_filters=other_filters)
 
-    # # ...............................................
-    # @staticmethod
-    # def _find_taxon_by_rank(root, rank_key):
-    #     for tax in root.iter(
-    #             '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.HIERARCHY_TAG)):
-    #         rank = tax.find(
-    #             '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.RANK_TAG)).text
-    #         if rank == rank_key:
-    #             name = tax.find(
-    #                '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXON_TAG)).text
-    #             tsn = tax.find(
-    #                 '{{}}{}'.format(
-    #                     Itis.DATA_NAMESPACE, Itis.TAXONOMY_KEY)).text
-    #             return (tsn, name)
-    #     return None
+    # ...............................................
+    def _assemble_filter_string(self, filter_string=None):
+        if filter_string is not None:
+            for oldstr, newstr in URL_ESCAPES:
+                filter_string = filter_string.replace(oldstr, newstr)
+        else:
+            all_filters = self._other_filters.copy()
+            if self._q_filters:
+                q_val = self._assemble_q_val(self._q_filters)
+                all_filters[self._q_key] = q_val
+            filter_string = self._assemble_key_val_filters(all_filters)
+        return filter_string
+
+    # ...............................................
+    @staticmethod
+    def _assemble_key_val_filters(of_dict):
+        filters = []
+        for k, val in of_dict.items():
+            if isinstance(val, bool):
+                val = str(val).lower()
+            # works for ITIS Solr?
+            elif isinstance(val, str):
+                for oldstr, newstr in URL_ESCAPES:
+                    val = val.replace(oldstr, newstr)
+            filters.append('{}={}'.format(k, val))
+        filter_string = '&'.join(filters)
+#         filter_string = urllib.parse.urlencode(of_dict)
+        return filter_string
+
+    # ...............................................
+    def _processRecordInfo(self, rec, header, reformat_keys=[]):
+        row = []
+        if rec is not None:
+            for key in header:
+                try:
+                    val = rec[key]
+                    
+                    if type(val) is list:
+                        if len(val) > 0:
+                            val = val[0]
+                        else:
+                            val = ''
+                            
+                    if key in reformat_keys:
+                        val = self._saveNLDelCR(val)
+                        
+                    elif key == 'citation':
+                        if type(val) is dict:
+                            try:
+                                val = val['text']
+                            except:
+                                pass
+                        
+                    elif key in ('created', 'modified'):
+                        val = self._clipDate(val)
+                            
+                except KeyError:
+                    val = ''
+                row.append(val)
+        return row
+
+# ...............................................
+    @staticmethod
+    def _get_fld_value(doc, fldname):
+        try:
+            val = doc[fldname]
+        except:
+            val = None
+        return val
 
     # ...............................................
     @staticmethod
@@ -469,29 +537,176 @@ class ItisAPI(APIQuery):
                 '{}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXON_TAG)).text
             tsn = tax.find(
                 # '{{}}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXONOMY_KEY)).text
-                '{}{}'.format(Itis.DATA_NAMESPACE, Itis.TAXONOMY_KEY)).text
+                '{}{}'.format(Itis.DATA_NAMESPACE, Itis.TSN_KEY)).text
             tax_path.append((rank, tsn, name))
         return tax_path
 
-    # ...............................................
-    def get_taxon_tsn_hierarchy(self):
-        """Retrieve taxon hierarchy
+# ...............................................
+    @staticmethod
+    def _get_itis_solr_recs(output):
+        try:
+            data = output['response']
+        except:
+            raise Exception('Failed to return response element')
+        try:
+            docs = data['docs']
+        except:
+            raise Exception('Failed to return docs')
+        return docs
+    
+# ...............................................
+    @staticmethod
+    def map_record(rec, mapping):
         """
-        if self.output is None:
-            APIQuery.query_by_get(self, output_type='xml')
-        tax_path = self._return_hierarchy()
+        Map old record to new, pulling values from returned record which may be 
+        nested several levels.
+        
+        Args:
+            rec: json/dictionary returned from a web service
+            mapping: dictionary mapping new records to returned records with 
+                keys = new fieldnames and values = a sequence of filed
+        """
+        newrec = {}
+        for new_fld, orig_fields in mapping.items():
+            val = rec
+            for ofld in orig_fields:
+                val = val[ofld]
+            newrec[new_fld] = val
+            
+            
+# ...............................................
+    @staticmethod
+    def match_name_solr(sciname, status=None, kingdom=None):
+        """Return an ITIS record for a scientific name using the 
+        ITIS Solr service.
+        
+        Args:
+            sciname: a scientific name designating a taxon
+            status: optional designation for taxon status, 
+                kingdom Plantae are valid/invalid, others are accepted 
+            kingdom: optional designation for kingdom 
+            
+        Ex: http://services.itis.gov/?q=nameWOInd:Spinus\%20tristis&wt=json
+        """
+        matches = []
+        q_filters={Itis.NAME_KEY: sciname}
+#         if status is not None:
+#             q_filters['usage'] = 'valid'
+        if kingdom is not None:
+            q_filters['kingdom'] = kingdom
+        apiq = ItisAPI(Itis.SOLR_URL, q_filters=q_filters)
+        apiq.query_by_get()
+        docs = apiq._get_itis_solr_recs(apiq.output)
+
+        for doc in docs:
+            if status is None:
+                matches.append(doc)
+            else:
+                usage = doc['usage'].lower()
+                if (status in ('accepted', 'valid') and 
+                    usage in ('accepted', 'valid')):
+                    matches.append(doc)
+                elif status == usage:
+                    matches.append(doc)
+#             else:
+#                 accepted_tsn_list = apiq._get_fld_value(doc, 'acceptedTSN')
+#                 for tsn in accepted_tsn_list:
+#                     acc_recs = ItisAPI.get_name(tsn)
+#                     matches.extend(acc_recs)
+        return matches
+    
+# ...............................................
+    @staticmethod
+    def match_name(sciname):
+        """Return a name and kingdom for an ITIS TSN using the ITIS Solr service.
+        
+        Args:
+            tsn: a unique integer identifier for a taxonomic record in ITIS
+            
+        Ex: https://services.itis.gov/?q=tsn:566578&wt=json
+        """
+        recs = []
+        apiq = ItisAPI(
+            Itis.WEBSVC_URL, service=Itis.ITISTERMS_FROM_SCINAME_QUERY, 
+            other_filters={Itis.SEARCH_KEY: sciname})
+        apiq.query()
+        root = apiq.output
+
+        retElt = root.find('{}return'.format(Itis.NAMESPACE))
+        if retElt is not None:
+            termEltLst = retElt.findall('{}itisTerms'.format(Itis.DATA_NAMESPACE))
+            for tElt in termEltLst:
+                rec = {}
+                elts = tElt.getchildren()
+                for e in elts:
+                    rec[e.tag] = e.text
+                if rec:
+                    recs.append(rec)
+        return recs
+
+# ...............................................
+    @staticmethod
+    def get_name_by_tsn_solr(tsn):
+        """Return a name and kingdom for an ITIS TSN using the ITIS Solr service.
+        
+        Args:
+            tsn: a unique integer identifier for a taxonomic record in ITIS
+            
+        Ex: https://services.itis.gov/?q=tsn:566578&wt=json
+        """
+        apiq = ItisAPI(Itis.SOLR_URL, q_filters={Itis.TSN_KEY: tsn})
+        docs = apiq.get_itis_recs()
+        recs = []
+        for doc in docs:
+            usage = doc['usage']
+            if usage in ('accepted', 'valid'):
+                recs.append(doc)
+        return recs
+
+# ...............................................
+    @staticmethod
+    def get_vernacular_by_tsn(self, tsn):
+        """Return vernacular names for an ITIS TSN.
+        
+        Args:
+            tsn: an ITIS code designating a taxonomic name
+        """
+        common_names = []
+        if tsn is not None:
+            url = '{}/{}?{}={}'.format(
+                Itis.WEBSVC_URL, Itis.VERNACULAR_QUERY, Itis.TSN_KEY, str(tsn))
+            root = self._getDataFromUrl(url, resp_type='xml')
+        
+            retElt = root.find('{}return'.format(Itis.NAMESPACE))
+            if retElt is not None:
+                cnEltLst = retElt.findall('{}commonNames'.format(Itis.DATA_NAMESPACE))
+                for cnElt in cnEltLst:
+                    nelt = cnElt.find('{}commonName'.format(Itis.DATA_NAMESPACE))
+                    if nelt is not None and nelt.text is not None:
+                        common_names.append(nelt.text)
+        return common_names
+
+    # ...............................................
+    @staticmethod
+    def get_tsn_hierarchy(tsn):
+        """Retrieve taxon hierarchy"""
+        url = '{}/{}'.format(Itis.WEBSVC_URL, Itis.TAXONOMY_HIERARCHY_QUERY)
+        apiq = APIQuery(
+            url, other_filters={Itis.TSN_KEY: tsn}, 
+            headers={'Content-Type': 'text/xml'})
+        apiq.query_by_get(output_type='xml')
+        tax_path = apiq._return_hierarchy()
         hierarchy = {}
         for rank in (
                 Itis.KINGDOM_KEY, Itis.PHYLUM_DIVISION_KEY, Itis.CLASS_KEY,
                 Itis.ORDER_KEY, Itis.FAMILY_KEY, Itis.GENUS_KEY,
                 Itis.SPECIES_KEY):
-            hierarchy[rank] = self._get_rank_from_path(tax_path, rank)
+            hierarchy[rank] = apiq._get_rank_from_path(tax_path, rank)
         return hierarchy
 
     # ...............................................
     def query(self):
-        """Queries the API and sets 'output' attribute to a ElementTree object
-        """
+        """Queries the API and sets 'output' attribute to a ElementTree object"""
         APIQuery.query_by_get(self, output_type='xml')
 
 
@@ -687,7 +902,6 @@ class GbifAPI(APIQuery):
             api.query()
         except Exception:
             print('Failed on {}'.format(guid))
-            curr_count = 0
         else:
             # First query, report count
             total = api.output['count']
@@ -709,13 +923,26 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def match_accepted_name(name_str, kingdom=None):
-        """Return closest accepted species in GBIF backbone taxonomy
+    def match_name(name_str, status=None, kingdom=None):
+        """Return closest accepted species in GBIF backbone taxonomy,
+        
+        Args:
+            name_str: A scientific namestring possibly including author, year, 
+                rank marker or other name information.
+            kingdom: optional kingdom of the desired results, helps to 
+                narrow down results in the event of duplicate names in different
+                kingdoms.
+                
+        Returns:
+            Either a dictionary containing a matching record with status 
+                'accepted' or 'synonym' without 'alternatives'.  
+            Or, if there is no matching record, return the first/best 
+                'alternative' record with status 'accepted' or 'synonym'.
 
         Note:
-            This function uses the name search API
+            This function uses the name search API, 
         """
-        good_names = []
+        matches = []
         name_clean = name_str.strip()
 
         other_filters = {'name': name_clean, 'verbose': 'true'}
@@ -732,34 +959,39 @@ class GbifAPI(APIQuery):
                    .format(name_clean, str(e))))
             raise
 
+        # Pull alternatives out of record
         try:
-            status = output['status'].lower()
-        except AttributeError:
-            status = None
-
-        if status in ('accepted', 'synonym'):
-            small_rec = name_api._get_fld_vals(output)
-            good_names.append(small_rec)
+            alternatives = output.pop('alternatives')
+        except Exception as e:
+            alternatives = []
+            
+        # No filter by status
+        if status is None:
+            matches.append(output)
+            for alt in alternatives:
+                matches.append(alt)
+        # Check status of upper level result
         else:
+            outstatus = None
             try:
-                alternatives = output['alternatives']
-                print('No exact match on {}, returning top alt. {}'.format(
-                    name_clean, len(alternatives)))
-                # get first/best synonym
-                for alt in alternatives:
-                    try:
-                        alt_status = alt['status'].lower()
-                    except AttributeError:
-                        alt_status = None
-                    if alt_status in ('accepted', 'synonym'):
-                        small_rec = name_api._get_fld_vals(alt)
-                        good_names.append(small_rec)
-                        break
-            except Exception:
-                print(('No match or alternatives to return for {}'.format(
-                    name_clean)))
+                outstatus = output['status'].lower()
+            except AttributeError:
+                print('No status for record matching {}'.format(name_clean))
+            else:
+                if outstatus == status:
+                    matches.append(output)
+            # Check status of alternative results result            
+            for alt in alternatives:
+                outstatus = None
+                try:
+                    outstatus = alt['status'].lower()
+                except AttributeError:
+                    print('No status for alternative matching {}'.format(name_clean))
+                else:
+                    if outstatus == status:
+                        matches.append(alt)
 
-        return good_names
+        return matches
 
     # ......................................
     @staticmethod
@@ -797,82 +1029,88 @@ class GbifAPI(APIQuery):
                     print(('Failed on URL {} ({}: {})'.format(
                         url, ret_code, reason)))
         return output
+    
+    
+# ...............................................
+    @staticmethod
+    def _trim_parsed_output(output):
+        recs = []
+        for rec in output:
+            # Only return parsed records
+            try:
+                success = rec['parsed']
+            except:
+                print('Missing `parsed` field in record')
+            else:
+                if success:
+                    recs.append(rec)
+        return recs
 
 # ...............................................
     @staticmethod
-    def parse_name(self, namestr):
+    def parse_name(namestr):
         """
-        Return a dictionary 
+        Send a scientific name to the GBIF Parser returning a canonical name.
+        
+        Args:
+            namestr: A scientific namestring possibly including author, year, 
+                rank marker or other name information.
+                
+        Returns:
+            A record as a dictionary containing a parsed scientific name, with 
+            keys being the part of a scientific name, and values being the 
+            element or elements that correspond to that part.
         """
-        output = self._postJsonToParser(GBIF_BATCH_PARSER_URL, indata)
-        if output is not None:
-            for rec in output:
-                canname = None
-                kingdom = None
-                # Retrieve kingdom to help identify accepted name
-                try:
-                    kingdom = rec['kingdom']
-                except Exception as e:
-                    print('Missing kingdom in output record')
-                # Get scientific name, should match namestr
-                try:
-                    sciname = rec['scientificName']
-                except Exception as e:
-                    print('Missing scientificName in output record')
-                    sciname = namestr
-                else:
-                    if rec['parsed'] is True:
-                        try:
-                            canname = rec['canonicalName']
-                        except KeyError as e:
-                            print('Missing canonicalName in output record')
-                        except Exception as e:
-                            print('Failed writing output record, err: {}'
-                                  .format(str(e)))
-                parsed_names[sciname] = (canname, kingdom)
-        return [sci_name, can_name, kingdom]
+        rec = None
+        # Query GBIF
+        name_api = GbifAPI(
+            service=GBIF.PARSER_SERVICE, 
+            other_filters={GBIF.REQUEST_NAME_QUERY_KEY: namestr})
+        name_api.query_by_get()
+        # Parse results (should be only one)
+        if name_api.output is not None:
+            recs = name_api._trim_parsed_output(name_api.output)
+            try:
+                rec = recs[0]
+            except:
+                pass
+            else:
+                if len(recs) > 1:
+                    print('WTF, {} has > 1 parsed records'.format(namestr))
+        return rec
 
     # ...............................................
     @staticmethod
     def parse_names(names=[], filename=None):
-        """Return dictionary of given, and clean taxon name for namestrings
-        
-        Note:
-            Accepts either a list of names, a filename containing names, or both.
         """
-        if os.path.exists(filename):
+        Send a list or file (or both) of scientific names to the GBIF Parser,
+        returning a dictionary of results.  Each scientific name can possibly 
+        include author, year, rank marker or other name information.
+        
+        Args:
+            names: a list of names to be parsed
+            filename: a file of names to be parsed
+            
+        Returns:
+            A list of resolved records, each is a dictionary with keys of 
+            GBIF fieldnames and values with field values. 
+        """
+        if filename and os.path.exists(filename):
             with open(filename, 'r', encoding=ENCODING) as in_file:
                 for line in in_file:
                     names.append(line.strip())
 
-        clean_names = {}
-        name_api = GbifAPI(service=GBIF.PARSER_SERVICE)
+        url = '{}/{}'.format(GBIF.REST_URL, GBIF.PARSER_SERVICE)
         try:
-            output = name_api._post_json_to_parser(names)
-        except Exception as err:
-            print((
-                'Failed to get response from GBIF for data {}, {}'.format(
-                    filename, str(err))))
-            raise err
+            output = GbifAPI._post_json_to_parser(url, names)
+        except Exception as e:
+            print('Failed to get response from GBIF for data {}, {}'.format(
+                filename, e))
+            raise e
 
         if output:
-            for rec in output:
-                try:
-                    sci_name = rec['scientificName']
-                except Exception as err:
-                    print('Missing scientificName in record')
-                else:
-                    if rec['parsed'] is False:
-                        can_name = None
-                    else:
-                        try:
-                            can_name = rec['canonicalName']
-                        except Exception as err:
-                            print('Missing canonicalName in record')
-                            can_name = None
-                    clean_names[sci_name] = can_name
-
-        return clean_names
+            recs = GbifAPI._trim_parsed_output(output)
+        return recs
 
     # ...............................................
     @staticmethod
@@ -976,14 +1214,12 @@ class IdigbioAPI(APIQuery):
         recs = []
         qf = {Idigbio.QKEY: 
               '{"' + Idigbio.SPECIFY_GUID_FIELD + '":"' + guid + '"}'}
-#               '{"{}":"{}"}'.format(Idigbio.SPECIFY_GUID_FIELD, guid)}
         api = IdigbioAPI(other_filters=qf)
 
         try:
             api.query()
         except Exception:
             print('Failed on {}'.format(guid))
-            curr_count = 0
         else:
             recs = []
             if api.output is not None:
@@ -1239,25 +1475,23 @@ def test_idigbio_taxon_ids():
 
 # .............................................................................
 class SpecifyPortalAPI(APIQuery):
-    """Class to query Specify portal APIs and return results
-    """
+    """Class to query Specify portal APIs and return results"""
     # ...............................................
     def __init__(self, url=None):
-        """Constructor for SpecifyAPI class
-        """
-        headers = {'Content-Type': 'application/json'}
+        """Constructor for SpecifyPortalAPI class"""
         if url is None:
             url = 'http://preview.specifycloud.org/export/record'
-        APIQuery.__init__(self, url)
+        APIQuery.__init__(self, url, headers=JSON_HEADERS)
 
     # ...............................................
     @staticmethod
     def get_specify_record(url):
-        """Return GBIF occurrences for this occurrenceId.  This should retrieve 
-        a single record originally from Specify.
+        """Return Specify record published at this url.  
+        
+        Args:
+            url: direct url endpoint for source Specify occurrence record
+            
         """
-#         dwc = 'http://rs.tdwg.org/dwc/terms/'
-#         dc = 'http://purl.org/dc/terms/'
         rec = {}
         api = APIQuery(url, headers=JSON_HEADERS)
 
@@ -1265,7 +1499,6 @@ class SpecifyPortalAPI(APIQuery):
             api.query_by_get()
         except Exception:
             print('Failed on {}'.format(url))
-            curr_count = 0
         else:
             rec = api.output
         return rec
@@ -1273,25 +1506,70 @@ class SpecifyPortalAPI(APIQuery):
 
 # .............................................................................
 if __name__ == '__main__':
-    pass
+    # test
+    names = ['Acer caesium Wall. ex Brandis', 'Acer heldreichii Orph. ex Boiss.', 
+             'Acer pseudoplatanus L.', 'Acer velutinum Boiss.', 
+             'Acer hyrcanum Fisch. & Meyer', 'Acer monspessulanum L.', 
+             'Acer obtusifolium Sibthorp & Smith', 'Acer opalus Miller', 
+             'Acer sempervirens L.', 'Acer floridanum (Chapm.) Pax', 
+             'Acer grandidentatum Torr. & Gray', 'Acer leucoderme Small', 
+             'Acer nigrum Michx.f.', 'Acer skutchii Rehder', 
+             'Acer saccharum Marshall']
+    
+    tsns = [526853, 183671, 182662, 566578]
+    
+    namestr = names[0]
+    clean_names = GbifAPI.parse_names(names=names)
+    can_name = GbifAPI.parse_name(namestr)
+    try:
+        acc_name = can_name['canonicalName']
+    except Exception as e:
+        print('Failed to match {}'.format(namestr))
+    else:
+#         good_names = GbifAPI.match_name(acc_name)
+#         print('Matched names:')
+#         for n in good_names:
+#             print('{}: {}, {}'.format(
+#                 n['scientificName'], n['status'], n['rank']))
+#         print ('')
+#         acc_names = GbifAPI.match_name(acc_name, status='accepted')
+#         print('Matched accepted names:')
+#         for n in acc_names:
+#             print('{}: {}, {}'.format(
+#                 n['scientificName'], n['status'], n['rank']))
+#         print ('')
+#         syn_names = GbifAPI.match_name(acc_name, status='synonym')
+#         print('Matched synonyms:')
+#         for n in syn_names:
+#             print('{}: {}, {}'.format(
+#                 n['scientificName'], n['status'], n['rank']))
+#         print ('')
+        
+        names = ['ursidae', 'Poa annua']
+        for name in names:
+            itis_names = ItisAPI.match_name_solr(name)
+            print ('Matched {} with {} ITIS names using Solr'.format(
+                name, len(itis_names)))
+            for n in itis_names:
+                print('{}: {}, {}'.format(
+                    n['nameWOInd'], n['kingdom'], n['usage'], n['rank']))
+            print ('')
+    
+            itis_names = ItisAPI.match_name(name)
+            print ('Matched {} with {} ITIS names using web services'.format(
+                name, len(itis_names)))
+            sname_key = '{}scientificName'.format(Itis.DATA_NAMESPACE)
+            usage_key = '{}nameUsage'.format(Itis.DATA_NAMESPACE)
+            for n in itis_names:
+                print('{}: {}'.format(n[sname_key], n[usage_key]))
+            print ('')
 
-
+#     for tsn in tsns:
+#         recs = ItisAPI.get_itis_tsn(tsn)
 """
 https://api.gbif.org/v1/occurrence/search?occurrenceId=dbe1622c-1ed3-11e3-bfac-90b11c41863e
 url = 'https://search.idigbio.org/v2/search/records/?rq={%22occurrenceid%22%3A%22a413b456-0bff-47da-ab26-f074d9be5219%22}'
 
 
-
-def assemble_fstring(filters):
-    if filter_string is not None:
-        for replace_str, with_str in URL_ESCAPES:
-            filter_string = filter_string.replace(replace_str, with_str)
-    else:
-        all_filters = self._other_filters.copy()
-        if self._q_filters:
-            q_val = self._assemble_q_val(self._q_filters)
-            all_filters[self._q_key] = q_val
-        filter_string = self._assemble_key_val_filters(all_filters)
-    return filter_string
 
 """

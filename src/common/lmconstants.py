@@ -2,10 +2,8 @@ import os
 
 APP_PATH = '/opt/lifemapper'
 CONFIG_DIR = 'config'
-# http://<specify7-server>/export/record/<dataset_guid>/<occurrence_guid>
 TEST_SPECIFY7_SERVER = 'http://preview.specifycloud.org'
 TEST_SPECIFY7_RSS_URL = '{}/export/rss'.format(TEST_SPECIFY7_SERVER)
-# TEST_SPECIFY7_EXPORT_URL = '{}/static/depository/export_feed'.format(TEST_SPECIFY7_SERVER)
 
 # For saving Specify7 server URL (used to download individual records)
 SPECIFY7_SERVER_KEY = 'specify7-server'
@@ -17,6 +15,8 @@ ICH_RSS_URL = 'https://ichthyology.specify.ku.edu/export/rss'
 SPECIFY_ARK_PREFIX = 'http://spcoco.org/ark:/'
 DWC_URL = 'http://rs.tdwg.org/dwc'
 DWC_RECORD_TITLE = 'digital specimen object'
+
+JSON_HEADERS = {'Content-Type': 'application/json'}
 
 TEST_GUIDS = [
     '2c1becd5-e641-4e83-b3f5-76a55206539a', 
@@ -54,7 +54,7 @@ class DWCA:
         'month',
         'day']
 
-URL_ESCAPES = [[" ", "%20"], [",", "%2C"]]
+URL_ESCAPES = [[" ", "\%20"], [",", "\%2C"]]
 ENCODING = 'utf-8'
 
 DWC_QUALIFIER = 'dwc:'
@@ -243,13 +243,26 @@ class GBIF:
 # .............................................................................
 class Itis:
     """ITIS constants enumeration
+    http://www.itis.gov/ITISWebService/services/ITISService/getAcceptedNamesFromTSN?tsn=183671
     """
-    DATA_NAMESPACE = 'http://data.itis_service.itis.usgs.gov/xsd'
-    # Basic Web Services
-    TAXONOMY_HIERARCHY_URL = ('http://www.itis.gov/ITISWebService/services/' +
-                              'ITISService/getFullHierarchyFromTSN')
-    # JSON Web Services
-    TAXONOMY_KEY = 'tsn'
+    DATA_NAMESPACE = '{http://data.itis_service.itis.usgs.gov/xsd}'
+    NAMESPACE = '{http://itis_service.itis.usgs.gov}'
+    # ...........
+    # Solr Services
+    SOLR_URL = 'https://services.itis.gov/'
+    TAXONOMY_HIERARCHY_QUERY = 'getFullHierarchyFromTSN'
+    VERNACULAR_QUERY = 'getCommonNamesFromTSN'    
+    NAMES_FROM_TSN_QUERY = 'getAcceptedNamesFromTSN'
+    # ...........
+    # Web Services
+    WEBSVC_URL = 'https://www.itis.gov/ITISWebService/services/ITISService'
+    # wildcard matching
+    ITISTERMS_FROM_SCINAME_QUERY = 'getITISTermsFromScientificName'
+    SEARCH_KEY = 'srchKey'
+    # JSON return tags
+    TSN_KEY = 'tsn'
+    NAME_KEY = 'nameWOInd'
+    HIERARCHY_KEY = 'hierarchySoFarWRanks'
     HIERARCHY_TAG = 'hierarchyList'
     RANK_TAG = 'rankName'
     TAXON_TAG = 'taxonName'
@@ -260,7 +273,7 @@ class Itis:
     FAMILY_KEY = 'Family'
     GENUS_KEY = 'Genus'
     SPECIES_KEY = 'Species'
-
+    URL_ESCAPES = [ [" ", "\%20"] ]
 
 # .............................................................................
 # .                           iDigBio constants                               .

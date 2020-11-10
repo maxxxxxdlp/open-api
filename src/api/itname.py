@@ -1,20 +1,20 @@
 import cherrypy
 
-from LmRex.tools.api import GbifAPI
+from LmRex.tools.api import GbifAPI, ItisAPI
 
 # .............................................................................
 @cherrypy.expose
-class GAcName:
+class ITISName:
     
     # ...............................................
-    def get_gbif_accepted_taxon(self, namestr, kingdom=None):
+    def get_itis_accepted_taxon(self, status=None, namestr, kingdom=None):
         rec = GbifAPI.parse_name(namestr)
         try:
             can_name = rec['canonicalName']
         except:
             # Default to original namestring if parsing fails
             can_name = namestr
-        good_names = GbifAPI.match_name(can_name, status='accepted')
+        good_names = ItisAPI.match_name(can_name, status=None, kingdom=None)
         if len(good_names) == 0:
             return {'spcoco.error': 
                     'No matching GBIF taxon records for {}'.format(namestr)}
@@ -35,12 +35,12 @@ class GAcName:
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF name resolution is online'}
         else:
-            return self.get_gbif_accepted_taxon(namestr)
+            return self.get_itis_accepted_taxon(namestr)
 
 # .............................................................................
 if __name__ == '__main__':
     cherrypy.tree.mount(
-        GAcName(), '/api/gacname',
+        ITISName(), '/api/itisname',
         {'/':
             {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
          }
