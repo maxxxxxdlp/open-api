@@ -5,10 +5,8 @@ import csv
 import os
 import requests
 import urllib
-import xml.etree.ElementTree as ET
+# import xml.etree.ElementTree as ET
 
-
-# import idigbio
 from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING,

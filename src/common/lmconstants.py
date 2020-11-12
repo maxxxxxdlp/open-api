@@ -246,6 +246,7 @@ class GBIF:
 class Itis:
     """ITIS constants enumeration
     http://www.itis.gov/ITISWebService/services/ITISService/getAcceptedNamesFromTSN?tsn=183671
+    @todo: for JSON output use jsonservice instead of ITISService
     """
     DATA_NAMESPACE = '{http://data.itis_service.itis.usgs.gov/xsd}'
     NAMESPACE = '{http://itis_service.itis.usgs.gov}'

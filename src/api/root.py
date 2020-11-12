@@ -4,9 +4,10 @@ import cherrypy
 from LmRex.api.gacname import GAcName
 from LmRex.api.gocc import GOcc
 from LmRex.api.idbocc import IDBOcc
+from LmRex.api.itname import ITISName, ITISSolrName
 from LmRex.api.spocc import SPOcc
 from LmRex.api.sparks import SpecifyArk
-from LmRex.api.tentacles import Tentacles
+from LmRex.api.occ import OccurrenceSvc
 
 from LmRex.common.lmconstants import (CHERRYPY_CONFIG_FILE)
 
@@ -24,23 +25,24 @@ if __name__ == '__main__':
     cherrypy.config.update({'server.socket_port': 80,
                             'server.socket_host': '129.237.201.192'})
 
+    
     # ARK service
-    cherrypy.tree.mount(SpecifyArk(), '/api/sparks', conf)
+    cherrypy.tree.mount(SpecifyArk(), '/tentacles/sparks', conf)
 
-    # Aggregator services
-    cherrypy.tree.mount(GOcc(), '/api/gocc', conf)
-    cherrypy.tree.mount(IDBOcc(), '/api/idbocc', conf)
-
-    # Specify service
-    cherrypy.tree.mount(SPOcc(), '/api/spocc', conf)
+    # GBIF, iDigBio, Specifyoccurrence services
+    cherrypy.tree.mount(GOcc(), '/tentacles/occ/gocc', conf)
+    cherrypy.tree.mount(IDBOcc(), '/tentacles/occ/idbocc', conf)
+    cherrypy.tree.mount(SPOcc(), '/tentacles/occ/spocc', conf)
+    # combined
+    cherrypy.tree.mount(OccurrenceSvc(), '/tentacles/occ', conf)
     
     # GBIF, ITIS name(s) services
-    cherrypy.tree.mount(GAcName(), '/api/gacname', conf)
-    cherrypy.tree.mount(GAcName(), '/api/itname', conf)
+    cherrypy.tree.mount(GAcName(), '/tentacles/name/gac', conf)
+    cherrypy.tree.mount(ITISName(), '/tentacles/name/itis', conf)
+    cherrypy.tree.mount(ITISSolrName(), '/tentacles/name/itis2', conf)
+    # combined
+    cherrypy.tree.mount(SpecifyArk(), '/tentacles/name', conf)
     
-    
-    # Linkages service
-    cherrypy.tree.mount(Tentacles(), '/api/tentacles', conf)
 
     cherrypy.engine.start()
     cherrypy.engine.block()
