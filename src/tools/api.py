@@ -109,26 +109,26 @@ class APIQuery:
 
     # ...............................................
     def _assemble_filter_string(self, filter_string=None):
-        if filter_string is not None:
-            for oldstr, newstr in URL_ESCAPES:
-                filter_string = filter_string.replace(oldstr, newstr)
-        else:
+        # Assemble key/value pairs
+        if filter_string is None:
             all_filters = self._other_filters.copy()
             if self._q_filters:
                 q_val = self._assemble_q_val(self._q_filters)
                 all_filters[self._q_key] = q_val
-            filter_string = self._assemble_key_val_filters(all_filters)
-        return filter_string
+            for k, val in all_filters.items():
+                if isinstance(val, bool):
+                    val = str(val).lower()
+                elif isinstance(val, str):
+                    for oldstr, newstr in URL_ESCAPES:
+                        val = val.replace(oldstr, newstr)
+                # works for GBIF, iDigBio, ITIS web services (no manual escaping)
+                all_filters[k] = str(val).encode(ENCODING)
+            filter_string = urllib.parse.urlencode(all_filters)
+        # Escape filter string
+        else:
+            for oldstr, newstr in URL_ESCAPES:
+                filter_string = filter_string.replace(oldstr, newstr)
 
-    # ...............................................
-    @staticmethod
-    def _assemble_key_val_filters(of_dict):
-        for k, val in of_dict.items():
-            if isinstance(val, bool):
-                val = str(val).lower()
-            # works for GBIF and iDigBio (no manual escaping)
-            of_dict[k] = str(val).encode(ENCODING)
-        filter_string = urllib.parse.urlencode(of_dict)
         return filter_string
 
     # ...............................................
@@ -435,7 +435,8 @@ class ItisAPI(APIQuery):
         Note:
             ITIS Solr service does not have nested services
         """
-        other_filters['wt'] = 'json'
+        if base_url == Itis.SOLR_URL:
+            other_filters['wt'] = 'json'
         if service is not None:
             base_url = '{}/{}'.format(base_url, service)
         APIQuery.__init__(
@@ -443,32 +444,36 @@ class ItisAPI(APIQuery):
 
     # ...............................................
     def _assemble_filter_string(self, filter_string=None):
-        if filter_string is not None:
-            for oldstr, newstr in URL_ESCAPES:
-                filter_string = filter_string.replace(oldstr, newstr)
-        else:
+        # Assemble key/value pairs
+        if filter_string is None:
             all_filters = self._other_filters.copy()
             if self._q_filters:
                 q_val = self._assemble_q_val(self._q_filters)
                 all_filters[self._q_key] = q_val
-            filter_string = self._assemble_key_val_filters(all_filters)
-        return filter_string
 
-    # ...............................................
-    @staticmethod
-    def _assemble_key_val_filters(of_dict):
-        filters = []
-        for k, val in of_dict.items():
-            if isinstance(val, bool):
-                val = str(val).lower()
-            # works for ITIS Solr?
-            elif isinstance(val, str):
-                for oldstr, newstr in URL_ESCAPES:
-                    val = val.replace(oldstr, newstr)
-            filters.append('{}={}'.format(k, val))
-        filter_string = '&'.join(filters)
-#         filter_string = urllib.parse.urlencode(of_dict)
-        return filter_string
+            if self.base_url == Itis.SOLR_URL:
+                kvpairs = []
+                for k, val in all_filters.items():
+                    if isinstance(val, bool):
+                        val = str(val).lower()
+                    # manual escaping for ITIS Solr
+                    elif isinstance(val, str):
+                        for oldstr, newstr in URL_ESCAPES:
+                            val = val.replace(oldstr, newstr)
+                    kvpairs.append('{}={}'.format(k, val))
+                filter_string = '&'.join(kvpairs)
+            else:
+                for k, val in all_filters.items():
+                    if isinstance(val, bool):
+                        val = str(val).lower()
+                # urlencode for ITIS web services
+                filter_string = urllib.parse.urlencode(all_filters)
+            
+        # Escape filter string
+        else:
+            for oldstr, newstr in URL_ESCAPES:
+                filter_string = filter_string.replace(oldstr, newstr)
+        return filter_string  
 
     # ...............................................
     def _processRecordInfo(self, rec, header, reformat_keys=[]):
@@ -589,12 +594,11 @@ class ItisAPI(APIQuery):
         Ex: http://services.itis.gov/?q=nameWOInd:Spinus\%20tristis&wt=json
         """
         matches = []
-        q_filters={Itis.NAME_KEY: sciname}
-#         if status is not None:
-#             q_filters['usage'] = 'valid'
+        q_filters = {Itis.NAME_KEY: sciname}
         if kingdom is not None:
             q_filters['kingdom'] = kingdom
         apiq = ItisAPI(Itis.SOLR_URL, q_filters=q_filters)
+#         apiq.query()
         apiq.query_by_get()
         docs = apiq._get_itis_solr_recs(apiq.output)
 
@@ -618,10 +622,10 @@ class ItisAPI(APIQuery):
 # ...............................................
     @staticmethod
     def match_name(sciname):
-        """Return a name and kingdom for an ITIS TSN using the ITIS Solr service.
+        """Return matching names for scienfific name using the ITIS Web service.
         
         Args:
-            tsn: a unique integer identifier for a taxonomic record in ITIS
+            sciname: a scientific name
             
         Ex: https://services.itis.gov/?q=tsn:566578&wt=json
         """
@@ -965,31 +969,39 @@ class GbifAPI(APIQuery):
         except Exception as e:
             alternatives = []
             
-        # No filter by status
-        if status is None:
-            matches.append(output)
-            for alt in alternatives:
-                matches.append(alt)
-        # Check status of upper level result
+        is_match = True
+        try:
+            if output['matchType'].lower() == 'none':
+                is_match = False
+        except AttributeError:
+            print('No matchType for record matching {}'.format(name_clean))
         else:
-            outstatus = None
-            try:
-                outstatus = output['status'].lower()
-            except AttributeError:
-                print('No status for record matching {}'.format(name_clean))
-            else:
-                if outstatus == status:
+            # No filter by status
+            if is_match:
+                if status is None:
                     matches.append(output)
-            # Check status of alternative results result            
-            for alt in alternatives:
-                outstatus = None
-                try:
-                    outstatus = alt['status'].lower()
-                except AttributeError:
-                    print('No status for alternative matching {}'.format(name_clean))
-                else:
-                    if outstatus == status:
+                    for alt in alternatives:
                         matches.append(alt)
+                # Check status of upper level result
+                else:
+                    outstatus = None
+                    try:
+                        outstatus = output['status'].lower()
+                    except AttributeError:
+                        print('No status for record matching {}'.format(name_clean))
+                    else:
+                        if outstatus == status:
+                            matches.append(output)
+                    # Check status of alternative results result            
+                    for alt in alternatives:
+                        outstatus = None
+                        try:
+                            outstatus = alt['status'].lower()
+                        except AttributeError:
+                            print('No status for alternative matching {}'.format(name_clean))
+                        else:
+                            if outstatus == status:
+                                matches.append(alt)
 
         return matches
 
@@ -1526,12 +1538,6 @@ if __name__ == '__main__':
     except Exception as e:
         print('Failed to match {}'.format(namestr))
     else:
-#         good_names = GbifAPI.match_name(acc_name)
-#         print('Matched names:')
-#         for n in good_names:
-#             print('{}: {}, {}'.format(
-#                 n['scientificName'], n['status'], n['rank']))
-#         print ('')
 #         acc_names = GbifAPI.match_name(acc_name, status='accepted')
 #         print('Matched accepted names:')
 #         for n in acc_names:
@@ -1545,8 +1551,16 @@ if __name__ == '__main__':
 #                 n['scientificName'], n['status'], n['rank']))
 #         print ('')
         
-        names = ['ursidae', 'Poa annua']
+#         names = ['ursidae', 'Poa annua']
+        names = ['Poa annua']
         for name in names:
+            good_names = GbifAPI.match_name(name)
+            print('Matched {} with {} GBIF names:'.format(name, len(good_names)))
+            for n in good_names:
+                print('{}: {}, {}'.format(
+                    n['scientificName'], n['status'], n['rank']))
+            print ('')
+            
             itis_names = ItisAPI.match_name_solr(name)
             print ('Matched {} with {} ITIS names using Solr'.format(
                 name, len(itis_names)))
@@ -1555,14 +1569,14 @@ if __name__ == '__main__':
                     n['nameWOInd'], n['kingdom'], n['usage'], n['rank']))
             print ('')
     
-            itis_names = ItisAPI.match_name(name)
-            print ('Matched {} with {} ITIS names using web services'.format(
-                name, len(itis_names)))
-            sname_key = '{}scientificName'.format(Itis.DATA_NAMESPACE)
-            usage_key = '{}nameUsage'.format(Itis.DATA_NAMESPACE)
-            for n in itis_names:
-                print('{}: {}'.format(n[sname_key], n[usage_key]))
-            print ('')
+#             itis_names = ItisAPI.match_name(name)
+#             print ('Matched {} with {} ITIS names using web services'.format(
+#                 name, len(itis_names)))
+#             sname_key = '{}scientificName'.format(Itis.DATA_NAMESPACE)
+#             usage_key = '{}nameUsage'.format(Itis.DATA_NAMESPACE)
+#             for n in itis_names:
+#                 print('{}: {}'.format(n[sname_key], n[usage_key]))
+#             print ('')
 
 #     for tsn in tsns:
 #         recs = ItisAPI.get_itis_tsn(tsn)
