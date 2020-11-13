@@ -37,6 +37,38 @@ class GOcc:
 
 # .............................................................................
 @cherrypy.expose
+class GColl:
+    
+    # ...............................................
+    def get_dataset_recs(self, dataset_key):
+        recs = GbifAPI.get_records_by_dataset(dataset_key)
+        if len(recs) == 0:
+            return {'spcoco.error': 
+                    'No GBIF records with the dataset_key {}'.format(dataset_key)}
+        elif len(recs) == 1:
+            return recs[0]
+        else:
+            return recs
+
+    # ...............................................
+    @cherrypy.tools.json_out()
+    def GET(self, dataset_key=None):
+        """Get a one or more GBIF records for a Specify GUID or 
+        info/error message.
+        
+        Args:
+            dataset_key: a GBIF dataset GUID, from the DWCA metadata
+        Return:
+            a list of dictionaries containing DWC records from the chosen
+            dataset.  
+        """
+        if dataset_key is None:
+            return {'spcoco.message': 'S^n GBIF dataset query is online'}
+        else:
+            return self.get_dataset_recs(dataset_key)
+
+# .............................................................................
+@cherrypy.expose
 class IDBOcc:
     
     # ...............................................

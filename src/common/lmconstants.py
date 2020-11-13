@@ -186,8 +186,7 @@ class SPECIFY:
     
 # ......................................................
 class GBIF:
-    """GBIF constants enumeration
-    """
+    """GBIF constants enumeration"""
     DATA_DUMP_DELIMITER = '\t'
     TAXON_KEY = 'specieskey'
     TAXON_NAME = 'sciname'
@@ -216,6 +215,7 @@ class GBIF:
     REQUEST_DATASET_KEY = 'dataset_key'
 
     DATASET_BACKBONE_VALUE = 'GBIF Backbone Taxonomy'
+    DATASET_BACKBONE_KEY = 'd7dddbf4-2cf0-4f39-9b2a-bb099caae36c'
 
     SEARCH_COMMAND = 'search'
     COUNT_COMMAND = 'count'
@@ -258,7 +258,8 @@ class Itis:
     NAMES_FROM_TSN_QUERY = 'getAcceptedNamesFromTSN'
     # ...........
     # Web Services
-    WEBSVC_URL = 'https://www.itis.gov/ITISWebService/services/ITISService'
+    WEBSVC_URL = 'http://www.itis.gov/ITISWebService/services/ITISService'
+    JSONSVC_URL = 'https://www.itis.gov/ITISWebService/jsonservice'
     # wildcard matching
     ITISTERMS_FROM_SCINAME_QUERY = 'getITISTermsFromScientificName'
     SEARCH_KEY = 'srchKey'

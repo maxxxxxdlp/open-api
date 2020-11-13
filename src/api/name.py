@@ -77,7 +77,7 @@ class ITISName:
 class ITISSolrName:
     
     # ...............................................
-    def get_itis_accepted_taxon(self, status=None, namestr, kingdom=None):
+    def get_itis_accepted_taxon(self, namestr, status=None, kingdom=None):
         rec = GbifAPI.parse_name(namestr)
         try:
             can_name = rec['canonicalName']
@@ -162,7 +162,7 @@ class NameSvc:
 # .............................................................................
 if __name__ == '__main__':
     cherrypy.tree.mount(
-        NameSvc(), '/api/tentacles',
+        NameSvc(), '/tentacles/name',
         {'/':
             {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
          }

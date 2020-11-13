@@ -5,8 +5,10 @@ import csv
 import os
 import requests
 import urllib
-# import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET
 
+
+# import idigbio
 from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING,
@@ -559,6 +561,19 @@ class ItisAPI(APIQuery):
     
 # ...............................................
     @staticmethod
+    def _get_itis_json_recs(output):
+        try:
+            data = output['response']
+        except:
+            raise Exception('Failed to return response element')
+        try:
+            docs = data['docs']
+        except:
+            raise Exception('Failed to return docs')
+        return docs
+    
+# ...............................................
+    @staticmethod
     def map_record(rec, mapping):
         """
         Map old record to new, pulling values from returned record which may be 
@@ -596,8 +611,8 @@ class ItisAPI(APIQuery):
         if kingdom is not None:
             q_filters['kingdom'] = kingdom
         apiq = ItisAPI(Itis.SOLR_URL, q_filters=q_filters)
-#         apiq.query()
-        apiq.query_by_get()
+        apiq.query()
+#         apiq.query_by_get()
         docs = apiq._get_itis_solr_recs(apiq.output)
 
         for doc in docs:
@@ -619,7 +634,7 @@ class ItisAPI(APIQuery):
     
 # ...............................................
     @staticmethod
-    def match_name(sciname):
+    def match_name(sciname, outformat='json'):
         """Return matching names for scienfific name using the ITIS Web service.
         
         Args:
@@ -628,22 +643,37 @@ class ItisAPI(APIQuery):
         Ex: https://services.itis.gov/?q=tsn:566578&wt=json
         """
         recs = []
+        if outformat == 'json':
+            url = Itis.JSONSVC_URL
+        else:
+            url = Itis.WEBSVC_URL
+            outformat = 'xml'
         apiq = ItisAPI(
-            Itis.WEBSVC_URL, service=Itis.ITISTERMS_FROM_SCINAME_QUERY, 
+            url, service=Itis.ITISTERMS_FROM_SCINAME_QUERY, 
             other_filters={Itis.SEARCH_KEY: sciname})
-        apiq.query()
-        root = apiq.output
-
-        retElt = root.find('{}return'.format(Itis.NAMESPACE))
-        if retElt is not None:
-            termEltLst = retElt.findall('{}itisTerms'.format(Itis.DATA_NAMESPACE))
-            for tElt in termEltLst:
-                rec = {}
-                elts = tElt.getchildren()
-                for e in elts:
-                    rec[e.tag] = e.text
-                if rec:
-                    recs.append(rec)
+        apiq.query_by_get(output_type=outformat)
+        
+        if outformat == 'json':    
+#             recs = apiq._get_itis_json_recs(apiq.output)
+            outjson = apiq.output
+            try:
+                recs = outjson['itisTerms']
+            except:
+                print('itisTerms is not present in output, keys = {}'.format(
+                    outjson.keys()))
+                pass
+        else:
+            root = apiq.output    
+            retElt = root.find('{}return'.format(Itis.NAMESPACE))
+            if retElt is not None:
+                termEltLst = retElt.findall('{}itisTerms'.format(Itis.DATA_NAMESPACE))
+                for tElt in termEltLst:
+                    rec = {}
+                    elts = tElt.getchildren()
+                    for e in elts:
+                        rec[e.tag] = e.text
+                    if rec:
+                        recs.append(rec)
         return recs
 
 # ...............................................
@@ -709,7 +739,7 @@ class ItisAPI(APIQuery):
     # ...............................................
     def query(self):
         """Queries the API and sets 'output' attribute to a ElementTree object"""
-        APIQuery.query_by_get(self, output_type='xml')
+        APIQuery.query_by_get(self, output_type='json')
 
 
 # .............................................................................
@@ -925,7 +955,12 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def match_name(name_str, status=None, kingdom=None):
+    def get_records_by_dataset(dataset_key):
+        pass
+
+    # ...............................................
+    @staticmethod
+    def match_name(name_str, status=None):
         """Return closest accepted species in GBIF backbone taxonomy,
         
         Args:
@@ -948,8 +983,10 @@ class GbifAPI(APIQuery):
         name_clean = name_str.strip()
 
         other_filters = {'name': name_clean, 'verbose': 'true'}
-        if kingdom:
-            other_filters['kingdom'] = kingdom
+#         if rank:
+#             other_filters['rank'] = rank
+#         if kingdom:
+#             other_filters['kingdom'] = kingdom
         name_api = GbifAPI(
             service=GBIF.SPECIES_SERVICE, key='match',
             other_filters=other_filters)
@@ -1527,6 +1564,7 @@ if __name__ == '__main__':
              'Acer saccharum Marshall']
     
     tsns = [526853, 183671, 182662, 566578]
+    dskeys = ['56caf05f-1364-4f24-85f6-0c82520c2792']
     
     namestr = names[0]
     clean_names = GbifAPI.parse_names(names=names)
@@ -1550,34 +1588,32 @@ if __name__ == '__main__':
 #         print ('')
         
 #         names = ['ursidae', 'Poa annua']
+        recs = GbifAPI.get_records_by_dataset(dskeys[0])
         names = ['Poa annua']
         for name in names:
-            good_names = GbifAPI.match_name(name)
+            good_names = GbifAPI.match_name(
+                name, match_backbone=True, rank='species')
             print('Matched {} with {} GBIF names:'.format(name, len(good_names)))
             for n in good_names:
                 print('{}: {}, {}'.format(
                     n['scientificName'], n['status'], n['rank']))
             print ('')
-            
-            itis_names = ItisAPI.match_name_solr(name)
-            print ('Matched {} with {} ITIS names using Solr'.format(
-                name, len(itis_names)))
-            for n in itis_names:
-                print('{}: {}, {}'.format(
-                    n['nameWOInd'], n['kingdom'], n['usage'], n['rank']))
-            print ('')
-    
+#             itis_names = ItisAPI.match_name_solr(name)
+#             print ('Matched {} with {} ITIS names using Solr'.format(
+#                 name, len(itis_names)))
+#             for n in itis_names:
+#                 print('{}: {}, {}, {}'.format(
+#                     n['nameWOInd'], n['kingdom'], n['usage'], n['rank']))
+#             print ('')
+#     
 #             itis_names = ItisAPI.match_name(name)
 #             print ('Matched {} with {} ITIS names using web services'.format(
 #                 name, len(itis_names)))
-#             sname_key = '{}scientificName'.format(Itis.DATA_NAMESPACE)
-#             usage_key = '{}nameUsage'.format(Itis.DATA_NAMESPACE)
 #             for n in itis_names:
-#                 print('{}: {}'.format(n[sname_key], n[usage_key]))
+#                 print('{} {}: {}'.format(
+#                     n['tsn'], n['scientificName'], n['nameUsage']))
 #             print ('')
 
-#     for tsn in tsns:
-#         recs = ItisAPI.get_itis_tsn(tsn)
 """
 https://api.gbif.org/v1/occurrence/search?occurrenceId=dbe1622c-1ed3-11e3-bfac-90b11c41863e
 url = 'https://search.idigbio.org/v2/search/records/?rq={%22occurrenceid%22%3A%22a413b456-0bff-47da-ab26-f074d9be5219%22}'
