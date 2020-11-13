@@ -956,7 +956,31 @@ class GbifAPI(APIQuery):
     # ...............................................
     @staticmethod
     def get_records_by_dataset(dataset_key):
-        pass
+        recs = []
+        offset = 0
+        api = GbifAPI(
+            service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+            other_filters={'dataset_key': dataset_key, 'offset': offset, 
+                           'limit': GBIF.LIMIT})
+        
+        is_end = False
+        while not is_end:
+            try:
+                api.query()
+            except Exception:
+                print('Failed on {}'.format(dataset_key))
+            else:
+                # First query, report count
+                total = api.output['count']
+                is_end = bool(api.output['endOfRecords'])
+                curr_recs = api.output['results']
+                curr_count = len(curr_recs)
+                offset += curr_count
+                recs.append(curr_recs)
+                print(('Returned {} of {} GBIF recs for dataset {}'.format(
+                    curr_count, total, dataset_key)))
+        return recs
+
 
     # ...............................................
     @staticmethod
@@ -1589,15 +1613,17 @@ if __name__ == '__main__':
         
 #         names = ['ursidae', 'Poa annua']
         recs = GbifAPI.get_records_by_dataset(dskeys[0])
+        print('Returned {} records for dataset:'.format(len(recs)))
         names = ['Poa annua']
         for name in names:
-            good_names = GbifAPI.match_name(
-                name, match_backbone=True, rank='species')
-            print('Matched {} with {} GBIF names:'.format(name, len(good_names)))
-            for n in good_names:
-                print('{}: {}, {}'.format(
-                    n['scientificName'], n['status'], n['rank']))
-            print ('')
+            pass
+#             good_names = GbifAPI.match_name(
+#                 name, match_backbone=True, rank='species')
+#             print('Matched {} with {} GBIF names:'.format(name, len(good_names)))
+#             for n in good_names:
+#                 print('{}: {}, {}'.format(
+#                     n['scientificName'], n['status'], n['rank']))
+#             print ('')
 #             itis_names = ItisAPI.match_name_solr(name)
 #             print ('Matched {} with {} ITIS names using Solr'.format(
 #                 name, len(itis_names)))
