@@ -12,6 +12,15 @@ ENCODING='utf-8'
 """
 Defined solrcores in /var/solr/data/cores/
 """
+# ......................................................
+def count_docs(collection, solr_location=None):
+    count = -1
+    output = query(collection, solr_location=solr_location)
+    try:
+        count = output['response']['numFound']
+    except Exception as e:
+        print('Failed to return count {}'.format(e))
+    return count
 
 # ...............................................
 def _post_remote(collection, fname, solr_location='localhost', headers={}):
