@@ -11,8 +11,8 @@ import xml.etree.ElementTree as ET
 # import idigbio
 from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
-    BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, URL_ESCAPES, ENCODING,
-    JSON_HEADERS)
+    BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, MorphoSource, 
+    URL_ESCAPES, ENCODING, JSON_HEADERS)
 from LmRex.tools.ready_file import ready_filename
 
 # .............................................................................
@@ -921,9 +921,9 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_specify_record_by_guid(guid):
+    def get_specimen_records_by_occid(occid):
         """Return GBIF occurrences for this occurrenceId.  This should retrieve 
-        a single record originally from Specify.
+        a single record if the occurrenceId is unique.
         """
         recs = []
         api = GbifAPI(
@@ -1278,13 +1278,13 @@ class IdigbioAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_specify_record_by_guid(guid):
-        """Return iDigBio occurrences for this occurrenceId.  This should retrieve 
-        a single record originally from Specify.
+    def get_records_by_occid(occid):
+        """Return iDigBio occurrences for this occurrenceId.  This will
+        retrieve a one or more records with the given occurrenceId.
         """
         recs = []
         qf = {Idigbio.QKEY: 
-              '{"' + Idigbio.SPECIFY_GUID_FIELD + '":"' + guid + '"}'}
+              '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + guid + '"}'}
         api = IdigbioAPI(other_filters=qf)
 
         try:
@@ -1456,6 +1456,57 @@ class IdigbioAPI(APIQuery):
 
         return summary
 
+# .............................................................................
+class MorphoSourceAPI(APIQuery):
+    """Class to query Specify portal APIs and return results"""
+    # ...............................................
+    def __init__(
+            self, resource=MorphoSource.OCC_RESOURCE, q_filters={}, 
+            other_filters={}):
+        """Constructor for MorphoSourceAPI class"""
+        url = '{}/{}/{}'.format(
+            MorphoSource.URL, MorphoSource.COMMAND, resource)
+        APIQuery.__init__(
+            self, url, q_filters=q_filters, 
+            other_filters=other_filters)
+
+    # ...............................................
+    @staticmethod
+    def get_specimen_records_by_occid(occurrenceid):
+        api = MorphoSourceAPI(
+            resource=MorphoSource.OCC_RESOURCE, 
+            q_filters={MorphoSource.GUID_KEY: occurrenceid})
+
+# .............................................................................
+class SpecifyPortalAPI(APIQuery):
+    """Class to query Specify portal APIs and return results"""
+    # ...............................................
+    def __init__(self, url=None):
+        """Constructor for SpecifyPortalAPI class"""
+        if url is None:
+            url = 'http://preview.specifycloud.org/export/record'
+        APIQuery.__init__(self, url, headers=JSON_HEADERS)
+
+    # ...............................................
+    @staticmethod
+    def get_specify_record(url):
+        """Return Specify record published at this url.  
+        
+        Args:
+            url: direct url endpoint for source Specify occurrence record
+        """
+        rec = {}
+        api = APIQuery(url, headers=JSON_HEADERS)
+
+        try:
+            api.query_by_get()
+        except Exception:
+            print('Failed on {}'.format(url))
+        else:
+            rec = api.output
+        return rec
+
+
 
 # .............................................................................
 def test_bison():
@@ -1543,37 +1594,6 @@ def test_idigbio_taxon_ids():
 
     out_f.close()
     return idig_list
-
-# .............................................................................
-class SpecifyPortalAPI(APIQuery):
-    """Class to query Specify portal APIs and return results"""
-    # ...............................................
-    def __init__(self, url=None):
-        """Constructor for SpecifyPortalAPI class"""
-        if url is None:
-            url = 'http://preview.specifycloud.org/export/record'
-        APIQuery.__init__(self, url, headers=JSON_HEADERS)
-
-    # ...............................................
-    @staticmethod
-    def get_specify_record(url):
-        """Return Specify record published at this url.  
-        
-        Args:
-            url: direct url endpoint for source Specify occurrence record
-            
-        """
-        rec = {}
-        api = APIQuery(url, headers=JSON_HEADERS)
-
-        try:
-            api.query_by_get()
-        except Exception:
-            print('Failed on {}'.format(url))
-        else:
-            rec = api.output
-        return rec
-
 
 # .............................................................................
 if __name__ == '__main__':

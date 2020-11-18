@@ -179,6 +179,15 @@ class BisonQuery:
 #     }
 
 # ......................................................
+class MorphoSource:
+    URL = 'http://www.morphosource.org/api/v1'
+    OCC_RESOURCE = 'specimens'
+    MEDIA_RESOURCE = 'media'
+    OTHER_RESOURCES = ['taxonomy', 'projects', 'facilities']
+    COMMAND = 'find'
+    OCCURRENCEID_KEY = 'occurrence_id'
+    
+# ......................................................
 class SPECIFY:
     """Specify constants enumeration
     """
@@ -293,7 +302,7 @@ class Idigbio:
     RECORDSETS_POSTFIX = 'recordsets'
     SEARCH_LIMIT = 5000
     ID_FIELD = 'uuid'
-    SPECIFY_GUID_FIELD = 'occurrenceid'
+    OCCURRENCEID_FIELD = 'occurrenceid'
     LINK_FIELD = 'idigbiourl'
     GBIFID_FIELD = 'taxonid'
     BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
