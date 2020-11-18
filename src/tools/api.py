@@ -744,18 +744,7 @@ class ItisAPI(APIQuery):
 
 # .............................................................................
 class GbifAPI(APIQuery):
-    """Class to query GBIF APIs and return results
-    """
-    NameMatchFieldnames = [
-        'scientificName', 'kingdom', 'phylum', 'class', 'order', 'family',
-        'genus', 'species', 'rank', 'genusKey', 'speciesKey', 'usageKey',
-        'canonicalName', 'confidence']
-    ACCEPTED_NAME_KEY = 'accepted_name'
-    SEARCH_NAME_KEY = 'search_name'
-    SPECIES_KEY_KEY = 'speciesKey'
-    SPECIES_NAME_KEY = 'species'
-    TAXON_ID_KEY = 'taxon_id'
-
+    """Class to query GBIF APIs and return results"""
     # ...............................................
     def __init__(self, service=GBIF.SPECIES_SERVICE, key=None,
                  other_filters=None):
@@ -802,7 +791,6 @@ class GbifAPI(APIQuery):
                 tax_api.output, 'taxonomicStatus')
             canonical_str = tax_api._get_output_val(
                 tax_api.output, 'canonicalName')
-            log_lines = []
             if tax_status != 'ACCEPTED':
                 try:
                     # Not present if results are taxonomicStatus=ACCEPTED
@@ -812,30 +800,15 @@ class GbifAPI(APIQuery):
                         tax_api.output, 'accepted')
                     nub_key = tax_api._get_output_val(tax_api.output, 'nubKey')
 
-                    log_lines.append(tax_api.url)
-                    log_lines.append(
-                        '   taxonomicStatus = {}'.format(tax_status))
-                    log_lines.append(
-                        '   acceptedKey = {}'.format(accepted_key))
-                    log_lines.append(
-                        '   acceptedStr = {}'.format(accepted_str))
-                    log_lines.append('   nubKey = {}'.format(nub_key))
-                    log_lines.append('   genusKey = {}'.format(genus_key))
-                    log_lines.append('   speciesKey = {}'.format(species_key))
-                    log_lines.append(
-                        '   canonicalName = {}'.format(canonical_str))
-                    log_lines.append('   rank = {}'.format(rank_str))
                 except Exception:
-                    log_lines.append(
-                        'Failed to format data from {}'.format(taxon_key))
+                    msg = 'Failed to format data from {}'.format(taxon_key))
         except Exception as e:
             print(str(e))
             raise
         return (
             rank_str, sciname_str, canonical_str, accepted_key, accepted_str,
             nub_key, tax_status, kingdom_str, phylum_str, class_str, order_str,
-            family_str, genus_str, species_str, genus_key, species_key,
-            log_lines)
+            family_str, genus_str, species_str, genus_key, species_key)
 
     # ...............................................
     @staticmethod
@@ -928,17 +901,17 @@ class GbifAPI(APIQuery):
         recs = []
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
-            other_filters={'occurrenceID': guid})
+            other_filters={'occurrenceID': occid})
 
         try:
             api.query()
         except Exception:
-            print('Failed on {}'.format(guid))
+            print('Failed on {}'.format(occid))
         else:
             # First query, report count
             total = api.output['count']
-            print(('Found {} GBIF recs for Specify occurrenceId {}'.format(
-                total, guid)))
+            print(('Found {} GBIF recs for occurrenceId {}'.format(
+                total, occid)))
             recs = api.output['results']
         return recs
 
@@ -1472,10 +1445,21 @@ class MorphoSourceAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_specimen_records_by_occid(occurrenceid):
+    def get_specimen_records_by_occid(occid):
         api = MorphoSourceAPI(
             resource=MorphoSource.OCC_RESOURCE, 
-            q_filters={MorphoSource.GUID_KEY: occurrenceid})
+            q_filters={MorphoSource.GUID_KEY: occid})
+        try:
+            api.query()
+        except Exception:
+            print('Failed on {}'.format(guid))
+        else:
+            # First query, report count
+            total = api.output['count']
+            print(('Found {} MorphoSource recs for occurrenceId {}'.format(
+                total, occid)))
+            recs = api.output['results']
+        return recs
 
 # .............................................................................
 class SpecifyPortalAPI(APIQuery):
@@ -1584,8 +1568,8 @@ def test_idigbio_taxon_ids():
                     temp_vals = temp_vals[1:]
                     curr_name = ' '.join(temp_vals)
 
-                (_, _, _, _, _, _, tax_status, _, _, _, _, _, _, _, _, _, _
-                 ) = GbifAPI.get_taxonomy(curr_gbif_taxon_id)
+                output = GbifAPI.get_taxonomy(curr_gbif_taxon_id)
+                tax_status = output[6]
 
                 if tax_status == 'ACCEPTED':
                     idig_list.append(

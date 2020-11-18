@@ -217,6 +217,12 @@ class GBIF:
     PROVIDER_FIELD = 'puborgkey'
     ID_FIELD = 'gbifid'
 
+    ACCEPTED_NAME_KEY = 'accepted_name'
+    SEARCH_NAME_KEY = 'search_name'
+    SPECIES_KEY_KEY = 'speciesKey'
+    SPECIES_NAME_KEY = 'species'
+    TAXON_ID_KEY = 'taxon_id'
+
     REQUEST_SIMPLE_QUERY_KEY = 'q'
     REQUEST_NAME_QUERY_KEY = 'name'
     REQUEST_TAXON_KEY = 'TAXON_KEY'
@@ -231,16 +237,12 @@ class GBIF:
     MATCH_COMMAND = 'match'
     DOWNLOAD_COMMAND = 'download'
     DOWNLOAD_REQUEST_COMMAND = 'request'
-    RESPONSE_IDENTIFIER_KEY = 'key'
-    RESPONSE_RESULT_KEY = 'results'
-    RESPONSE_END_KEY = 'endOfRecords'
-    RESPONSE_COUNT_KEY = 'count'
-    RESPONSE_GENUS_ID_KEY = 'genusKey'
-    RESPONSE_GENUS_KEY = 'genus'
-    RESPONSE_SPECIES_ID_KEY = 'speciesKey'
-    RESPONSE_SPECIES_KEY = 'species'
-    RESPONSE_MATCH_KEY = 'matchType'
     RESPONSE_NOMATCH_VALUE = 'NONE'
+    
+    NameMatchFieldnames = [
+        'scientificName', 'kingdom', 'phylum', 'class', 'order', 'family',
+        'genus', 'species', 'rank', 'genusKey', 'speciesKey', 'usageKey',
+        'canonicalName', 'confidence']
 
     # For writing files from GBIF DarwinCore download,
     # DWC translations in lmCompute/code/sdm/gbif/constants
