@@ -1,7 +1,6 @@
 import cherrypy
 
-from LmRex.spcoco.resolve import (count_docs_in_solr)
-from LmRex.tools.solr import (query_guid)
+from LmRex.tools.solr import (count_docs, query_guid)
 
 collection = 'spcoco'
 solr_location = 'notyeti-192.lifemapper.org'
@@ -23,7 +22,7 @@ class SpecifyArk:
 
     # ...............................................
     def count_specify_arc_recs(self):
-        total = count_docs_in_solr(collection, solr_location)
+        total = count_docs(collection, solr_location)
         rec = {'spcoco.total': total} 
         return rec
 
