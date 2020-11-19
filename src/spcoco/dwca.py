@@ -6,9 +6,9 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from LmRex.tools.api import APIQuery, GbifAPI, IdigbioAPI
-from LmRex.tools.readwrite import (
+from LmRex.fileop.readwrite import (
     get_csv_dict_reader, get_csv_dict_writer,  get_line)
-from LmRex.tools.ready_file import ready_filename, delete_file
+from LmRex.fileop.ready_file import ready_filename, delete_file
 import LmRex.tools.solr as spsolr
 from LmRex.common.lmconstants import (
     SPECIFY_ARK_PREFIX, GBIF, DWCA, ENCODING, TEST_SPECIFY7_SERVER, 
@@ -59,11 +59,11 @@ def get_dwca_urls(rss_url, isIPT):
                 ds_key_val = str(INCR_KEY)
             else:
                 ds_key_val = ds_id_elt.text
-            datasets[ds_key_val] = {'url': url_elt.text}
+            datasets[ds_key_val] = {'url': url_elt.text, 'name': ds_key_val}
     return datasets
     
 # ......................................................
-def download_dwca(url, baseoutpath, overwrite=False):
+def download_dwca(url, baseoutpath, overwrite=False, logger=None):
     if url.endswith('.zip'):
         _, fname = os.path.split(url)
         basename, _ = os.path.splitext(fname)
@@ -90,8 +90,8 @@ def download_dwca(url, baseoutpath, overwrite=False):
                 reason = response.reason
             except AttributeError:
                 reason = 'Unknown Error'
-            print(('Failed on URL {}, code = {}, reason = {} ({})'.format(
-                url, ret_code, reason, str(e))))
+            log_error('Failed on URL {}, code = {}, reason = {} ({})'.format(
+                url, ret_code, reason, str(e)), logger)
     
         output = response.content
         with open(outfilename, 'wb') as outf:
@@ -99,17 +99,24 @@ def download_dwca(url, baseoutpath, overwrite=False):
     return outfilename
 
 # .............................................................................
-class DWCA:
+class DwCArchive:
     """Class to download and read a Darwin Core Archive"""
 
     # ......................................................
-    def __init__(self, zipfile_or_directory, outpath=None):
+    def __init__(self, zipfile_or_directory, outpath=None, logger=None):
         """
+        Args:
+            zipfile_or_directory: Full path to zipfile or directory containing 
+                Darwin Core Archive
+            outpath: file location for output data and log files
+            logger: LMLog object for logging processing information
+            
         Note: 
             Produces data requiring http post to contain 
             headers={'Content-Type': 'text/csv'}
         """
         if os.path.exists(zipfile_or_directory):
+            self.logger = logger
             # DWCA is zipped
             if (os.path.isfile(zipfile_or_directory) and 
                 zipfile_or_directory.endswith('.zip')):
@@ -137,9 +144,9 @@ class DWCA:
             return False
     
     # ......................................................
-    def _get_date(self, dwc_rec):
-        yr = dwc_rec['year']
+    def _get_date(self, dwc_rec):        
         try:
+            yr = dwc_rec['year']
             int(yr)
         except:
             coll_date = ''
@@ -157,7 +164,7 @@ class DWCA:
     
 
     # ......................................................
-    def read_recs_for_solr(self, fileinfo, ds_uuid, outpath, overwrite=True):
+    def rewrite_recs_for_solr(self, fileinfo, ds_uuid, outpath, overwrite=True):
         """
         Note: 
             Produces data requiring http post to contain 
@@ -190,8 +197,9 @@ class DWCA:
                         occ_uuid = dwc_rec[fileinfo[DWCA.UUID_KEY]]
                         if not self._is_guid(occ_uuid):
                             if count > 1:
-                                print('Line {} does not contain a GUID in id field'
-                                      .format(count))
+                                log_warn(
+                                    'Line {} does not contain a GUID in id field'
+                                    .format(count), self.log)
                         else:
                             coll_date = self._get_date(dwc_rec)
                             who_val = dwc_rec['datasetName']
@@ -214,9 +222,11 @@ class DWCA:
                                         specify_record_server, ds_uuid, occ_uuid)                        
                             wtr.writerow(solr_rec)
                     except Exception as e:
-                        print('Rec {}: failed {}'.format(count, e))
+                        log_error('Rec {}: failed {}'.format(count, e))
             except Exception as e:
-                print ('Failed to read/write file {}: {}'.format(core_fname, e))
+                log_warn(
+                    'Failed to read/write file {}: {}'.format(core_fname, e), 
+                    self.logger)
             finally:
                 inf.close()
                 outf.close()
@@ -233,15 +243,17 @@ class DWCA:
             if ext in ['.xml', '.csv', '.txt']:
                 zfile.extract(zinfo, path=extract_path)
             else:
-                print('Unexpected filename {} in zipfile {}'.format(
-                    zinfo.filename, zip_fname))
+                log_warn('Unexpected filename {} in zipfile {}'.format(
+                    zinfo.filename, zip_fname), self.logger)
 
     
     # ......................................................
     def read_dataset_uuid(self, meta_fname):
         idstr = None
         if os.path.split(meta_fname)[1] != 'eml.xml':
-            print ('Expected filename eml.xml at {}'.format(meta_fname))
+            log_error(
+                'Expected filename eml.xml at {}'.format(meta_fname), 
+                self.logger)
             return ''
         tree = ET.parse(meta_fname)
         root = tree.getroot()
@@ -282,7 +294,9 @@ class DWCA:
                 fieldname_index_map: dict of fields and corresponding column indices
         """
         if os.path.split(meta_fname)[1] != 'meta.xml':
-            print ('Expected filename meta.xml at {}'.format(meta_fname))
+            log_error(
+                'Expected filename meta.xml at {}'.format(meta_fname), 
+                self.logger)
             return ''
         fileinfo = {}
         field_idxs = {}
@@ -311,7 +325,7 @@ class DWCA:
             #     plus fieldname --> uuid_idx 
             field_idxs[DWCA.UUID_KEY] = uuid_idx
             field_idxs[uuid_idx] = DWCA.UUID_KEY
-            all_idxs = [int(uuid_idx)]
+            all_idxs = set([int(uuid_idx)])
             # Rest of fields and indices        
             field_elts = core_elt.findall('{}field'.format(DWCA.NS))
             startidx = len(DWCA.NS)-1
@@ -326,12 +340,14 @@ class DWCA:
                 # Correct UUID fieldname
                 if idx == uuid_idx:
                     uuid_fldname = term
-                all_idxs.append(int(idx))
+                    field_idxs.pop(DWCA.UUID_KEY)
+                all_idxs.add(int(idx))
                 field_idxs[idx] = term
                 field_idxs[term] = idx
             fileinfo[DWCA.UUID_KEY] = uuid_fldname
             fileinfo[DWCA.FLDMAP_KEY] = field_idxs
             # CSV file fieldnames ordered by column index
+            all_idxs = list(all_idxs)
             all_idxs.sort()
             ordered_fldnames = []
             for i in all_idxs:

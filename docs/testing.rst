@@ -25,3 +25,14 @@ Testing T-Rex elements
     * Options to search: 
       
       * curl "http://localhost:8983/solr/spcoco/select?q=*.*"
+      
+      
+* Web UI for Solr admin:
+
+  * http://notyeti-192.lifemapper.org:8983/solr/#/spcoco/core-overview 
+  
+Troubleshooting
+----------------
+
+  * /var/solr/logs/solr.log
+

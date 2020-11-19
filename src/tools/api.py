@@ -1,5 +1,4 @@
-"""Module containing functions for API Queries
-"""
+"""Module containing functions for API Queries"""
 from copy import copy
 import csv
 import os
@@ -13,7 +12,7 @@ from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, MorphoSource, 
     URL_ESCAPES, ENCODING, JSON_HEADERS)
-from LmRex.tools.ready_file import ready_filename
+from LmRex.fileop.ready_file import ready_filename
 
 # .............................................................................
 class APIQuery:
@@ -26,10 +25,12 @@ class APIQuery:
     GBIF_MISSING_KEY = 'unmatched_gbif_ids'
 
     def __init__(self, base_url, q_key='q', q_filters=None,
-                 other_filters=None, filter_string=None, headers=None):
+                 other_filters=None, filter_string=None, headers=None, 
+                 logger=None):
         """
         @summary Constructor for the APIQuery class
         """
+        self.logger = logger
         self._q_key = q_key
         self.headers = {} if headers is None else headers
         # No added filters are on url (unless initialized with filters in url)
@@ -43,7 +44,7 @@ class APIQuery:
 
     # .....................................
     @classmethod
-    def init_from_url(cls, url, headers=None):
+    def init_from_url(cls, url, headers=None, logger=None):
         """Initialize APIQuery from a url
 
         Args:
@@ -53,7 +54,8 @@ class APIQuery:
         if headers is None:
             headers = {}
         base, filters = url.split('?')
-        qry = APIQuery(base, filter_string=filters, headers=headers)
+        qry = APIQuery(
+            base, filter_string=filters, headers=headers, logger=logger)
         return qry
 
     # .........................................
@@ -133,7 +135,7 @@ class APIQuery:
 
     # ...............................................
     @staticmethod
-    def _interpret_q_clause(key, val):
+    def _interpret_q_clause(key, val, logger=None):
         cls = None
         if isinstance(val, (float, int, str)):
             cls = '{}:{}'.format(key, str(val))
@@ -147,9 +149,9 @@ class APIQuery:
                     val[0], (float, int)) and isinstance(val[1], (float, int)):
                 cls = '{}:[{} TO {}]'.format(key, str(val[0]), str(val[1]))
             else:
-                print('Unexpected value type {}'.format(val))
+                log_info('Unexpected value type {}'.format(val), logger=logger)
         else:
-            print('Unexpected value type {}'.format(val))
+            log_info('Unexpected value type {}'.format(val), logger=logger)
         return cls
 
     # ...............................................
@@ -197,8 +199,8 @@ class APIQuery:
                 reason = response.reason
             except AttributeError:
                 reason = 'Unknown Error'
-            print(('Failed on URL {}, code = {}, reason = {} ({})'.format(
-                self.url, ret_code, reason, str(e))))
+            log_info('Failed on URL {}, code = {}, reason = {} ({})'.format(
+                self.url, ret_code, reason, str(e)), logger=self.logger)
 
         if response.status_code == HTTPStatus.OK:
             if output_type == 'json':
@@ -214,10 +216,14 @@ class APIQuery:
                 except Exception as e:
                     self.output = response.text
             else:
-                print(('Unrecognized output type {}'.format(output_type)))
+                log_info(
+                    'Unrecognized output type {}'.format(output_type), 
+                    logger=self.logger)
         else:
-            print(('Failed on URL {}, code = {}, reason = {}'.format(
-                self.url, response.status_code, response.reason)))
+            log_info(
+                'Failed on URL {}, code = {}, reason = {}'.format(
+                    self.url, response.status_code, response.reason), 
+                logger=self.logger)
 
     # ...........    ....................................
     def query_by_post(self, output_type='json', file=None):
@@ -236,10 +242,11 @@ class APIQuery:
                 except Exception:
                     ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
-                print((
+                log_info(
                     """Failed on URL {}, posting uploaded file {}, code = {},
                         reason = {} ({})""".format(
-                            self.url, file, ret_code, reason, str(e))))
+                            self.url, file, ret_code, reason, str(e)), 
+                        logger=self.logger)
         # Post parameters
         else:
             all_params = self._other_filters.copy()
@@ -256,8 +263,10 @@ class APIQuery:
                 except Exception:
                     ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
-                print(('Failed on URL {}, code = {}, reason = {} ({})'.format(
-                    self.url, ret_code, reason, str(e))))
+                log_info(
+                    'Failed on URL {}, code = {}, reason = {} ({})'.format(
+                        self.url, ret_code, reason, str(e)), 
+                    logger=self.logger)
 
         if response.ok:
             try:
@@ -271,11 +280,14 @@ class APIQuery:
                     output = response.text
                     self.output = deserialize(fromstring(output))
                 else:
-                    print(('Unrecognized output type {}'.format(output_type)))
+                    log_info(
+                        'Unrecognized output type {}'.format(output_type),
+                        logger=self.logger)
             except Exception as e:
-                print(('{} {}, content={}, ({})'.format(
-                    'Failed to interpret output of URL', self.base_url,
-                    response.content, str(e))))
+                log_info(
+                    'Failed to interpret output of URL {}, content={}, ({})'
+                    .format(self.base_url, response.content, str(e)),
+                    logger=self.logger)
         else:
             try:
                 ret_code = response.status_code
@@ -283,8 +295,10 @@ class APIQuery:
             except Exception:
                 ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                 reason = 'Unknown Error'
-            print(('Failed ({}: {}) for baseurl {}'.format(
-                ret_code, reason, self.base_url)))
+            log_info(
+                'Failed ({}: {}) for baseurl {}'.format(
+                    ret_code, reason, self.base_url), 
+                logger=self.logger)
 
 
 # .............................................................................
@@ -294,7 +308,7 @@ class BisonAPI(APIQuery):
 
     # ...............................................
     def __init__(self, q_filters=None, other_filters=None, filter_string=None,
-                 headers=None):
+                 headers=None, logger=None):
         """Constructor for BisonAPI class
         """
         if headers is None:
@@ -311,18 +325,18 @@ class BisonAPI(APIQuery):
         APIQuery.__init__(
             self, BISON.OCCURRENCE_URL, q_key='q', q_filters=all_q_filters,
             other_filters=all_other_filters, filter_string=filter_string,
-            headers=headers)
+            headers=headers, logger=logger)
 
     # ...............................................
     @classmethod
-    def init_from_url(cls, url, headers=None):
+    def init_from_url(cls, url, headers=None, logger=None):
         """Instiate from url
         """
         if headers is None:
             headers = {'Content-Type': 'application/json'}
         base, filters = url.split('?')
         if base.strip().startswith(BISON.OCCURRENCE_URL):
-            qry = BisonAPI(filter_string=filters)
+            qry = BisonAPI(filter_string=filters, logger=logger)
         else:
             raise Exception(
                 'Bison occurrence API must start with {}'.format(
@@ -350,12 +364,12 @@ class BisonAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_tsn_list_for_binomials():
+    def get_tsn_list_for_binomials(logger=None):
         """Returns a list of sequences containing tsn and tsnCount
         """
         bison_qry = BisonAPI(
             q_filters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX},
-            other_filters=BisonQuery.TSN_FILTERS)
+            other_filters=BisonQuery.TSN_FILTERS, logger=logger)
         tsn_list = bison_qry._get_binomial_tsns()
         return tsn_list
 
@@ -366,25 +380,27 @@ class BisonAPI(APIQuery):
         if self.output is not None:
             data_count = self._burrow(BisonQuery.COUNT_KEYS)
             data_list = self._burrow(BisonQuery.TSN_LIST_KEYS)
-            print('Reported count = {}, actual count = {}'.format(
-                data_count, len(data_list)))
+            log_info(
+                'Reported count = {}, actual count = {}'.format(
+                    data_count, len(data_list)), 
+                logger=self.logger)
         return data_list
 
     # ...............................................
     @staticmethod
-    def get_itis_tsn_values(itis_tsn):
+    def get_itis_tsn_values(itis_tsn, logger=None):
         """Return ItisScientificName, kingdom, and TSN info for occ record
         """
         itis_name = king = tsn_hier = None
         try:
             occ_api = BisonAPI(
                 q_filters={BISON.HIERARCHY_KEY: '*-{}-'.format(itis_tsn)},
-                other_filters={'rows': 1})
+                other_filters={'rows': 1}, logger=logger)
             tsn_hier = occ_api.get_first_value_for(BISON.HIERARCHY_KEY)
             itis_name = occ_api.get_first_value_for(BISON.NAME_KEY)
             king = occ_api.get_first_value_for(BISON.KINGDOM_KEY)
         except Exception as e:
-            print(str(e))
+            log_info(str(e), logger=self.logger)
             raise
         return (itis_name, king, tsn_hier)
 
@@ -410,8 +426,9 @@ class BisonAPI(APIQuery):
                 val = rec[field_name]
                 break
             except KeyError:
-                print(('Missing {} for {}'.format(field_name, self.url)))
-
+                log_info(
+                    'Missing {} for {}'.format(field_name, self.url), 
+                    logger=self.logger)
         return val
 
 
@@ -423,7 +440,9 @@ class ItisAPI(APIQuery):
     """
 
     # ...............................................
-    def __init__(self, base_url, service=None, q_filters={}, other_filters={}):
+    def __init__(
+            self, base_url, service=None, q_filters={}, other_filters={}, 
+            logger=None):
         """Constructor for ItisAPI class.
         
         Args:
@@ -440,7 +459,8 @@ class ItisAPI(APIQuery):
         if service is not None:
             base_url = '{}/{}'.format(base_url, service)
         APIQuery.__init__(
-            self, base_url, q_filters=q_filters, other_filters=other_filters)
+            self, base_url, q_filters=q_filters, other_filters=other_filters,
+            logger=logger)
 
     # ...............................................
     def _assemble_filter_string(self, filter_string=None):
@@ -594,7 +614,7 @@ class ItisAPI(APIQuery):
             
 # ...............................................
     @staticmethod
-    def match_name_solr(sciname, status=None, kingdom=None):
+    def match_name_solr(sciname, status=None, kingdom=None, logger=None):
         """Return an ITIS record for a scientific name using the 
         ITIS Solr service.
         
@@ -610,7 +630,7 @@ class ItisAPI(APIQuery):
         q_filters = {Itis.NAME_KEY: sciname}
         if kingdom is not None:
             q_filters['kingdom'] = kingdom
-        apiq = ItisAPI(Itis.SOLR_URL, q_filters=q_filters)
+        apiq = ItisAPI(Itis.SOLR_URL, q_filters=q_filters, logger=logger)
         apiq.query()
 #         apiq.query_by_get()
         docs = apiq._get_itis_solr_recs(apiq.output)
@@ -634,7 +654,7 @@ class ItisAPI(APIQuery):
     
 # ...............................................
     @staticmethod
-    def match_name(sciname, outformat='json'):
+    def match_name(sciname, outformat='json', logger=None):
         """Return matching names for scienfific name using the ITIS Web service.
         
         Args:
@@ -650,7 +670,7 @@ class ItisAPI(APIQuery):
             outformat = 'xml'
         apiq = ItisAPI(
             url, service=Itis.ITISTERMS_FROM_SCINAME_QUERY, 
-            other_filters={Itis.SEARCH_KEY: sciname})
+            other_filters={Itis.SEARCH_KEY: sciname}, logger=logger)
         apiq.query_by_get(output_type=outformat)
         
         if outformat == 'json':    
@@ -659,8 +679,10 @@ class ItisAPI(APIQuery):
             try:
                 recs = outjson['itisTerms']
             except:
-                print('itisTerms is not present in output, keys = {}'.format(
-                    outjson.keys()))
+                log_info(
+                    'itisTerms is not present in output, keys = {}'.format(
+                        outjson.keys()), 
+                    logger=logger)
                 pass
         else:
             root = apiq.output    
@@ -678,7 +700,7 @@ class ItisAPI(APIQuery):
 
 # ...............................................
     @staticmethod
-    def get_name_by_tsn_solr(tsn):
+    def get_name_by_tsn_solr(tsn, logger=None):
         """Return a name and kingdom for an ITIS TSN using the ITIS Solr service.
         
         Args:
@@ -686,7 +708,8 @@ class ItisAPI(APIQuery):
             
         Ex: https://services.itis.gov/?q=tsn:566578&wt=json
         """
-        apiq = ItisAPI(Itis.SOLR_URL, q_filters={Itis.TSN_KEY: tsn})
+        apiq = ItisAPI(
+            Itis.SOLR_URL, q_filters={Itis.TSN_KEY: tsn}, logger=logger)
         docs = apiq.get_itis_recs()
         recs = []
         for doc in docs:
@@ -695,37 +718,37 @@ class ItisAPI(APIQuery):
                 recs.append(doc)
         return recs
 
-# ...............................................
-    @staticmethod
-    def get_vernacular_by_tsn(self, tsn):
-        """Return vernacular names for an ITIS TSN.
-        
-        Args:
-            tsn: an ITIS code designating a taxonomic name
-        """
-        common_names = []
-        if tsn is not None:
-            url = '{}/{}?{}={}'.format(
-                Itis.WEBSVC_URL, Itis.VERNACULAR_QUERY, Itis.TSN_KEY, str(tsn))
-            root = self._getDataFromUrl(url, resp_type='xml')
-        
-            retElt = root.find('{}return'.format(Itis.NAMESPACE))
-            if retElt is not None:
-                cnEltLst = retElt.findall('{}commonNames'.format(Itis.DATA_NAMESPACE))
-                for cnElt in cnEltLst:
-                    nelt = cnElt.find('{}commonName'.format(Itis.DATA_NAMESPACE))
-                    if nelt is not None and nelt.text is not None:
-                        common_names.append(nelt.text)
-        return common_names
+# # ...............................................
+#     @staticmethod
+#     def get_vernacular_by_tsn(tsn, logger=None):
+#         """Return vernacular names for an ITIS TSN.
+#         
+#         Args:
+#             tsn: an ITIS code designating a taxonomic name
+#         """
+#         common_names = []
+#         if tsn is not None:
+#             url = '{}/{}?{}={}'.format(
+#                 Itis.WEBSVC_URL, Itis.VERNACULAR_QUERY, Itis.TSN_KEY, str(tsn))
+#             root = self._getDataFromUrl(url, resp_type='xml')
+#         
+#             retElt = root.find('{}return'.format(Itis.NAMESPACE))
+#             if retElt is not None:
+#                 cnEltLst = retElt.findall('{}commonNames'.format(Itis.DATA_NAMESPACE))
+#                 for cnElt in cnEltLst:
+#                     nelt = cnElt.find('{}commonName'.format(Itis.DATA_NAMESPACE))
+#                     if nelt is not None and nelt.text is not None:
+#                         common_names.append(nelt.text)
+#         return common_names
 
     # ...............................................
     @staticmethod
-    def get_tsn_hierarchy(tsn):
+    def get_tsn_hierarchy(tsn, logger=None):
         """Retrieve taxon hierarchy"""
         url = '{}/{}'.format(Itis.WEBSVC_URL, Itis.TAXONOMY_HIERARCHY_QUERY)
         apiq = APIQuery(
             url, other_filters={Itis.TSN_KEY: tsn}, 
-            headers={'Content-Type': 'text/xml'})
+            headers={'Content-Type': 'text/xml'}, logger=logger)
         apiq.query_by_get(output_type='xml')
         tax_path = apiq._return_hierarchy()
         hierarchy = {}
@@ -747,13 +770,13 @@ class GbifAPI(APIQuery):
     """Class to query GBIF APIs and return results"""
     # ...............................................
     def __init__(self, service=GBIF.SPECIES_SERVICE, key=None,
-                 other_filters=None):
+                 other_filters=None, logger=None):
         """Constructor for GbifAPI class
         """
         url = '/'.join((GBIF.REST_URL, service))
         if key is not None:
             url = '/'.join((url, str(key)))
-        APIQuery.__init__(self, url, other_filters=other_filters)
+        APIQuery.__init__(self, url, other_filters=other_filters, logger=logger)
 
     # ...............................................
     @staticmethod
@@ -767,11 +790,12 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_taxonomy(taxon_key):
+    def get_taxonomy(taxon_key, logger=None):
         """Return GBIF backbone taxonomy for this GBIF Taxon ID
         """
         accepted_key = accepted_str = nub_key = None
-        tax_api = GbifAPI(service=GBIF.SPECIES_SERVICE, key=taxon_key)
+        tax_api = GbifAPI(
+            service=GBIF.SPECIES_SERVICE, key=taxon_key, logger=logger)
 
         try:
             tax_api.query()
@@ -801,9 +825,11 @@ class GbifAPI(APIQuery):
                     nub_key = tax_api._get_output_val(tax_api.output, 'nubKey')
 
                 except Exception:
-                    msg = 'Failed to format data from {}'.format(taxon_key))
+                    log_warn(
+                        'Failed to format data from {}'.format(taxon_key), 
+                        logger)
         except Exception as e:
-            print(str(e))
+            log_info(str(e), logger=logger)
             raise
         return (
             rank_str, sciname_str, canonical_str, accepted_key, accepted_str,
@@ -836,7 +862,7 @@ class GbifAPI(APIQuery):
     # ...............................................
     @staticmethod
     def get_occurrences(taxon_key, canonical_name, out_f_name,
-                        other_filters=None, max_points=None):
+                        other_filters=None, max_points=None, logger=None):
         """Return GBIF occurrences for this GBIF Taxon ID
         """
         gbif_api = GbifAPI(
@@ -844,7 +870,8 @@ class GbifAPI(APIQuery):
             other_filters={'taxonKey': taxon_key,
                            'limit': GBIF.LIMIT,
                            'hasCoordinate': True,
-                           'has_geospatial_issue': False})
+                           'has_geospatial_issue': False},
+            logger=logger)
 
         gbif_api.add_filters(q_filters=other_filters)
 
@@ -863,14 +890,16 @@ class GbifAPI(APIQuery):
                 try:
                     gbif_api.query()
                 except Exception:
-                    print('Failed on {}'.format(taxon_key))
+                    log_info('Failed on {}'.format(taxon_key), logger=logger)
                     curr_count = 0
                 else:
                     # First query, report count
                     if offset == 0:
                         gbif_total = gbif_api.output['count']
-                        print(('Found {} recs for key {}'.format(
-                            gbif_total, taxon_key)))
+                        log_info(
+                            'Found {} recs for key {}'.format(
+                                gbif_total, taxon_key), 
+                            logger=logger)
 
                     recs = gbif_api.output['results']
                     curr_count = len(recs)
@@ -886,32 +915,35 @@ class GbifAPI(APIQuery):
                             gbif_api, taxon_key, canonical_name, rec)
                         if row:
                             writer.writerow(row)
-                    print(('  Retrieved {} records, starting at {}'.format(
-                        curr_count, offset)))
+                    log_info(
+                        '  Retrieved {} records, starting at {}'.format(
+                            curr_count, offset), 
+                        logger=logger)
                     offset += GBIF.LIMIT
                     if max_points is not None and lm_total >= max_points:
                         complete = True
 
     # ...............................................
     @staticmethod
-    def get_specimen_records_by_occid(occid):
+    def get_specimen_records_by_occid(occid, logger=None):
         """Return GBIF occurrences for this occurrenceId.  This should retrieve 
         a single record if the occurrenceId is unique.
         """
         recs = []
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
-            other_filters={'occurrenceID': occid})
+            other_filters={'occurrenceID': occid}, logger=logger)
 
         try:
             api.query()
         except Exception:
-            print('Failed on {}'.format(occid))
+            log_info('Failed on {}'.format(occid), logger=logger)
         else:
             # First query, report count
             total = api.output['count']
-            print(('Found {} GBIF recs for occurrenceId {}'.format(
-                total, occid)))
+            log_info(
+                'Found {} GBIF recs for occurrenceId {}'.format(total, occid), 
+                logger=logger)
             recs = api.output['results']
         return recs
 
@@ -928,20 +960,21 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_records_by_dataset(dataset_key):
+    def get_records_by_dataset(dataset_key, logger=None):
         recs = []
         offset = 0
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'dataset_key': dataset_key, 'offset': offset, 
-                           'limit': GBIF.LIMIT})
+                           'limit': GBIF.LIMIT}
+            logger=logger)
         
         is_end = False
         while not is_end:
             try:
                 api.query()
             except Exception:
-                print('Failed on {}'.format(dataset_key))
+                log_info('Failed on {}'.format(dataset_key), logger=logger)
             else:
                 # First query, report count
                 total = api.output['count']
@@ -950,14 +983,16 @@ class GbifAPI(APIQuery):
                 curr_count = len(curr_recs)
                 offset += curr_count
                 recs.append(curr_recs)
-                print(('Returned {} of {} GBIF recs for dataset {}'.format(
-                    curr_count, total, dataset_key)))
+                log_info(
+                    'Returned {} of {} GBIF recs for dataset {}'.format(
+                        curr_count, total, dataset_key), 
+                    logger=logger)
         return recs
 
 
     # ...............................................
     @staticmethod
-    def match_name(name_str, status=None):
+    def match_name(name_str, status=None, logger=None):
         """Return closest accepted species in GBIF backbone taxonomy,
         
         Args:
@@ -986,13 +1021,15 @@ class GbifAPI(APIQuery):
 #             other_filters['kingdom'] = kingdom
         name_api = GbifAPI(
             service=GBIF.SPECIES_SERVICE, key='match',
-            other_filters=other_filters)
+            other_filters=other_filters, logger=logger)
         try:
             name_api.query()
             output = name_api.output
         except Exception as e:
-            print(('Failed to get a response for species match on {}, ({})'
-                   .format(name_clean, str(e))))
+            log_info(
+                'Failed to get a response for species match on {}, ({})'.format(
+                    name_clean, str(e)), 
+                logger=logger)
             raise
 
         # Pull alternatives out of record
@@ -1006,7 +1043,9 @@ class GbifAPI(APIQuery):
             if output['matchType'].lower() == 'none':
                 is_match = False
         except AttributeError:
-            print('No matchType for record matching {}'.format(name_clean))
+            log_info(
+                'No matchType for record matching {}'.format(name_clean), 
+                logger=logger)
         else:
             # No filter by status
             if is_match:
@@ -1020,7 +1059,10 @@ class GbifAPI(APIQuery):
                     try:
                         outstatus = output['status'].lower()
                     except AttributeError:
-                        print('No status for record matching {}'.format(name_clean))
+                        log_info(
+                            'No status for record matching {}'.format(
+                                name_clean), 
+                            logger=logger)
                     else:
                         if outstatus == status:
                             matches.append(output)
@@ -1030,16 +1072,18 @@ class GbifAPI(APIQuery):
                         try:
                             outstatus = alt['status'].lower()
                         except AttributeError:
-                            print('No status for alternative matching {}'.format(name_clean))
+                            log_info(
+                                'No status for alternative matching {}'.format(
+                                    name_clean), 
+                                logger=logger)
                         else:
                             if outstatus == status:
                                 matches.append(alt)
-
         return matches
 
     # ......................................
     @staticmethod
-    def _post_json_to_parser(url, data):
+    def _post_json_to_parser(url, data, logger=None):
         response = output = None
         try:
             response = requests.post(url, json=data)
@@ -1047,7 +1091,8 @@ class GbifAPI(APIQuery):
             if response is not None:
                 ret_code = response.status_code
             else:
-                print(('Failed on URL {} ({})'.format(url, str(e))))
+                log_info(
+                    'Failed on URL {} ({})'.format(url, str(e)), logger=logger)
         else:
             if response.ok:
                 try:
@@ -1058,33 +1103,36 @@ class GbifAPI(APIQuery):
                     except Exception:
                         output = response.text
                     else:
-                        print((
+                        log_info(
                             'Failed to interpret output of URL {} ({})'.format(
-                                url, str(e))))
+                                url, str(e)), 
+                            logger=logger)
             else:
                 try:
                     ret_code = response.status_code
                     reason = response.reason
                 except AttributeError:
-                    print((
+                    log_info(
                         'Failed to find failure reason for URL {} ({})'.format(
-                            url, str(e))))
+                            url, str(e)), 
+                        logger=logger)
                 else:
-                    print(('Failed on URL {} ({}: {})'.format(
-                        url, ret_code, reason)))
+                    log_info(
+                        'Failed on URL {} ({}: {})'.format(url, ret_code, reason), 
+                        logger=logger)
         return output
     
     
 # ...............................................
     @staticmethod
-    def _trim_parsed_output(output):
+    def _trim_parsed_output(output, logger=None):
         recs = []
         for rec in output:
             # Only return parsed records
             try:
                 success = rec['parsed']
             except:
-                print('Missing `parsed` field in record')
+                log_info('Missing `parsed` field in record', logger=logger)
             else:
                 if success:
                     recs.append(rec)
@@ -1092,7 +1140,7 @@ class GbifAPI(APIQuery):
 
 # ...............................................
     @staticmethod
-    def parse_name(namestr):
+    def parse_name(namestr, logger=None):
         """
         Send a scientific name to the GBIF Parser returning a canonical name.
         
@@ -1109,7 +1157,8 @@ class GbifAPI(APIQuery):
         # Query GBIF
         name_api = GbifAPI(
             service=GBIF.PARSER_SERVICE, 
-            other_filters={GBIF.REQUEST_NAME_QUERY_KEY: namestr})
+            other_filters={GBIF.REQUEST_NAME_QUERY_KEY: namestr},
+            logger=logger)
         name_api.query_by_get()
         # Parse results (should be only one)
         if name_api.output is not None:
@@ -1120,12 +1169,14 @@ class GbifAPI(APIQuery):
                 pass
             else:
                 if len(recs) > 1:
-                    print('WTF, {} has > 1 parsed records'.format(namestr))
+                    log_info(
+                        'WTF, {} has > 1 parsed records'.format(namestr), 
+                        logger=logger)
         return rec
 
     # ...............................................
     @staticmethod
-    def parse_names(names=[], filename=None):
+    def parse_names(names=[], filename=None, logger=None):
         """
         Send a list or file (or both) of scientific names to the GBIF Parser,
         returning a dictionary of results.  Each scientific name can possibly 
@@ -1146,30 +1197,33 @@ class GbifAPI(APIQuery):
 
         url = '{}/{}'.format(GBIF.REST_URL, GBIF.PARSER_SERVICE)
         try:
-            output = GbifAPI._post_json_to_parser(url, names)
+            output = GbifAPI._post_json_to_parser(url, names, logger=logger)
         except Exception as e:
-            print('Failed to get response from GBIF for data {}, {}'.format(
-                filename, e))
+            log_info(
+                'Failed to get response from GBIF for data {}, {}'.format(
+                    filename, e), 
+                logger=logger)
             raise e
 
         if output:
-            recs = GbifAPI._trim_parsed_output(output)
+            recs = GbifAPI._trim_parsed_output(output, logger=logger)
         return recs
 
     # ...............................................
     @staticmethod
-    def get_publishing_org(pub_org_key):
+    def get_publishing_org(pub_org_key, logger=None):
         """Return title from one organization record with this key
 
         Args:
             pub_org_key: GBIF identifier for this publishing organization
         """
-        org_api = GbifAPI(service=GBIF.ORGANIZATION_SERVICE, key=pub_org_key)
+        org_api = GbifAPI(
+            service=GBIF.ORGANIZATION_SERVICE, key=pub_org_key, logger=logger)
         try:
             org_api.query()
             pub_org_name = org_api._get_output_val(org_api.output, 'title')
         except Exception as e:
-            print(str(e))
+            log_info(str(e), logger=logger)
             raise
         return pub_org_name
 
@@ -1188,7 +1242,7 @@ class IdigbioAPI(APIQuery):
 
     # ...............................................
     def __init__(self, q_filters=None, other_filters=None, filter_string=None,
-                 headers=None):
+                 headers=None, logger=None):
         """Constructor for IdigbioAPI class
         """
         idig_search_url = '/'.join((
@@ -1206,16 +1260,17 @@ class IdigbioAPI(APIQuery):
         APIQuery.__init__(
             self, idig_search_url, q_key=Idigbio.QKEY, q_filters=all_q_filters,
             other_filters=all_other_filters, filter_string=filter_string,
-            headers=headers)
+            headers=headers, logger=logger)
 
     # ...............................................
     @classmethod
-    def init_from_url(cls, url, headers=None):
+    def init_from_url(cls, url, headers=None, logger=None):
         """Initialize from url
         """
         base, filters = url.split('?')
         if base.strip().startswith(Idigbio.SEARCH_PREFIX):
-            qry = IdigbioAPI(filter_string=filters, headers=headers)
+            qry = IdigbioAPI(
+                filter_string=filters, headers=headers, logger=logger)
         else:
             raise Exception(
                 'iDigBio occurrence API must start with {}' .format(
@@ -1251,25 +1306,27 @@ class IdigbioAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_records_by_occid(occid):
+    def get_records_by_occid(occid, logger=None):
         """Return iDigBio occurrences for this occurrenceId.  This will
         retrieve a one or more records with the given occurrenceId.
         """
         recs = []
         qf = {Idigbio.QKEY: 
-              '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + guid + '"}'}
-        api = IdigbioAPI(other_filters=qf)
+              '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + occid + '"}'}
+        api = IdigbioAPI(other_filters=qf, logger=logger)
 
         try:
             api.query()
         except Exception:
-            print('Failed on {}'.format(guid))
+            log_info('Failed on {}'.format(occid), logger=logger)
         else:
             recs = []
             if api.output is not None:
                 total = api.output['itemCount']
-                print(('Found {} iDigBio recs for Specify occurrenceId {}'.format(
-                    total, guid)))
+                log_info(
+                    'Found {} iDigBio recs for Specify occurrenceId {}'.format(
+                        total, occid), 
+                    logger=logger)
                 recs = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
         return recs
 
@@ -1301,7 +1358,7 @@ class IdigbioAPI(APIQuery):
 #         try:
 #             output = api.search_records(rq=record_query, limit=1, offset=0)
 #         except Exception:
-#             print('Failed on {}'.format(gbif_taxon_id))
+#             log_info('Failed on {}'.format(gbif_taxon_id))
 #             total = 0
 #         else:
 #             total = output['itemCount']
@@ -1324,7 +1381,7 @@ class IdigbioAPI(APIQuery):
 #                 output = api.search_records(
 #                     rq=record_query, limit=limit, offset=offset)
 #             except Exception:
-#                 print('Failed on {}'.format(gbif_taxon_id))
+#                 log_info('Failed on {}'.format(gbif_taxon_id))
 #                 total = 0
 #             else:
 #                 total = output['itemCount']
@@ -1332,7 +1389,7 @@ class IdigbioAPI(APIQuery):
 #                 # First gbifTaxonId where this data retrieval is successful,
 #                 # get and write header and metadata
 #                 if total > 0 and fields is None:
-#                     print('Found data, writing data and metadata')
+#                     log_info('Found data, writing data and metadata')
 #                     fields = self._get_idigbio_fields(output['items'][0])
 #                     # Write header in datafile
 #                     writer.writerow(fields)
@@ -1343,7 +1400,7 @@ class IdigbioAPI(APIQuery):
 #                 # Write these records
 #                 recs = output['items']
 #                 curr_count += len(recs)
-#                 print(('  Retrieved {} records, {} recs starting at {}'.format(
+#                 log_info(('  Retrieved {} records, {} recs starting at {}'.format(
 #                     len(recs), limit, offset)))
 #                 for rec in recs:
 #                     rec_data = rec['indexTerms']
@@ -1369,22 +1426,23 @@ class IdigbioAPI(APIQuery):
 # 
 #                     writer.writerow(vals)
 #                 offset += limit
-#         print(('Retrieved {} of {} reported records for {}'.format(
+#         log_info(('Retrieved {} of {} reported records for {}'.format(
 #             curr_count, total, gbif_taxon_id)))
 #         return curr_count, fields
 
     # ...............................................
-    def assemble_idigbio_data(self, taxon_ids, point_output_file,
-                              meta_output_file, missing_id_file=None):
-        """Assemble iDigBio data dictionary
-        """
+    def assemble_idigbio_data(
+            self, taxon_ids, point_output_file, meta_output_file, 
+            missing_id_file=None, logger=None):
+        """Assemble iDigBio data dictionary"""
         if not isinstance(taxon_ids, list):
             taxon_ids = [taxon_ids]
 
         # Delete old files
         for fname in (point_output_file, meta_output_file):
             if os.path.exists(fname):
-                print(('Deleting existing file {} ...'.format(fname)))
+                log_info(
+                    'Deleting existing file {} ...'.format(fname), logger=logger)
                 os.remove(fname)
 
         summary = {self.GBIF_MISSING_KEY: []}
@@ -1435,29 +1493,31 @@ class MorphoSourceAPI(APIQuery):
     # ...............................................
     def __init__(
             self, resource=MorphoSource.OCC_RESOURCE, q_filters={}, 
-            other_filters={}):
+            other_filters={}, logger=None):
         """Constructor for MorphoSourceAPI class"""
         url = '{}/{}/{}'.format(
             MorphoSource.URL, MorphoSource.COMMAND, resource)
         APIQuery.__init__(
             self, url, q_filters=q_filters, 
-            other_filters=other_filters)
+            other_filters=other_filters, logger=logger)
 
     # ...............................................
     @staticmethod
-    def get_specimen_records_by_occid(occid):
+    def get_specimen_records_by_occid(occid, logger=None):
         api = MorphoSourceAPI(
             resource=MorphoSource.OCC_RESOURCE, 
-            q_filters={MorphoSource.GUID_KEY: occid})
+            q_filters={MorphoSource.OCCURRENCEID_KEY: occid})
         try:
             api.query()
         except Exception:
-            print('Failed on {}'.format(guid))
+            log_info('Failed on {}'.format(occid), logger=logger)
         else:
             # First query, report count
             total = api.output['count']
-            print(('Found {} MorphoSource recs for occurrenceId {}'.format(
-                total, occid)))
+            log_info(
+                'Found {} MorphoSource recs for occurrenceId {}'.format(
+                    total, occid), 
+                logger=logger)
             recs = api.output['results']
         return recs
 
@@ -1465,27 +1525,27 @@ class MorphoSourceAPI(APIQuery):
 class SpecifyPortalAPI(APIQuery):
     """Class to query Specify portal APIs and return results"""
     # ...............................................
-    def __init__(self, url=None):
+    def __init__(self, url=None, logger=None):
         """Constructor for SpecifyPortalAPI class"""
         if url is None:
             url = 'http://preview.specifycloud.org/export/record'
-        APIQuery.__init__(self, url, headers=JSON_HEADERS)
+        APIQuery.__init__(self, url, headers=JSON_HEADERS, logger=logger)
 
     # ...............................................
     @staticmethod
-    def get_specify_record(url):
+    def get_specify_record(url, logger=None):
         """Return Specify record published at this url.  
         
         Args:
             url: direct url endpoint for source Specify occurrence record
         """
         rec = {}
-        api = APIQuery(url, headers=JSON_HEADERS)
+        api = APIQuery(url, headers=JSON_HEADERS, logger=logger)
 
         try:
             api.query_by_get()
         except Exception:
-            print('Failed on {}'.format(url))
+            log_info('Failed on {}'.format(url), logger=logger)
         else:
             rec = api.output
         return rec
@@ -1493,7 +1553,7 @@ class SpecifyPortalAPI(APIQuery):
 
 
 # .............................................................................
-def test_bison():
+def test_bison(logger=None):
     """Test Bison
     """
     tsn_list = [['100637', 31], ['100667', 45], ['100674', 24]]
@@ -1509,19 +1569,23 @@ def test_bison():
         this_url = occ_api.url
         occ_list = occ_api.get_tsn_occurrences()
         count = None if not occ_list else len(occ_list)
-        print('Received {} occurrences for TSN {}'.format(count, tsn))
+        log_info(
+            'Received {} occurrences for TSN {}'.format(count, tsn), 
+            logger=logger)
 
         occ_api2 = BisonAPI.init_from_url(this_url)
         occ_list2 = occ_api2.get_tsn_occurrences()
         count = None if not occ_list2 else len(occ_list2)
-        print('Received {} occurrences from url init'.format(count))
+        log_info(
+            'Received {} occurrences from url init'.format(count),
+            logger=logger)
 
         tsn_api = BisonAPI(
             q_filters={BISON.HIERARCHY_KEY: '*-{}-'.format(tsn)},
             other_filters={'rows': 1})
         hier = tsn_api.get_first_value_for(BISON.HIERARCHY_KEY)
         name = tsn_api.get_first_value_for(BISON.NAME_KEY)
-        print(name, hier)
+        log_info('{} hierarchy: {}'.format(name, hier), logger=logger)
 
 
 # .............................................................................
@@ -1530,7 +1594,7 @@ def test_gbif():
     """
     taxon_id = 1000225
     output = GbifAPI.get_taxonomy(taxon_id)
-    print('GBIF Taxonomy for {} = {}'.format(taxon_id, output))
+    log_info('GBIF Taxonomy for {} = {}'.format(taxon_id, output))
 
 
 # .............................................................................
@@ -1554,7 +1618,7 @@ def test_idigbio_taxon_ids():
             if line is not None:
                 temp_vals = line.strip().split()
                 if len(temp_vals) < 3:
-                    print(('Missing data in line {}'.format(line)))
+                    log_info(('Missing data in line {}'.format(line)))
                 else:
                     try:
                         curr_gbif_taxon_id = int(temp_vals[0])
@@ -1600,49 +1664,49 @@ if __name__ == '__main__':
     try:
         acc_name = can_name['canonicalName']
     except Exception as e:
-        print('Failed to match {}'.format(namestr))
+        log_info('Failed to match {}'.format(namestr))
     else:
 #         acc_names = GbifAPI.match_name(acc_name, status='accepted')
-#         print('Matched accepted names:')
+#         log_info('Matched accepted names:')
 #         for n in acc_names:
-#             print('{}: {}, {}'.format(
+#             log_info('{}: {}, {}'.format(
 #                 n['scientificName'], n['status'], n['rank']))
-#         print ('')
+#         log_info ('')
 #         syn_names = GbifAPI.match_name(acc_name, status='synonym')
-#         print('Matched synonyms:')
+#         log_info('Matched synonyms:')
 #         for n in syn_names:
-#             print('{}: {}, {}'.format(
+#             log_info('{}: {}, {}'.format(
 #                 n['scientificName'], n['status'], n['rank']))
-#         print ('')
+#         log_info ('')
         
 #         names = ['ursidae', 'Poa annua']
         recs = GbifAPI.get_records_by_dataset(dskeys[0])
-        print('Returned {} records for dataset:'.format(len(recs)))
+        log_info('Returned {} records for dataset:'.format(len(recs)))
         names = ['Poa annua']
         for name in names:
             pass
 #             good_names = GbifAPI.match_name(
 #                 name, match_backbone=True, rank='species')
-#             print('Matched {} with {} GBIF names:'.format(name, len(good_names)))
+#             log_info('Matched {} with {} GBIF names:'.format(name, len(good_names)))
 #             for n in good_names:
-#                 print('{}: {}, {}'.format(
+#                 log_info('{}: {}, {}'.format(
 #                     n['scientificName'], n['status'], n['rank']))
-#             print ('')
+#             log_info ('')
 #             itis_names = ItisAPI.match_name_solr(name)
-#             print ('Matched {} with {} ITIS names using Solr'.format(
+#             log_info ('Matched {} with {} ITIS names using Solr'.format(
 #                 name, len(itis_names)))
 #             for n in itis_names:
-#                 print('{}: {}, {}, {}'.format(
+#                 log_info('{}: {}, {}, {}'.format(
 #                     n['nameWOInd'], n['kingdom'], n['usage'], n['rank']))
-#             print ('')
+#             log_info ('')
 #     
 #             itis_names = ItisAPI.match_name(name)
-#             print ('Matched {} with {} ITIS names using web services'.format(
+#             log_info ('Matched {} with {} ITIS names using web services'.format(
 #                 name, len(itis_names)))
 #             for n in itis_names:
-#                 print('{} {}: {}'.format(
+#                 log_info('{} {}: {}'.format(
 #                     n['tsn'], n['scientificName'], n['nameUsage']))
-#             print ('')
+#             log_info ('')
 
 """
 https://api.gbif.org/v1/occurrence/search?occurrenceId=dbe1622c-1ed3-11e3-bfac-90b11c41863e

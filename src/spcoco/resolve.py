@@ -3,9 +3,10 @@ import os
 import subprocess
 
 from LmRex.common.lmconstants import (
-    ENCODING, TEST_SPECIFY7_SERVER, SPECIFY7_RECORD_ENDPOINT, 
+    ENCODING, TEST_SPECIFY7_SERVER, SPECIFY7_RECORD_ENDPOINT, DWCA,
     SPECIFY7_SERVER_KEY, ICH_RSS_URL, KU_IPT_RSS_URL)
-from LmRex.spcoco.dwca import (DWCA, get_dwca_urls, download_dwca)
+from LmRex.fileop.logtools import (LMLog, log_info, log_warn, log_error)
+from LmRex.spcoco.dwca import (DwCArchive, get_dwca_urls, download_dwca)
 from LmRex.tools.api import GbifAPI, IdigbioAPI
 import LmRex.tools.solr as spsolr
 
@@ -50,7 +51,18 @@ def get_specify_server(dwca_url):
     return specify_url
 
 # ...............................................
-def main(zname, dwca_url, outpath, occguids):
+def get_logger_for_processing(self, logpath, logname=None):
+    import time
+    if logname is None:
+        nm, _ = os.path.splitext(os.path.basename(__file__))
+        logname = '{}.{}'.format(nm, int(time.time()))
+    logfname = os.path.join(logpath, '{}.log'.format(logname))
+    logger = get_logger(logname, logfname)
+    return logger
+
+# ...............................................
+def main(zname, dwca_url, outpath, solr_location, testguids=[]):
+    logger = get_logger_for_processing(outpath)
     # IPT url does not host Specify occurrence server
     isIPT = (dwca_url.find('http://ipt') == 0)
     if dwca_url is not None and not isIPT:
@@ -69,9 +81,9 @@ def main(zname, dwca_url, outpath, occguids):
             try:
                 url = meta['url']
             except:
-                print('Failed to get URL for IPT dataset {}'.format(guid))
+                logger.warn('Failed to get URL for IPT dataset {}'.format(guid))
             else:
-                zipfname = download_dwca(url, outpath)
+                zipfname = download_dwca(url, outpath, overwrite=False)
                 meta['filename'] = zipfname
                 datasets[guid] = meta
     fixme = []
@@ -80,9 +92,9 @@ def main(zname, dwca_url, outpath, occguids):
         try:
             zipfname = meta['filename']
         except:
-            print('Failed to download data for IPT dataset {}'.format(guid))
+            logger.warn('Failed to download data for IPT dataset {}'.format(guid))
         else:
-            dwca = DWCA(zipfname)
+            dwca = DwCArchive(zipfname, log=logger)
             
             extract_path, _ = os.path.split(zipfname)
             meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
@@ -103,20 +115,20 @@ def main(zname, dwca_url, outpath, occguids):
             # new/obsolete guid pair
             fixme.append((dwca_guid, tmp_guid))
                    
-#         # Read record metadata, dwca_guid takes precedence
-#         solr_fname, content_type, rec_count = read_recs_for_solr(
-#             core_fileinfo, dwca_guid, extract_path, overwrite=False)         
-#         start_count = spsolr.count_docs(collection, solr_location=solr_location)
-# 
-#         # Post
-#         retcode, output = spsolr.post(
-#             collection, solr_fname, solr_location=solr_location, 
-#             headers={'Content-Type': content_type})
-# 
-#         # Report old/new solr index count
-#         end_count = spsolr.count_docs(collection, solr_location=solr_location)
-#         print('Posted, code {}, {} recs in file {} to {}, {} --> {} docs'.format(
-#             retcode, rec_count, solr_fname, collection, start_count, end_count))
+        # Read record metadata, dwca_guid takes precedence
+        solr_fname, content_type, rec_count = dwca.rewrite_recs_for_solr(
+            core_fileinfo, dwca_guid, extract_path, overwrite=False)         
+        start_count = spsolr.count_docs(collection, solr_location=solr_location)
+ 
+        # Post
+        retcode, output = spsolr.post(
+            collection, solr_fname, solr_location=solr_location, 
+            headers={'Content-Type': content_type})
+ 
+        # Report old/new solr index count
+        end_count = spsolr.count_docs(collection, solr_location=solr_location)
+        print('Posted, code {}, {} recs in file {} to {}, {} --> {} docs'.format(
+            retcode, rec_count, solr_fname, collection, start_count, end_count))
 
     # May use dataset guid somewhere
     for new_obsolete_pair in fixme:
@@ -125,20 +137,20 @@ def main(zname, dwca_url, outpath, occguids):
         # Add value back with updated key
         datasets[new_obsolete_pair[0]] = meta
         
-    # Test 
-    for oguid in occguids:
-        doc = spsolr.query_guid(collection, oguid, solr_location=solr_location)
-        print('{}: {}'.format(oguid, doc))
-        grecs = GbifAPI.get_specify_record_by_guid(oguid)
-        for r in grecs:
-            print('  Returned {} with {} issues from collection {}'.format(
-                r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
-        irecs = IdigbioAPI.get_specify_record_by_guid(oguid)
-        for r in irecs:
-            print('  Returned {} with {} flags from collection {}'.format(
-                r['data']['dwc:scientificName'], len(r['indexTerms']['flags']), 
-                r['data']['dwc:collectionCode'], oguid))
-        print()
+#     # Test 
+#     for oguid in testguids:
+#         doc = spsolr.query_guid(collection, oguid, solr_location=solr_location)
+#         print('{}: {}'.format(oguid, doc))logger
+#         grecs = GbifAPI.get_specimen_records_by_occid(oguid)
+#         for r in grecs:
+#             print('  Returned {} with {} issues from collection {}'.format(
+#                 r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
+#         irecs = IdigbioAPI.get_records_by_occid(oguid)
+#         for r in irecs:
+#             print('  Returned {} with {} flags from collection {}'.format(
+#                 r['data']['dwc:scientificName'], len(r['indexTerms']['flags']), 
+#                 r['data']['dwc:collectionCode'], oguid))
+#         print()
 
         
 
@@ -146,13 +158,16 @@ def main(zname, dwca_url, outpath, occguids):
 if __name__ == '__main__':
     collection = 'spcoco'
     solr_location = 'notyeti-192.lifemapper.org'
+    test_rss = KU_IPT_RSS_URL
+#     test_rss = ICH_RSS_URL
+    
     parser = argparse.ArgumentParser(
         description=('Read a zipped DWCA file and index records into Solr.'))
     parser.add_argument(
         '--dwca_file', type=str, default=None,
         help='Zipped DWCA to process')
     parser.add_argument(
-        '--rss', type=str, default=ICH_RSS_URL,
+        '--rss', type=str, default=test_rss,
         help='URL for RSS feed with download links')    
     parser.add_argument(
         '--outpath', type=str, default='/tmp',
@@ -172,7 +187,7 @@ if __name__ == '__main__':
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
     
-    main(zname, dwca_url, outpath, occguids)
+    main(zname, dwca_url, outpath, solr_location, testguids=occguids)
 
 """
 query collection:

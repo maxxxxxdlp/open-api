@@ -7,9 +7,9 @@ import cherrypy
 import json
 
 from LmRex.tools.api import APIQuery, GbifAPI, IdigbioAPI
-from LmRex.tools.readwrite import (
+from LmRex.fileop.readwrite import (
     get_csv_dict_reader, get_csv_dict_writer,  get_line)
-from LmRex.tools.ready_file import ready_filename, delete_file
+from LmRex.fileop.ready_file import ready_filename, delete_file
 import LmRex.tools.solr as spsolr
 from LmRex.common.lmconstants import (
     SPECIFY_ARK_PREFIX, GBIF, DWCA, ENCODING, TEST_SPECIFY7_SERVER, 
