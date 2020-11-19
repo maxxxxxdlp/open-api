@@ -149,9 +149,9 @@ class APIQuery:
                     val[0], (float, int)) and isinstance(val[1], (float, int)):
                 cls = '{}:[{} TO {}]'.format(key, str(val[0]), str(val[1]))
             else:
-                log_info('Unexpected value type {}'.format(val), logger=logger)
+                log_warn('Unexpected value type {}'.format(val), logger=logger)
         else:
-            log_info('Unexpected value type {}'.format(val), logger=logger)
+            log_warn('Unexpected value type {}'.format(val), logger=logger)
         return cls
 
     # ...............................................
@@ -194,36 +194,32 @@ class APIQuery:
         try:
             response = requests.get(self.url, headers=self.headers)
         except Exception as e:
-            try:
-                ret_code = response.status_code
-                reason = response.reason
-            except AttributeError:
-                reason = 'Unknown Error'
-            log_info('Failed on URL {}, code = {}, reason = {} ({})'.format(
-                self.url, ret_code, reason, str(e)), logger=self.logger)
-
-        if response.status_code == HTTPStatus.OK:
-            if output_type == 'json':
-                try:
-                    self.output = response.json()
-                except Exception as e:
-                    output = response.content
-                    self.output = deserialize(fromstring(output))
-            elif output_type == 'xml':
-                try:
-                    output = fromstring(response.text)
-                    self.output = output
-                except Exception as e:
-                    self.output = response.text
-            else:
-                log_info(
-                    'Unrecognized output type {}'.format(output_type), 
-                    logger=self.logger)
-        else:
-            log_info(
-                'Failed on URL {}, code = {}, reason = {}'.format(
-                    self.url, response.status_code, response.reason), 
+            log_error(
+                'Failed on URL {}, ({})'.format(self.url, str(e)), 
                 logger=self.logger)
+        else:
+            if response.status_code == HTTPStatus.OK:
+                if output_type == 'json':
+                    try:
+                        self.output = response.json()
+                    except Exception as e:
+                        output = response.content
+                        self.output = deserialize(fromstring(output))
+                elif output_type == 'xml':
+                    try:
+                        output = fromstring(response.text)
+                        self.output = output
+                    except Exception as e:
+                        self.output = response.text
+                else:
+                    log_error(
+                        'Unrecognized output type {}'.format(output_type), 
+                        logger=self.logger)
+            else:
+                log_error(
+                    'Failed on URL {}, code = {}, reason = {}'.format(
+                        self.url, response.status_code, response.reason), 
+                    logger=self.logger)
 
     # ...........    ....................................
     def query_by_post(self, output_type='json', file=None):
@@ -242,7 +238,7 @@ class APIQuery:
                 except Exception:
                     ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
-                log_info(
+                log_error(
                     """Failed on URL {}, posting uploaded file {}, code = {},
                         reason = {} ({})""".format(
                             self.url, file, ret_code, reason, str(e)), 
@@ -263,7 +259,7 @@ class APIQuery:
                 except Exception:
                     ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
-                log_info(
+                log_error(
                     'Failed on URL {}, code = {}, reason = {} ({})'.format(
                         self.url, ret_code, reason, str(e)), 
                     logger=self.logger)
@@ -280,11 +276,11 @@ class APIQuery:
                     output = response.text
                     self.output = deserialize(fromstring(output))
                 else:
-                    log_info(
+                    log_error(
                         'Unrecognized output type {}'.format(output_type),
                         logger=self.logger)
             except Exception as e:
-                log_info(
+                log_error(
                     'Failed to interpret output of URL {}, content={}, ({})'
                     .format(self.base_url, response.content, str(e)),
                     logger=self.logger)
@@ -295,7 +291,7 @@ class APIQuery:
             except Exception:
                 ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                 reason = 'Unknown Error'
-            log_info(
+            log_error(
                 'Failed ({}: {}) for baseurl {}'.format(
                     ret_code, reason, self.base_url), 
                 logger=self.logger)
@@ -400,7 +396,7 @@ class BisonAPI(APIQuery):
             itis_name = occ_api.get_first_value_for(BISON.NAME_KEY)
             king = occ_api.get_first_value_for(BISON.KINGDOM_KEY)
         except Exception as e:
-            log_info(str(e), logger=self.logger)
+            log_error(str(e), logger=self.logger)
             raise
         return (itis_name, king, tsn_hier)
 
@@ -426,7 +422,7 @@ class BisonAPI(APIQuery):
                 val = rec[field_name]
                 break
             except KeyError:
-                log_info(
+                log_error(
                     'Missing {} for {}'.format(field_name, self.url), 
                     logger=self.logger)
         return val
@@ -679,11 +675,9 @@ class ItisAPI(APIQuery):
             try:
                 recs = outjson['itisTerms']
             except:
-                log_info(
+                log_error(
                     'itisTerms is not present in output, keys = {}'.format(
-                        outjson.keys()), 
-                    logger=logger)
-                pass
+                        outjson.keys()), logger=logger)
         else:
             root = apiq.output    
             retElt = root.find('{}return'.format(Itis.NAMESPACE))
@@ -829,7 +823,7 @@ class GbifAPI(APIQuery):
                         'Failed to format data from {}'.format(taxon_key), 
                         logger)
         except Exception as e:
-            log_info(str(e), logger=logger)
+            log_error(str(e), logger=logger)
             raise
         return (
             rank_str, sciname_str, canonical_str, accepted_key, accepted_str,
@@ -867,10 +861,9 @@ class GbifAPI(APIQuery):
         """
         gbif_api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
-            other_filters={'taxonKey': taxon_key,
-                           'limit': GBIF.LIMIT,
-                           'hasCoordinate': True,
-                           'has_geospatial_issue': False},
+            other_filters={
+                'taxonKey': taxon_key, 'limit': GBIF.LIMIT,
+                'hasCoordinate': True, 'has_geospatial_issue': False},
             logger=logger)
 
         gbif_api.add_filters(q_filters=other_filters)
@@ -890,7 +883,7 @@ class GbifAPI(APIQuery):
                 try:
                     gbif_api.query()
                 except Exception:
-                    log_info('Failed on {}'.format(taxon_key), logger=logger)
+                    log_error('Failed on {}'.format(taxon_key), logger=logger)
                     curr_count = 0
                 else:
                     # First query, report count
@@ -898,8 +891,7 @@ class GbifAPI(APIQuery):
                         gbif_total = gbif_api.output['count']
                         log_info(
                             'Found {} recs for key {}'.format(
-                                gbif_total, taxon_key), 
-                            logger=logger)
+                                gbif_total, taxon_key), logger=logger)
 
                     recs = gbif_api.output['results']
                     curr_count = len(recs)
@@ -917,8 +909,7 @@ class GbifAPI(APIQuery):
                             writer.writerow(row)
                     log_info(
                         '  Retrieved {} records, starting at {}'.format(
-                            curr_count, offset), 
-                        logger=logger)
+                            curr_count, offset), logger=logger)
                     offset += GBIF.LIMIT
                     if max_points is not None and lm_total >= max_points:
                         complete = True
@@ -937,7 +928,7 @@ class GbifAPI(APIQuery):
         try:
             api.query()
         except Exception:
-            log_info('Failed on {}'.format(occid), logger=logger)
+            log_error('Failed on {}'.format(occid), logger=logger)
         else:
             # First query, report count
             total = api.output['count']
@@ -965,8 +956,9 @@ class GbifAPI(APIQuery):
         offset = 0
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
-            other_filters={'dataset_key': dataset_key, 'offset': offset, 
-                           'limit': GBIF.LIMIT}
+            other_filters={
+                'dataset_key': dataset_key, 'offset': offset, 
+                'limit': GBIF.LIMIT}, 
             logger=logger)
         
         is_end = False
@@ -974,7 +966,7 @@ class GbifAPI(APIQuery):
             try:
                 api.query()
             except Exception:
-                log_info('Failed on {}'.format(dataset_key), logger=logger)
+                log_error('Failed on {}'.format(dataset_key), logger=logger)
             else:
                 # First query, report count
                 total = api.output['count']
@@ -985,8 +977,7 @@ class GbifAPI(APIQuery):
                 recs.append(curr_recs)
                 log_info(
                     'Returned {} of {} GBIF recs for dataset {}'.format(
-                        curr_count, total, dataset_key), 
-                    logger=logger)
+                        curr_count, total, dataset_key), logger=logger)
         return recs
 
 
@@ -1026,10 +1017,9 @@ class GbifAPI(APIQuery):
             name_api.query()
             output = name_api.output
         except Exception as e:
-            log_info(
+            log_error(
                 'Failed to get a response for species match on {}, ({})'.format(
-                    name_clean, str(e)), 
-                logger=logger)
+                    name_clean, str(e)), logger=logger)
             raise
 
         # Pull alternatives out of record
@@ -1043,7 +1033,7 @@ class GbifAPI(APIQuery):
             if output['matchType'].lower() == 'none':
                 is_match = False
         except AttributeError:
-            log_info(
+            log_error(
                 'No matchType for record matching {}'.format(name_clean), 
                 logger=logger)
         else:
@@ -1059,10 +1049,9 @@ class GbifAPI(APIQuery):
                     try:
                         outstatus = output['status'].lower()
                     except AttributeError:
-                        log_info(
+                        log_error(
                             'No status for record matching {}'.format(
-                                name_clean), 
-                            logger=logger)
+                                name_clean), logger=logger)
                     else:
                         if outstatus == status:
                             matches.append(output)
@@ -1072,10 +1061,9 @@ class GbifAPI(APIQuery):
                         try:
                             outstatus = alt['status'].lower()
                         except AttributeError:
-                            log_info(
+                            log_error(
                                 'No status for alternative matching {}'.format(
-                                    name_clean), 
-                                logger=logger)
+                                    name_clean), logger=logger)
                         else:
                             if outstatus == status:
                                 matches.append(alt)
@@ -1091,7 +1079,7 @@ class GbifAPI(APIQuery):
             if response is not None:
                 ret_code = response.status_code
             else:
-                log_info(
+                log_error(
                     'Failed on URL {} ({})'.format(url, str(e)), logger=logger)
         else:
             if response.ok:
@@ -1103,21 +1091,19 @@ class GbifAPI(APIQuery):
                     except Exception:
                         output = response.text
                     else:
-                        log_info(
+                        log_error(
                             'Failed to interpret output of URL {} ({})'.format(
-                                url, str(e)), 
-                            logger=logger)
+                                url, str(e)), logger=logger)
             else:
                 try:
                     ret_code = response.status_code
                     reason = response.reason
                 except AttributeError:
-                    log_info(
+                    log_error(
                         'Failed to find failure reason for URL {} ({})'.format(
-                            url, str(e)), 
-                        logger=logger)
+                            url, str(e)), logger=logger)
                 else:
-                    log_info(
+                    log_error(
                         'Failed on URL {} ({}: {})'.format(url, ret_code, reason), 
                         logger=logger)
         return output
@@ -1132,7 +1118,7 @@ class GbifAPI(APIQuery):
             try:
                 success = rec['parsed']
             except:
-                log_info('Missing `parsed` field in record', logger=logger)
+                log_error('Missing `parsed` field in record', logger=logger)
             else:
                 if success:
                     recs.append(rec)
@@ -1169,7 +1155,7 @@ class GbifAPI(APIQuery):
                 pass
             else:
                 if len(recs) > 1:
-                    log_info(
+                    log_warn(
                         'WTF, {} has > 1 parsed records'.format(namestr), 
                         logger=logger)
         return rec
@@ -1199,10 +1185,9 @@ class GbifAPI(APIQuery):
         try:
             output = GbifAPI._post_json_to_parser(url, names, logger=logger)
         except Exception as e:
-            log_info(
+            log_error(
                 'Failed to get response from GBIF for data {}, {}'.format(
-                    filename, e), 
-                logger=logger)
+                    filename, e), logger=logger)
             raise e
 
         if output:
@@ -1223,7 +1208,7 @@ class GbifAPI(APIQuery):
             org_api.query()
             pub_org_name = org_api._get_output_val(org_api.output, 'title')
         except Exception as e:
-            log_info(str(e), logger=logger)
+            log_error(str(e), logger=logger)
             raise
         return pub_org_name
 
@@ -1318,15 +1303,14 @@ class IdigbioAPI(APIQuery):
         try:
             api.query()
         except Exception:
-            log_info('Failed on {}'.format(occid), logger=logger)
+            log_error('Failed on {}'.format(occid), logger=logger)
         else:
             recs = []
             if api.output is not None:
                 total = api.output['itemCount']
                 log_info(
                     'Found {} iDigBio recs for Specify occurrenceId {}'.format(
-                        total, occid), 
-                    logger=logger)
+                        total, occid), logger=logger)
                 recs = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
         return recs
 
@@ -1510,14 +1494,13 @@ class MorphoSourceAPI(APIQuery):
         try:
             api.query()
         except Exception:
-            log_info('Failed on {}'.format(occid), logger=logger)
+            log_error('Failed on {}'.format(occid), logger=logger)
         else:
             # First query, report count
             total = api.output['count']
             log_info(
                 'Found {} MorphoSource recs for occurrenceId {}'.format(
-                    total, occid), 
-                logger=logger)
+                    total, occid), logger=logger)
             recs = api.output['results']
         return recs
 
@@ -1545,7 +1528,7 @@ class SpecifyPortalAPI(APIQuery):
         try:
             api.query_by_get()
         except Exception:
-            log_info('Failed on {}'.format(url), logger=logger)
+            log_error('Failed on {}'.format(url), logger=logger)
         else:
             rec = api.output
         return rec
@@ -1618,7 +1601,7 @@ def test_idigbio_taxon_ids():
             if line is not None:
                 temp_vals = line.strip().split()
                 if len(temp_vals) < 3:
-                    log_info(('Missing data in line {}'.format(line)))
+                    log_error(('Missing data in line {}'.format(line)))
                 else:
                     try:
                         curr_gbif_taxon_id = int(temp_vals[0])
@@ -1664,7 +1647,7 @@ if __name__ == '__main__':
     try:
         acc_name = can_name['canonicalName']
     except Exception as e:
-        log_info('Failed to match {}'.format(namestr))
+        log_error('Failed to match {}'.format(namestr))
     else:
 #         acc_names = GbifAPI.match_name(acc_name, status='accepted')
 #         log_info('Matched accepted names:')

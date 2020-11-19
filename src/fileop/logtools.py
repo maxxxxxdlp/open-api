@@ -46,25 +46,25 @@ class LMLog():
         return log
     
 # ...............................................
-def log_info(self, msg, logger=None):
+def log_info(msg, logger=None):
     if logger is None:
         print(msg)
     else:
-        logger.info(msg)
+        logger.log.info(msg)
     
 # ...............................................
-def log_warn(self, msg, logger=None):
+def log_warn(msg, logger=None):
     if logger is None:
         print(msg)
     else:
-        logger.warn(msg)
+        logger.log.warn(msg)
     
 # ...............................................
-def log_error(self, msg, logger=None):
+def log_error(msg, logger=None):
     if logger is None:
         print(msg)
     else:
-        logger.error(msg)
+        logger.log.error(msg)
     
 # # .............................................................................
 # def get_logger(name, fname):

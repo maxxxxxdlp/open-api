@@ -42,6 +42,14 @@ def _get_server_addr():
     else:
         return hn
 
+# ......................................................
+def is_guid(idstr):
+    try:
+        int(idstr.replace('-', ''), 16)
+        return True
+    except:
+        return False
+
 # ...............................................
 def get_specify_server(dwca_url):
     prefix = 'http://'
@@ -51,13 +59,13 @@ def get_specify_server(dwca_url):
     return specify_url
 
 # ...............................................
-def get_logger_for_processing(self, logpath, logname=None):
+def get_logger_for_processing(logpath, logname=None):
     import time
     if logname is None:
         nm, _ = os.path.splitext(os.path.basename(__file__))
         logname = '{}.{}'.format(nm, int(time.time()))
     logfname = os.path.join(logpath, '{}.log'.format(logname))
-    logger = get_logger(logname, logfname)
+    logger = LMLog(logname, logfname)
     return logger
 
 # ...............................................
@@ -81,7 +89,9 @@ def main(zname, dwca_url, outpath, solr_location, testguids=[]):
             try:
                 url = meta['url']
             except:
-                logger.warn('Failed to get URL for IPT dataset {}'.format(guid))
+                log_warn(
+                    'Failed to get URL for IPT dataset {}'.format(guid), 
+                    logger=logger)
             else:
                 zipfname = download_dwca(url, outpath, overwrite=False)
                 meta['filename'] = zipfname
@@ -92,9 +102,11 @@ def main(zname, dwca_url, outpath, solr_location, testguids=[]):
         try:
             zipfname = meta['filename']
         except:
-            logger.warn('Failed to download data for IPT dataset {}'.format(guid))
+            log_warn(
+                'Failed to download data for IPT dataset {}'.format(guid),
+                logger=logger)
         else:
-            dwca = DwCArchive(zipfname, log=logger)
+            dwca = DwCArchive(zipfname, logger=logger)
             
             extract_path, _ = os.path.split(zipfname)
             meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
@@ -109,14 +121,15 @@ def main(zname, dwca_url, outpath, solr_location, testguids=[]):
         dwca_guid = dwca.read_dataset_uuid(ds_meta_fname)
         # Save new guid for update of datasets dict 
         # if zname argument is provided, we have dataset without guid from download site
-        if dwca_guid != tmp_guid:
-            print('DWCA meta.xml guid {} conflicts with reported guid {}'
-                  .format(dwca_guid, tmp_guid))
+        if is_guid(tmp_guid) and dwca_guid != tmp_guid:
+            log_info(
+                'DWCA meta.xml guid {} conflicts with reported guid {}'.format(
+                    dwca_guid, tmp_guid), logger=logger)
             # new/obsolete guid pair
             fixme.append((dwca_guid, tmp_guid))
                    
         # Read record metadata, dwca_guid takes precedence
-        solr_fname, content_type, rec_count = dwca.rewrite_recs_for_solr(
+        solr_fname, content_type = dwca.rewrite_recs_for_solr(
             core_fileinfo, dwca_guid, extract_path, overwrite=False)         
         start_count = spsolr.count_docs(collection, solr_location=solr_location)
  
@@ -127,8 +140,9 @@ def main(zname, dwca_url, outpath, solr_location, testguids=[]):
  
         # Report old/new solr index count
         end_count = spsolr.count_docs(collection, solr_location=solr_location)
-        print('Posted, code {}, {} recs in file {} to {}, {} --> {} docs'.format(
-            retcode, rec_count, solr_fname, collection, start_count, end_count))
+        log_info(
+            'Posted, code {}, to {}, {} --> {} docs'.format(
+                retcode, collection, start_count, end_count), logger=logger)
 
     # May use dataset guid somewhere
     for new_obsolete_pair in fixme:

@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from LmRex.tools.api import APIQuery, GbifAPI, IdigbioAPI
+from LmRex.fileop.logtools import (log_info, log_warn, log_error)
 from LmRex.fileop.readwrite import (
     get_csv_dict_reader, get_csv_dict_writer,  get_line)
 from LmRex.fileop.ready_file import ready_filename, delete_file
@@ -144,22 +145,29 @@ class DwCArchive:
             return False
     
     # ......................................................
-    def _get_date(self, dwc_rec):        
+    def _get_date(self, dwc_rec):
+        coll_date = ''        
         try:
             yr = dwc_rec['year']
             int(yr)
         except:
-            coll_date = ''
+            pass
         else:
-            coll_date = yr 
-            
-        for val in (dwc_rec['month'], dwc_rec['day']):
+            coll_date = yr             
             try:
-                int(val)
+                mo = dwc_rec['month']
+                int(mo)
             except:
-                return coll_date
+                pass
             else:
-                coll_date = '{}-{}'.format(coll_date, val)
+                coll_date = '{}-{}'.format(coll_date, mo)
+                try:
+                    dy = dwc_rec['day']
+                    int(dy)
+                except:
+                    pass
+                else:
+                    coll_date = '{}-{}'.format(coll_date, dy)
         return coll_date
     
 
@@ -199,7 +207,7 @@ class DwCArchive:
                             if count > 1:
                                 log_warn(
                                     'Line {} does not contain a GUID in id field'
-                                    .format(count), self.log)
+                                    .format(count), logger=self.logger)
                         else:
                             coll_date = self._get_date(dwc_rec)
                             who_val = dwc_rec['datasetName']
@@ -226,12 +234,15 @@ class DwCArchive:
             except Exception as e:
                 log_warn(
                     'Failed to read/write file {}: {}'.format(core_fname, e), 
-                    self.logger)
+                    logger=self.logger)
             finally:
                 inf.close()
                 outf.close()
+                log_info(
+                    'Wrote {} recs to file {}'.format(count, solr_outfname), 
+                    logger=self.logger)
     
-        return solr_outfname, content_type, count
+        return solr_outfname, content_type
         
     # ......................................................
     def extract_from_zip(self, zip_fname, extract_path=None):
@@ -244,7 +255,7 @@ class DwCArchive:
                 zfile.extract(zinfo, path=extract_path)
             else:
                 log_warn('Unexpected filename {} in zipfile {}'.format(
-                    zinfo.filename, zip_fname), self.logger)
+                    zinfo.filename, zip_fname), logger=self.logger)
 
     
     # ......................................................
@@ -253,7 +264,7 @@ class DwCArchive:
         if os.path.split(meta_fname)[1] != 'eml.xml':
             log_error(
                 'Expected filename eml.xml at {}'.format(meta_fname), 
-                self.logger)
+                logger=self.logger)
             return ''
         tree = ET.parse(meta_fname)
         root = tree.getroot()
@@ -296,7 +307,7 @@ class DwCArchive:
         if os.path.split(meta_fname)[1] != 'meta.xml':
             log_error(
                 'Expected filename meta.xml at {}'.format(meta_fname), 
-                self.logger)
+                logger=self.logger)
             return ''
         fileinfo = {}
         field_idxs = {}
