@@ -8,11 +8,12 @@ import xml.etree.ElementTree as ET
 
 
 # import idigbio
-from LmRex.tools.lm_xml import fromstring, deserialize
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, MorphoSource, 
     URL_ESCAPES, ENCODING, JSON_HEADERS)
 from LmRex.fileop.ready_file import ready_filename
+from LmRex.fileop.logtools import (log_info, log_warn, log_error)
+from LmRex.tools.lm_xml import fromstring, deserialize
 
 # .............................................................................
 class APIQuery:
