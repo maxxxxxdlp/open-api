@@ -2,7 +2,7 @@
 import cherrypy
 
 from LmRex.api.name import (GAcName, ITISName, ITISSolrName, NameSvc)
-from LmRex.api.occ import (GOcc, GColl, IDBOcc, SPOcc, OccurrenceSvc)
+from LmRex.api.occ import (GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccurrenceSvc)
 from LmRex.api.sparks import SpecifyArk
 
 from LmRex.common.lmconstants import (APIMount, CHERRYPY_CONFIG_FILE)
