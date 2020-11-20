@@ -23,6 +23,7 @@ def main():
     cherrypy.tree.mount(OccurrenceSvc(), APIMount.OccurrenceSvc, conf)
     cherrypy.tree.mount(GOcc(), APIMount.GOcc, conf)
     cherrypy.tree.mount(IDBOcc(), APIMount.IDBOcc, conf)
+    cherrypy.tree.mount(MophOcc(), APIMount.MophOcc, conf)
     cherrypy.tree.mount(SPOcc(), APIMount.SPOcc, conf)
     cherrypy.tree.mount(GColl(), APIMount.GColl, conf)
     

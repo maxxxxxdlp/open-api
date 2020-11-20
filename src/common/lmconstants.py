@@ -58,6 +58,7 @@ class APIMount:
     SpecifyArk = '/tentacles/sparks'
     GOcc = '/tentacles/occ/gbif'
     IDBOcc = '/tentacles/occ/idb'
+    MophOcc = '/tentacles/occ/mopho'
     SPOcc = '/tentacles/occ/specify'
     GColl = '/tentacles/occ/gbif/dataset'
     # name services
@@ -220,6 +221,7 @@ class MorphoSource:
     OTHER_RESOURCES = ['taxonomy', 'projects', 'facilities']
     COMMAND = 'find'
     OCCURRENCEID_KEY = 'occurrence_id'
+    LIMIT = 1000
     
 # ......................................................
 class SPECIFY:

@@ -396,7 +396,7 @@ class BisonAPI(APIQuery):
             itis_name = occ_api.get_first_value_for(BISON.NAME_KEY)
             king = occ_api.get_first_value_for(BISON.KINGDOM_KEY)
         except Exception as e:
-            log_error(str(e), logger=self.logger)
+            log_error(str(e))
             raise
         return (itis_name, king, tsn_hier)
 
@@ -1487,21 +1487,41 @@ class MorphoSourceAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_specimen_records_by_occid(occid, logger=None):
+    def _page_specimen_records(start, occid, logger=None):
+        recs = []
+        total = curr_total = 0
         api = MorphoSourceAPI(
             resource=MorphoSource.OCC_RESOURCE, 
-            q_filters={MorphoSource.OCCURRENCEID_KEY: occid})
+            q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
+            other_filters={'start': start, 'limit': MorphoSource.LIMIT})
         try:
-            api.query()
+            api.query_by_get()
         except Exception:
             log_error('Failed on {}'.format(occid), logger=logger)
         else:
             # First query, report count
-            total = api.output['count']
-            log_info(
-                'Found {} MorphoSource recs for occurrenceId {}'.format(
-                    total, occid), logger=logger)
-            recs = api.output['results']
+            data = api.output
+            curr_total = data['returnedResults']
+            total = data['totalResults']
+            recs = data['results']
+            log_info('Page start {}: reported {}, returned {}'.format(
+                start, curr_total, len(recs)))
+        return recs, curr_total, total
+
+    # ...............................................
+    @staticmethod
+    def get_specimen_records_by_occid(occid, logger=None):
+        start = 0
+        recs, curr_total, total = MorphoSourceAPI._page_specimen_records(
+            start, occid, logger=logger)
+        if curr_total < total:
+            start = MorphoSource.LIMIT
+            loops = int(total/MorphoSource.LIMIT)
+            for i in loops:
+                curr_recs, curr_total, total = MorphoSourceAPI._page_specimen_records(
+                    start, occid, logger=logger)
+                if curr_recs:
+                    recs.extend(curr_recs)
         return recs
 
 # .............................................................................
@@ -1630,8 +1650,17 @@ def test_idigbio_taxon_ids():
 if __name__ == '__main__':
     # test
     
+    log_info('Mopho records:')
     for guid in TEST_VALUES.BIRD_GUIDS:
-        SpecifyPortalAPI()
+        recs = MorphoSourceAPI.get_specimen_records_by_occid(guid)
+        for r in recs:
+            try:
+                notes = r['specimen.notes']
+            except:
+                notes = 'no notes'
+            log_info('{}: {}'.format(
+                r['specimen.occurrence_id'], notes))
+        log_info ('')
     
 #     namestr = names[0]
 #     clean_names = GbifAPI.parse_names(names=names)
@@ -1655,8 +1684,8 @@ if __name__ == '__main__':
 #         log_info ('')
         
 #         names = ['ursidae', 'Poa annua']
-        recs = GbifAPI.get_records_by_dataset(dskeys[0])
-        log_info('Returned {} records for dataset:'.format(len(recs)))
+#         recs = GbifAPI.get_records_by_dataset(TEST_VALUES.DATASET_GUIDS[0])
+#         log_info('Returned {} records for dataset:'.format(len(recs)))
 #         names = ['Poa annua']
 #         for name in names:
 #             pass
