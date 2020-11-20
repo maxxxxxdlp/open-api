@@ -7,10 +7,9 @@ import zipfile
 
 from LmRex.tools.api import APIQuery, GbifAPI, IdigbioAPI
 from LmRex.fileop.logtools import (log_info, log_warn, log_error)
-from LmRex.fileop.readwrite import (
-    get_csv_dict_reader, get_csv_dict_writer,  get_line)
+from LmRex.fileop.csvtools import (get_csv_dict_reader, get_csv_dict_writer)
 from LmRex.fileop.ready_file import ready_filename, delete_file
-import LmRex.tools.solr as spsolr
+import LmRex.tools.solr as SpSolr
 from LmRex.common.lmconstants import (
     SPECIFY_ARK_PREFIX, GBIF, DWCA, ENCODING, TEST_SPECIFY7_SERVER, 
     SPECIFY7_RECORD_ENDPOINT, SPECIFY7_SERVER_KEY, SPCOCO_FIELDS, 
@@ -179,6 +178,7 @@ class DwCArchive:
             headers={'Content-Type': 'text/csv'}
         """
         count = 0
+        is_new = False
         out_delimiter = ','
         content_type = 'text/csv'
         core_fname = os.path.join(outpath, fileinfo[DWCA.LOCATION_KEY])
@@ -198,17 +198,25 @@ class DwCArchive:
                 solr_outfname, out_delimiter, ENCODING, SPCOCO_FIELDS, fmode='w')
             try:
                 wtr.writeheader()
+                bad_guid_count = 0
                 for dwc_rec in rdr:
                     solr_rec = {}
                     try:
                         count += 1
                         occ_uuid = dwc_rec[fileinfo[DWCA.UUID_KEY]]
-                        if not self._is_guid(occ_uuid):
-                            if count > 1:
-                                log_warn(
-                                    'Line {} does not contain a GUID in id field'
-                                    .format(count), logger=self.logger)
+                        if count == 1 and occ_uuid == DWCA.UUID_KEY:
+                            pass
                         else:
+                            if not self._is_guid(occ_uuid):
+                                bad_guid_count += 1
+                                if bad_guid_count < 10:
+                                    log_warn(
+                                        'Line {} contains {}, non-GUID in id field'
+                                        .format(count, occ_uuid), 
+                                        logger=self.logger)
+                                elif bad_guid_count == 10:
+                                    log_warn('...', logger=self.logger)
+                                
                             coll_date = self._get_date(dwc_rec)
                             who_val = dwc_rec['datasetName']
                             
@@ -238,11 +246,11 @@ class DwCArchive:
             finally:
                 inf.close()
                 outf.close()
+                is_new = True
                 log_info(
-                    'Wrote {} recs to file {}'.format(count, solr_outfname), 
-                    logger=self.logger)
-    
-        return solr_outfname, content_type
+                    'Wrote {} recs, with {} non-guid-ids to file {}'.format(
+                        count, bad_guid_count, solr_outfname), logger=self.logger)
+        return solr_outfname, content_type, is_new
         
     # ......................................................
     def extract_from_zip(self, zip_fname, extract_path=None):

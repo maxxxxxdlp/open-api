@@ -1,6 +1,7 @@
 import requests
 import subprocess
 
+from LmRex.common.lmconstants import TEST_VALUES
 from LmRex.tools.api import APIQuery
 
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
@@ -104,14 +105,15 @@ def query_guid(collection, guid, solr_location='localhost'):
         collection: name of the Solr index
         guid: Unique identifier for record of interest
         solr_location: FQDN or IP of the Solr server or 'localhost' 
-        
+    
+    Returns:
+        Zero or one Solr records
     """
     doc = {}
     filters = {'id': guid}
-    output = query(collection, filters=filters, solr_location=solr_location)
-    response = output['response']
-    if response['numFound'] == 1: 
-        doc = response['docs'][0]
+    count, docs = query(collection, filters=filters, solr_location=solr_location)
+    if count == 1: 
+        doc = docs[0]
     return doc
     
 # .............................................................................
@@ -119,11 +121,24 @@ def query(collection, filters={'*': '*'}, solr_location='localhost'):
     """
     Query a solr index and return results in JSON format
     """
+    count = 0 
+    docs = {}
     solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
     api = APIQuery(solr_endpt, q_filters=filters)
     api.query_by_get(output_type='json')
-    output  = api.output
-    return output
+    try:
+        data = api.output['response']
+    except:
+        raise Exception('Failed to return response element')
+    try:
+        docs = data['docs']
+    except:
+        raise Exception('Failed to return docs')
+    try:
+        count = data['numFound']
+    except:
+        raise Exception('Failed to return docs')
+    return count, docs
 
 # .............................................................................
 def update(collection, solr_location='localhost'):
@@ -132,6 +147,13 @@ def update(collection, solr_location='localhost'):
     output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     return output
 
+# .............................................................................
+if __name__ == '__main__':
+    # test
+    
+    for guid in TEST_VALUES.BIRD_GUIDS:
+        doc = query_guid('spcoco', guid, solr_location='129.237.201.192')
+        print('Found {} record for guid {}'.format(doc, guid))
 
 
 """

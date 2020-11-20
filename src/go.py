@@ -7,14 +7,13 @@ import cherrypy
 import json
 
 from LmRex.tools.api import APIQuery, GbifAPI, IdigbioAPI
-from LmRex.fileop.readwrite import (
-    get_csv_dict_reader, get_csv_dict_writer,  get_line)
+from LmRex.fileop.csvtools import (get_csv_dict_reader, get_csv_dict_writer)
 from LmRex.fileop.ready_file import ready_filename, delete_file
-import LmRex.tools.solr as spsolr
+import LmRex.tools.solr as SpSolr
 from LmRex.common.lmconstants import (
     SPECIFY_ARK_PREFIX, GBIF, DWCA, ENCODING, TEST_SPECIFY7_SERVER, 
     SPECIFY7_RECORD_ENDPOINT, SPECIFY7_SERVER_KEY, SPCOCO_FIELDS, 
-    ICH_RSS_URL, KU_IPT_RSS_URL, TEST_GUIDS)
+    ICH_RSS_URL, KU_IPT_RSS_URL, TEST_VALUES)
 
 from LmRex.tools.api import SpecifyPortalAPI
 from LmRex.api.sparks import SpecifyArk

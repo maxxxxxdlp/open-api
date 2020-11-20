@@ -20,17 +20,51 @@ DWC_RECORD_TITLE = 'digital specimen object'
 
 JSON_HEADERS = {'Content-Type': 'application/json'}
 
-TEST_GUIDS = [
-    '2c1becd5-e641-4e83-b3f5-76a55206539a', 
-    'a413b456-0bff-47da-ab26-f074d9be5219',
-    'fa7dd78f-8c91-49f5-b01c-f61b3d30caee',
-    'db1af4fe-1ed3-11e3-bfac-90b11c41863e',
-    'dbe1622c-1ed3-11e3-bfac-90b11c41863e',
-    'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
-    'dc92869c-1ed3-11e3-bfac-90b11c41863e',
-    '21ac6644-5c55-44fd-b258-67eb66ea231d']
+class TEST_VALUES:
+    FISH_GUIDS = [
+        '2c1becd5-e641-4e83-b3f5-76a55206539a', 
+        'a413b456-0bff-47da-ab26-f074d9be5219',
+        'fa7dd78f-8c91-49f5-b01c-f61b3d30caee',
+        'db1af4fe-1ed3-11e3-bfac-90b11c41863e',
+        'dbe1622c-1ed3-11e3-bfac-90b11c41863e',
+        'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
+        'dc92869c-1ed3-11e3-bfac-90b11c41863e',
+        '21ac6644-5c55-44fd-b258-67eb66ea231d']
+    BIRD_GUIDS = [
+        'ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5',
+        'f5725a56-7b47-11e4-8ef3-782bcb9cd5b5',
+        'f69696a8-7b47-11e4-8ef3-782bcb9cd5b5',
+        '5e7ec91c-4d20-42c4-ad98-8854800e82f7']
+    NAMES = [
+        'Acer caesium Wall. ex Brandis', 'Acer heldreichii Orph. ex Boiss.', 
+        'Acer pseudoplatanus L.', 'Acer velutinum Boiss.', 
+        'Acer hyrcanum Fisch. & Meyer', 'Acer monspessulanum L.', 
+        'Acer obtusifolium Sibthorp & Smith', 'Acer opalus Miller', 
+        'Acer sempervirens L.', 'Acer floridanum (Chapm.) Pax', 
+        'Acer grandidentatum Torr. & Gray', 'Acer leucoderme Small', 
+        'Acer nigrum Michx.f.', 'Acer skutchii Rehder', 'Acer saccharum Marshall']
+    GUIDS = [526853, 183671, 182662, 566578]
+    DATASET_GUIDS = ['56caf05f-1364-4f24-85f6-0c82520c2792']
+    BAD_GUIDS = [
+        'KU :KUIZ:2200', 'KU :KUIZ:1663', 'KU :KUIZ:1569', 'KU :KUIZ:2462', 
+        'KU :KUIZ:1743', 'KU :KUIZ:3019', 'KU :KUIZ:1816', 'KU :KUIZ:2542', 
+        'KU :KUIZ:2396']
 
 CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, CONFIG_DIR, 'cherrypy.conf')
+
+class APIMount:
+    # occurrence services
+    OccurrenceSvc = '/tentacles/occ'
+    SpecifyArk = '/tentacles/sparks'
+    GOcc = '/tentacles/occ/gbif'
+    IDBOcc = '/tentacles/occ/idb'
+    SPOcc = '/tentacles/occ/specify'
+    GColl = '/tentacles/occ/gbif/dataset'
+    # name services
+    NameSvc = '/tentacles/name'
+    GAcName = '/tentacles/name/gbif'
+    ITISName = '/tentacles/name/itis'
+    ITISSolrName = '/tentacles/name/itis2'
 
 class DWCA:
     NS = '{http://rs.tdwg.org/dwc/text/}'

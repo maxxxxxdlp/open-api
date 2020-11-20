@@ -214,20 +214,3 @@ class OccurrenceSvc:
             return {'message': 'S^n occurrence tentacles are online'}
         else:
             return self.get_records(occid, True)
-
-# .............................................................................
-if __name__ == '__main__':
-    """
-    Call with 
-        curl http://127.0.0.1/tentacles/occ/2c1becd5-e641-4e83-b3f5-76a55206539a
-    """
-    cherrypy.tree.mount(
-        OccurrenceSvc(), '/tentacles/occ',
-        {'/':
-            {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
-         }
-    )
-
-    cherrypy.engine.start()
-    cherrypy.engine.block()
-

@@ -159,15 +159,3 @@ class NameSvc:
         else:
             return self.get_records(namestr, True)
 
-# .............................................................................
-if __name__ == '__main__':
-    cherrypy.tree.mount(
-        NameSvc(), '/tentacles/name',
-        {'/':
-            {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
-         }
-    )
-
-    cherrypy.engine.start()
-    cherrypy.engine.block()
-

@@ -5,15 +5,9 @@ from LmRex.api.name import (GAcName, ITISName, ITISSolrName, NameSvc)
 from LmRex.api.occ import (GOcc, GColl, IDBOcc, SPOcc, OccurrenceSvc)
 from LmRex.api.sparks import SpecifyArk
 
-from LmRex.common.lmconstants import (CHERRYPY_CONFIG_FILE)
+from LmRex.common.lmconstants import (APIMount, CHERRYPY_CONFIG_FILE)
 
-# .............................................................................
-if __name__ == '__main__':
-    """
-    Call with 
-        curl http://129.237.201.192/sparks/2c1becd5-e641-4e83-b3f5-76a55206539a
-        curl http://129.237.201.192/tentacles/occ/idbocc/2c1becd5-e641-4e83-b3f5-76a55206539a
-    """
+def main():
     conf = {
         '/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()} 
         }
@@ -23,23 +17,29 @@ if __name__ == '__main__':
                             'server.socket_host': '129.237.201.192'})
     
     # ARK service
-    cherrypy.tree.mount(SpecifyArk(), '/tentacles/sparks', conf)
+    cherrypy.tree.mount(SpecifyArk(), APIMount.SpecifyArk, conf)
 
-    # GBIF, iDigBio, Specifyoccurrence services
-    cherrypy.tree.mount(GOcc(), '/tentacles/occ/gbif', conf)
-    cherrypy.tree.mount(IDBOcc(), '/tentacles/occ/idb', conf)
-    cherrypy.tree.mount(SPOcc(), '/tentacles/occ/specify', conf)
-    cherrypy.tree.mount(GColl(), '/tentacles/occ/gbif/dataset', conf)
-    # combined
-    cherrypy.tree.mount(OccurrenceSvc(), '/tentacles/occ', conf)
+    # Occurrence services
+    cherrypy.tree.mount(OccurrenceSvc(), APIMount.OccurrenceSvc, conf)
+    cherrypy.tree.mount(GOcc(), APIMount.GOcc, conf)
+    cherrypy.tree.mount(IDBOcc(), APIMount.IDBOcc, conf)
+    cherrypy.tree.mount(SPOcc(), APIMount.SPOcc, conf)
+    cherrypy.tree.mount(GColl(), APIMount.GColl, conf)
     
-    # GBIF, ITIS name(s) services
-    cherrypy.tree.mount(GAcName(), '/tentacles/name/gbif', conf)
-    cherrypy.tree.mount(ITISName(), '/tentacles/name/itis', conf)
-    cherrypy.tree.mount(ITISSolrName(), '/tentacles/name/itis2', conf)
-    # combined
-    cherrypy.tree.mount(NameSvc(), '/tentacles/name', conf)
-    
+    # Name services
+    cherrypy.tree.mount(NameSvc(), APIMount.NameSvc, conf)
+    cherrypy.tree.mount(GAcName(), APIMount.GAcName, conf)
+    cherrypy.tree.mount(ITISName(), APIMount.ITISName, conf)
+    cherrypy.tree.mount(ITISSolrName(), APIMount.ITISSolrName, conf)    
 
     cherrypy.engine.start()
     cherrypy.engine.block()
+
+# .............................................................................
+if __name__ == '__main__':
+    """
+    Example calls:
+        curl http://129.237.201.192/sparks/2c1becd5-e641-4e83-b3f5-76a55206539a
+        curl http://129.237.201.192/tentacles/occ/idbocc/2c1becd5-e641-4e83-b3f5-76a55206539a
+    """
+    main()

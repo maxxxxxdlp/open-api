@@ -8,7 +8,7 @@ from LmRex.common.lmconstants import (
 from LmRex.fileop.logtools import (LMLog, log_info, log_warn, log_error)
 from LmRex.spcoco.dwca import (DwCArchive, get_dwca_urls, download_dwca)
 from LmRex.tools.api import GbifAPI, IdigbioAPI
-import LmRex.tools.solr as spsolr
+import LmRex.tools.solr as SpSolr
 
 
 INCR_KEY = 0
@@ -129,20 +129,21 @@ def main(zname, dwca_url, outpath, solr_location, testguids=[]):
             fixme.append((dwca_guid, tmp_guid))
                    
         # Read record metadata, dwca_guid takes precedence
-        solr_fname, content_type = dwca.rewrite_recs_for_solr(
+        solr_fname, content_type, is_new = dwca.rewrite_recs_for_solr(
             core_fileinfo, dwca_guid, extract_path, overwrite=False)         
-        start_count = spsolr.count_docs(collection, solr_location=solr_location)
  
         # Post
-        retcode, output = spsolr.post(
-            collection, solr_fname, solr_location=solr_location, 
-            headers={'Content-Type': content_type})
- 
-        # Report old/new solr index count
-        end_count = spsolr.count_docs(collection, solr_location=solr_location)
-        log_info(
-            'Posted, code {}, to {}, {} --> {} docs'.format(
-                retcode, collection, start_count, end_count), logger=logger)
+        if is_new:
+            start_count = SpSolr.count_docs(collection, solr_location=solr_location)
+            retcode, output = SpSolr.post(
+                collection, solr_fname, solr_location=solr_location, 
+                headers={'Content-Type': content_type})
+     
+            # Report old/new solr index count
+            end_count = SpSolr.count_docs(collection, solr_location=solr_location)
+            log_info(
+                'Posted, code {}, to {}, {} --> {} docs'.format(
+                    retcode, collection, start_count, end_count), logger=logger)
 
     # May use dataset guid somewhere
     for new_obsolete_pair in fixme:
@@ -173,7 +174,7 @@ if __name__ == '__main__':
     collection = 'spcoco'
     solr_location = 'notyeti-192.lifemapper.org'
     test_rss = KU_IPT_RSS_URL
-#     test_rss = ICH_RSS_URL
+    test_rss = ICH_RSS_URL
     
     parser = argparse.ArgumentParser(
         description=('Read a zipped DWCA file and index records into Solr.'))

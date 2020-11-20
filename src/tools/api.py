@@ -6,11 +6,10 @@ import requests
 import urllib
 import xml.etree.ElementTree as ET
 
-
 # import idigbio
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, MorphoSource, 
-    URL_ESCAPES, ENCODING, JSON_HEADERS)
+    URL_ESCAPES, ENCODING, JSON_HEADERS, TEST_VALUES)
 from LmRex.fileop.ready_file import ready_filename
 from LmRex.fileop.logtools import (log_info, log_warn, log_error)
 from LmRex.tools.lm_xml import fromstring, deserialize
@@ -1630,26 +1629,18 @@ def test_idigbio_taxon_ids():
 # .............................................................................
 if __name__ == '__main__':
     # test
-    names = ['Acer caesium Wall. ex Brandis', 'Acer heldreichii Orph. ex Boiss.', 
-             'Acer pseudoplatanus L.', 'Acer velutinum Boiss.', 
-             'Acer hyrcanum Fisch. & Meyer', 'Acer monspessulanum L.', 
-             'Acer obtusifolium Sibthorp & Smith', 'Acer opalus Miller', 
-             'Acer sempervirens L.', 'Acer floridanum (Chapm.) Pax', 
-             'Acer grandidentatum Torr. & Gray', 'Acer leucoderme Small', 
-             'Acer nigrum Michx.f.', 'Acer skutchii Rehder', 
-             'Acer saccharum Marshall']
     
-    tsns = [526853, 183671, 182662, 566578]
-    dskeys = ['56caf05f-1364-4f24-85f6-0c82520c2792']
+    for guid in TEST_VALUES.BIRD_GUIDS:
+        SpecifyPortalAPI()
     
-    namestr = names[0]
-    clean_names = GbifAPI.parse_names(names=names)
-    can_name = GbifAPI.parse_name(namestr)
-    try:
-        acc_name = can_name['canonicalName']
-    except Exception as e:
-        log_error('Failed to match {}'.format(namestr))
-    else:
+#     namestr = names[0]
+#     clean_names = GbifAPI.parse_names(names=names)
+#     can_name = GbifAPI.parse_name(namestr)
+#     try:
+#         acc_name = can_name['canonicalName']
+#     except Exception as e:
+#         log_error('Failed to match {}'.format(namestr))
+#     else:
 #         acc_names = GbifAPI.match_name(acc_name, status='accepted')
 #         log_info('Matched accepted names:')
 #         for n in acc_names:
@@ -1666,9 +1657,9 @@ if __name__ == '__main__':
 #         names = ['ursidae', 'Poa annua']
         recs = GbifAPI.get_records_by_dataset(dskeys[0])
         log_info('Returned {} records for dataset:'.format(len(recs)))
-        names = ['Poa annua']
-        for name in names:
-            pass
+#         names = ['Poa annua']
+#         for name in names:
+#             pass
 #             good_names = GbifAPI.match_name(
 #                 name, match_backbone=True, rank='species')
 #             log_info('Matched {} with {} GBIF names:'.format(name, len(good_names)))

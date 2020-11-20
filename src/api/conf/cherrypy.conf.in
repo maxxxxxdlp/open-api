@@ -2,6 +2,8 @@
 ; See: http://docs.cherrypy.org/en/latest/config.html
 
 [global]
+server.socket_port: 80
+server.socket_host: @PUBLIC_FQDN@
 log.error_file: '@LMSCRATCHDISK@/log/cherrypyErrors.log'
 log.access_file: '@LMSCRATCHDISK@/log/cherrypyAccess.log'
 response.timeout: 1000000
@@ -15,5 +17,3 @@ tools.sessions.storage_path: '@LMSCRATCHDISK@/sessions'
 tools.sessions.timeout: 20160
 tools.sessions.locking: 'implicit'
 environment: 'embedded'
-server.socket_port: 80
-server.socket_host: @PUBLIC_FQDN@
