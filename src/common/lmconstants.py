@@ -54,18 +54,18 @@ CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, CONFIG_DIR, 'cherrypy.conf')
 
 class APIMount:
     # occurrence services
-    OccurrenceSvc = '/tentacles/occ'
-    SpecifyArk = '/tentacles/sparks'
-    GOcc = '/tentacles/occ/gbif'
-    IDBOcc = '/tentacles/occ/idb'
-    MophOcc = '/tentacles/occ/mopho'
-    SPOcc = '/tentacles/occ/specify'
-    GColl = '/tentacles/occ/gbif/dataset'
+    OccurrenceSvc = '/occ/tentacles'
+    SpecifyArk = '/sparks'
+    GOcc = '/occ/gbif'
+    IDBOcc = '/occ/idb'
+    MophOcc = '/occ/mopho'
+    SPOcc = '/occ/specify'
+    GColl = '/dataset/gbif'
     # name services
-    NameSvc = '/tentacles/name'
-    GAcName = '/tentacles/name/gbif'
-    ITISName = '/tentacles/name/itis'
-    ITISSolrName = '/tentacles/name/itis2'
+    NameSvc = '/name/tentacles'
+    GAcName = '/name/gbif'
+    ITISSolrName = '/name/itis'
+    ITISName = '/name/itis2'
 
 class DWCA:
     NS = '{http://rs.tdwg.org/dwc/text/}'
