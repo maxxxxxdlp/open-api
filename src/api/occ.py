@@ -202,7 +202,7 @@ class OccurrenceSvc:
             
         # GBIF copy/s of Specify Record
         gocc = GOcc()
-        recs = gocc.get_gbif_rec(occid)
+        recs = gocc.get_gbif_recs(occid)
         all_output['GBIF Records'] = self._assemble_output(recs, count_only)
         # iDigBio copy/s of Specify Record
         idbocc = IDBOcc()
