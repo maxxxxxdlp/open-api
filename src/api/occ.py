@@ -180,7 +180,7 @@ class OccurrenceSvc:
         return svc_output
     
     # ...............................................
-    def get_records(self, occid, count_only):
+    def get_records(self, occid, count_only=True):
         all_output = {}
         # Specify ARK Record
         spark = SpecifyArk()
@@ -192,10 +192,13 @@ class OccurrenceSvc:
         except Exception as e:
             pass
         else:
-            # Original Specify Record
-            rec = SpecifyPortalAPI.get_specify_record(url)
-            all_output['Specify Record'] = self._assemble_output(
-                [rec], count_only)
+            if not url.startswith('http'):
+                rec = {}
+            else:
+                # Original Specify Record
+                rec = SpecifyPortalAPI.get_specify_record(url)
+                all_output['Specify Record'] = self._assemble_output(
+                    [rec], count_only)
             
         # GBIF copy/s of Specify Record
         gocc = GOcc()
@@ -213,4 +216,36 @@ class OccurrenceSvc:
         if occid is None:
             return {'message': 'S^n occurrence tentacles are online'}
         else:
-            return self.get_records(occid, True)
+            return self.get_records(occid, count_only=False)
+        
+# .............................................................................
+if __name__ == '__main__':
+    # test
+    from LmRex.common.lmconstants import TEST_VALUES
+    
+    occid = TEST_VALUES.FISH_GUIDS[2]
+    
+    oapi = OccurrenceSvc()
+    orecs = oapi.get_records(occid, count_only=False)
+    
+    gdapi = GColl()
+    gdrecs = gdapi.get_dataset_recs(TEST_VALUES.DATASET_GUIDS[0])
+    
+    gapi = GOcc()
+    grecs = gapi.get_gbif_recs(TEST_VALUES.DATASET_GUIDS[0])
+
+    iapi = IDBOcc()
+    irecs  = iapi.get_idb_recs(occid)
+    
+    mapi = MophOcc()
+    mrecs = mapi.get_dataset_recs(TEST_VALUES.DATASET_GUIDS[0])
+
+    sapi = SPOcc()
+    srecs = sapi.get_dataset_recs(TEST_VALUES.DATASET_GUIDS[0])
+"""
+
+api = OccurrenceSvc()
+recs = api.get_records()
+
+
+"""
