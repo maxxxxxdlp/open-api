@@ -162,13 +162,13 @@ class NameSvc:
 # .............................................................................
 if __name__ == '__main__':
     # test
-    from LmRex.common.lmconstants import TEST_VALUES
+    from LmRex.common.lmconstants import TST_VALUES
     
     
-    for name in TEST_VALUES.NAMES:
+    for name in TST_VALUES.NAMES:
         print('Name = {}'.format(name))
         gapi = GAcName()
-        grecs = gapi.get_gbif_accepted_taxon(TEST_VALUES.NAMES[0])
+        grecs = gapi.get_gbif_accepted_taxon(TST_VALUES.NAMES[0])
 
         iapi = ITISName()
         irecs = iapi.get_itis_taxon(name)

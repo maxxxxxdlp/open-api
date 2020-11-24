@@ -20,8 +20,10 @@ DWC_RECORD_TITLE = 'digital specimen object'
 
 JSON_HEADERS = {'Content-Type': 'application/json'}
 
-class TEST_VALUES:
-    FISH_GUIDS = [
+class TST_VALUES:
+    FISH_DS_GUIDS = ['56caf05f-1364-4f24-85f6-0c82520c2792', 
+                     '8f79c802-a58c-447f-99aa-1d6a0790825a']
+    FISH_OCC_GUIDS = [
         '2c1becd5-e641-4e83-b3f5-76a55206539a', 
         'a413b456-0bff-47da-ab26-f074d9be5219',
         'fa7dd78f-8c91-49f5-b01c-f61b3d30caee',
@@ -30,11 +32,16 @@ class TEST_VALUES:
         'dcbdb494-1ed3-11e3-bfac-90b11c41863e',
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
-    BIRD_GUIDS = [
+    BIRD_OCC_GUIDS = [
         'ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5',
         'f5725a56-7b47-11e4-8ef3-782bcb9cd5b5',
         'f69696a8-7b47-11e4-8ef3-782bcb9cd5b5',
         '5e7ec91c-4d20-42c4-ad98-8854800e82f7']
+    BIRD_DS_GUID = 'e635240a-3cb1-4d26-ab87-57d8c7afdfdb'
+    BAD_GUIDS = [
+        'KU :KUIZ:2200', 'KU :KUIZ:1663', 'KU :KUIZ:1569', 'KU :KUIZ:2462', 
+        'KU :KUIZ:1743', 'KU :KUIZ:3019', 'KU :KUIZ:1816', 'KU :KUIZ:2542', 
+        'KU :KUIZ:2396']
     NAMES = [
         'Acer caesium Wall. ex Brandis', 'Acer heldreichii Orph. ex Boiss.', 
         'Acer pseudoplatanus L.', 'Acer velutinum Boiss.', 
@@ -43,12 +50,7 @@ class TEST_VALUES:
         'Acer sempervirens L.', 'Acer floridanum (Chapm.) Pax', 
         'Acer grandidentatum Torr. & Gray', 'Acer leucoderme Small', 
         'Acer nigrum Michx.f.', 'Acer skutchii Rehder', 'Acer saccharum Marshall']
-    GUIDS = [526853, 183671, 182662, 566578]
-    DATASET_GUIDS = ['56caf05f-1364-4f24-85f6-0c82520c2792']
-    BAD_GUIDS = [
-        'KU :KUIZ:2200', 'KU :KUIZ:1663', 'KU :KUIZ:1569', 'KU :KUIZ:2462', 
-        'KU :KUIZ:1743', 'KU :KUIZ:3019', 'KU :KUIZ:1816', 'KU :KUIZ:2542', 
-        'KU :KUIZ:2396']
+    ITIS_TSNS = [526853, 183671, 182662, 566578]
 
 CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, CONFIG_DIR, 'cherrypy.conf')
 
@@ -335,6 +337,7 @@ class Idigbio:
     LINK_PREFIX = 'https://www.idigbio.org/portal/records/'
     SEARCH_PREFIX = 'https://search.idigbio.org/v2'
     SEARCH_POSTFIX = 'search'
+    COUNT_POSTFIX = 'summary/count'
     OCCURRENCE_POSTFIX = 'records'
     PUBLISHERS_POSTFIX = 'publishers'
     RECORDSETS_POSTFIX = 'recordsets'

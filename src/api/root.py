@@ -25,6 +25,7 @@ def main():
     cherrypy.tree.mount(IDBOcc(), APIMount.IDBOcc, conf)
     cherrypy.tree.mount(MophOcc(), APIMount.MophOcc, conf)
     cherrypy.tree.mount(SPOcc(), APIMount.SPOcc, conf)
+    # Occurrence by dataset
     cherrypy.tree.mount(GColl(), APIMount.GColl, conf)
     
     # Name services

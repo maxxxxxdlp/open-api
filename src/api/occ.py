@@ -222,13 +222,13 @@ class OccurrenceSvc:
 # .............................................................................
 if __name__ == '__main__':
     # test
-    from LmRex.common.lmconstants import TEST_VALUES
+    from LmRex.common.lmconstants import TST_VALUES
     
     gdapi = GColl()
-    gdrecs = gdapi.get_dataset_recs(TEST_VALUES.DATASET_GUIDS[0])
+    gdrecs = gdapi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0])
 
-    occid1 = TEST_VALUES.FISH_GUIDS[2]
-    occid2 = TEST_VALUES.BIRD_GUIDS[0]
+    occid1 = TST_VALUES.FISH_OCC_GUIDS[2]
+    occid2 = TST_VALUES.BIRD_OCC_GUIDS[0]
     for occid in [occid2]:
         oapi = OccurrenceSvc()
         orecs = oapi.get_records(occid, count_only=False)

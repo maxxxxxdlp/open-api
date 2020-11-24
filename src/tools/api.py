@@ -978,6 +978,10 @@ class GbifAPI(APIQuery):
                     log_info(
                         'Returned {} of {} GBIF recs for dataset {}'.format(
                             len(recs), total, dataset_key), logger=logger)
+                # TODO: handle large queries another way
+                # Throttle during testing
+                if offset >= (GBIF.LIMIT * 2):
+                    is_end = True
         return recs
 
 
