@@ -184,15 +184,16 @@ class DwCArchive:
         core_fname = os.path.join(outpath, fileinfo[DWCA.LOCATION_KEY])
         core_fname_noext, _ = os.path.splitext(core_fname)
         solr_outfname = core_fname_noext + '.solr.csv'
-        specify_record_server = fileinfo[SPECIFY7_SERVER_KEY]
+        specify_record_server = '{}/{}'.format(
+            fileinfo[SPECIFY7_SERVER_KEY], SPECIFY7_RECORD_ENDPOINT)
         
         if os.path.exists(solr_outfname) and overwrite is True:
             _, _ = delete_file(solr_outfname)
         if not os.path.exists(solr_outfname):
             in_delimiter = fileinfo[DWCA.DELIMITER_KEY]
             rdr, inf = get_csv_dict_reader(
-                core_fname, in_delimiter, ENCODING, fieldnames=fileinfo['fieldnames'], 
-                quote_char=fileinfo[DWCA.QUOTE_CHAR_KEY])
+                core_fname, in_delimiter, ENCODING, 
+                fieldnames=fileinfo['fieldnames'])
             # Tabs ok?
             wtr, outf = get_csv_dict_writer(
                 solr_outfname, out_delimiter, ENCODING, SPCOCO_FIELDS, fmode='w')
@@ -219,7 +220,6 @@ class DwCArchive:
                                 
                             coll_date = self._get_date(dwc_rec)
                             who_val = dwc_rec['datasetName']
-                            
                             for fld in SPCOCO_FIELDS:
                                 if fld == 'id':
                                     solr_rec[fld] = occ_uuid
