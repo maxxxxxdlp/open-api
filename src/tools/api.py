@@ -646,6 +646,8 @@ class ItisAPI(APIQuery):
 #                 for tsn in accepted_tsn_list:
 #                     acc_recs = ItisAPI.get_name(tsn)
 #                     matches.extend(acc_recs)
+        log_info('ITIS Solr returned {} matches for sciname {}'.format(
+            len(matches), sciname), logger=logger)
         return matches
     
 # ...............................................
@@ -690,6 +692,8 @@ class ItisAPI(APIQuery):
                         rec[e.tag] = e.text
                     if rec:
                         recs.append(rec)
+        log_info('ITIS WS returned {} matches for sciname {}'.format(
+            len(recs), sciname), logger=logger)
         return recs
 
 # ...............................................
@@ -889,9 +893,8 @@ class GbifAPI(APIQuery):
                     # First query, report count
                     if offset == 0:
                         gbif_total = gbif_api.output['count']
-                        log_info(
-                            'Found {} recs for key {}'.format(
-                                gbif_total, taxon_key), logger=logger)
+                        log_info('GBIF reports {} recs for key {}'.format(
+                            gbif_total, taxon_key), logger=logger)
 
                     recs = gbif_api.output['results']
                     curr_count = len(recs)
@@ -933,7 +936,7 @@ class GbifAPI(APIQuery):
             # First query, report count
             total = api.output['count']
             log_info(
-                'Found {} GBIF recs for occurrenceId {}'.format(total, occid), 
+                'GBIF returned {} recs for occurrenceId {}'.format(total, occid), 
                 logger=logger)
             recs = api.output['results']
         return recs
@@ -952,32 +955,29 @@ class GbifAPI(APIQuery):
     # ...............................................
     @staticmethod
     def get_records_by_dataset(dataset_key, logger=None):
-        recs = []
+        all_recs = []
         offset = 0
-        api = GbifAPI(
-            service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
-            other_filters={
-                'dataset_key': dataset_key, 'offset': offset, 
-                'limit': GBIF.LIMIT}, 
-            logger=logger)
-        
-        is_end = False
+        is_end = False        
         while not is_end:
+            api = GbifAPI(
+                service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+                other_filters={
+                    'dataset_key': dataset_key, 'offset': offset, 
+                    'limit': GBIF.LIMIT}, logger=logger)
             try:
                 api.query()
             except Exception:
                 log_error('Failed on {}'.format(dataset_key), logger=logger)
             else:
-                # First query, report count
                 total = api.output['count']
                 is_end = bool(api.output['endOfRecords'])
-                curr_recs = api.output['results']
-                curr_count = len(curr_recs)
-                offset += curr_count
-                recs.append(curr_recs)
-                log_info(
-                    'Returned {} of {} GBIF recs for dataset {}'.format(
-                        curr_count, total, dataset_key), logger=logger)
+                recs = api.output['results']
+                if recs:
+                    all_recs.extend(recs)
+                    offset += len(recs)
+                    log_info(
+                        'Returned {} of {} GBIF recs for dataset {}'.format(
+                            len(recs), total, dataset_key), logger=logger)
         return recs
 
 
@@ -1067,6 +1067,8 @@ class GbifAPI(APIQuery):
                         else:
                             if outstatus == status:
                                 matches.append(alt)
+        log_info('GBIF returned {} matches for name {}'.format(
+            len(matches), name_clean), logger=logger)
         return matches
 
     # ......................................
@@ -1079,8 +1081,8 @@ class GbifAPI(APIQuery):
             if response is not None:
                 ret_code = response.status_code
             else:
-                log_error(
-                    'Failed on URL {} ({})'.format(url, str(e)), logger=logger)
+                log_error('Failed on URL {} ({})'.format(url, str(e)), 
+                          logger=logger)
         else:
             if response.ok:
                 try:
@@ -1153,11 +1155,8 @@ class GbifAPI(APIQuery):
                 rec = recs[0]
             except:
                 pass
-            else:
-                if len(recs) > 1:
-                    log_warn(
-                        'WTF, {} has > 1 parsed records'.format(namestr), 
-                        logger=logger)
+#             log_info('GBIF returned {} parsed records for {}'.format(
+#                 len(recs), namestr), logger=logger)
         return rec
 
     # ...............................................
@@ -1192,6 +1191,9 @@ class GbifAPI(APIQuery):
 
         if output:
             recs = GbifAPI._trim_parsed_output(output, logger=logger)
+            log_info(
+                'GBIF returned {} parsed records for file {}'.format(
+                    filename), logger=logger)
         return recs
 
     # ...............................................
@@ -1309,7 +1311,7 @@ class IdigbioAPI(APIQuery):
             if api.output is not None:
                 total = api.output['itemCount']
                 log_info(
-                    'Found {} iDigBio recs for Specify occurrenceId {}'.format(
+                    'iDigBio returned {} recs for Specify occurrenceId {}'.format(
                         total, occid), logger=logger)
                 recs = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
         return recs
@@ -1504,8 +1506,6 @@ class MorphoSourceAPI(APIQuery):
             curr_total = data['returnedResults']
             total = data['totalResults']
             recs = data['results']
-            log_info('Page start {}: reported {}, returned {}'.format(
-                start, curr_total, len(recs)))
         return recs, curr_total, total
 
     # ...............................................
@@ -1522,6 +1522,9 @@ class MorphoSourceAPI(APIQuery):
                     start, occid, logger=logger)
                 if curr_recs:
                     recs.extend(curr_recs)
+        log_info(
+            'Returned {} of {} MorphoSource recs for occurrence {}'.format(
+                len(recs), total, occid), logger=logger)
         return recs
 
 # .............................................................................
@@ -1541,16 +1544,22 @@ class SpecifyPortalAPI(APIQuery):
         
         Args:
             url: direct url endpoint for source Specify occurrence record
+            
+        Note:
+            Specify records/datasets without a server endpoint may be cataloged
+            in the Solr Specify Resolver but are not resolvable to the host 
+            database.  URLs returned for these records begin with 'unknown_url'.
         """
         rec = {}
-        api = APIQuery(url, headers=JSON_HEADERS, logger=logger)
-
-        try:
-            api.query_by_get()
-        except Exception:
-            log_error('Failed on {}'.format(url), logger=logger)
-        else:
-            rec = api.output
+        if url.startswith('http'):
+            api = APIQuery(url, headers=JSON_HEADERS, logger=logger)
+    
+            try:
+                api.query_by_get()
+            except Exception:
+                log_error('Failed on {}'.format(url), logger=logger)
+            else:
+                rec = api.output
         return rec
 
 

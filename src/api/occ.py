@@ -42,8 +42,6 @@ class GColl:
         if len(recs) == 0:
             return {'spcoco.error': 
                     'No GBIF records with the dataset_key {}'.format(dataset_key)}
-        elif len(recs) == 1:
-            return recs[0]
         else:
             return recs
 
@@ -99,8 +97,7 @@ class IDBOcc:
 class MophOcc:
     # ...............................................
     def get_mopho_recs(self, occid):
-        mopho = MorphoSourceAPI()
-        recs = mopho.get_specimen_records_by_occid(occid=occid)
+        recs = MorphoSourceAPI.get_specimen_records_by_occid(occid=occid)
         return recs
 
     # ...............................................
@@ -180,7 +177,7 @@ class OccurrenceSvc:
         return svc_output
     
     # ...............................................
-    def get_records(self, occid, count_only=True):
+    def get_records(self, occid, count_only=False):
         all_output = {}
         # Specify ARK Record
         spark = SpecifyArk()
@@ -206,8 +203,12 @@ class OccurrenceSvc:
         all_output['GBIF Records'] = self._assemble_output(recs, count_only)
         # iDigBio copy/s of Specify Record
         idbocc = IDBOcc()
-        recs = idbocc.get_idb_rec(occid)
+        recs = idbocc.get_idb_recs(occid)
         all_output['iDigBio Records'] = self._assemble_output(recs, count_only)
+        
+        mopho = MophOcc()
+        mopho.get_mopho_recs(occid)
+        all_output['MorphoSource Records'] = self._assemble_output(recs, count_only)
         return all_output
 
     # ...............................................
@@ -223,25 +224,26 @@ if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TEST_VALUES
     
-    occid = TEST_VALUES.FISH_GUIDS[2]
-    
-    oapi = OccurrenceSvc()
-    orecs = oapi.get_records(occid, count_only=False)
-    
     gdapi = GColl()
     gdrecs = gdapi.get_dataset_recs(TEST_VALUES.DATASET_GUIDS[0])
-    
-    gapi = GOcc()
-    grecs = gapi.get_gbif_recs(TEST_VALUES.DATASET_GUIDS[0])
 
-    iapi = IDBOcc()
-    irecs  = iapi.get_idb_recs(occid)
+    occid1 = TEST_VALUES.FISH_GUIDS[2]
+    occid2 = TEST_VALUES.BIRD_GUIDS[0]
+    for occid in [occid2]:
+        oapi = OccurrenceSvc()
+        orecs = oapi.get_records(occid, count_only=False)
+            
+        gapi = GOcc()
+        grecs = gapi.get_gbif_recs(occid)
     
-    mapi = MophOcc()
-    mrecs = mapi.get_dataset_recs(TEST_VALUES.DATASET_GUIDS[0])
-
-    sapi = SPOcc()
-    srecs = sapi.get_dataset_recs(TEST_VALUES.DATASET_GUIDS[0])
+        iapi = IDBOcc()
+        irecs  = iapi.get_idb_recs(occid)
+        
+        mapi = MophOcc()
+        mrecs = mapi.get_mopho_recs(occid)
+    
+        sapi = SPOcc()
+        srecs = sapi.get_specify_rec(occid)
 """
 
 api = OccurrenceSvc()

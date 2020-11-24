@@ -42,17 +42,17 @@ class GAcName:
 class ITISName:
     
     # ...............................................
-    def get_itis_taxon(self, namestr, status=None, kingdom=None):
+    def get_itis_taxon(self, namestr):
         rec = GbifAPI.parse_name(namestr)
         try:
             can_name = rec['canonicalName']
         except:
             # Default to original namestring if parsing fails
             can_name = namestr
-        good_names = ItisAPI.match_name(can_name, status=None, kingdom=None)
+        good_names = ItisAPI.match_name(can_name)
         if len(good_names) == 0:
             return {'spcoco.error': 
-                    'No matching GBIF taxon records for {}'.format(namestr)}
+                    'No matching ITIS taxon records for {}'.format(namestr)}
         else:
             return good_names
 
@@ -137,7 +137,7 @@ class NameSvc:
         return svc_output
     
     # ...............................................
-    def get_records(self, namestr, count_only):
+    def get_records(self, namestr, count_only=False):
         all_output = {}
             
         # GBIF Taxon Record
@@ -157,5 +157,25 @@ class NameSvc:
         if namestr is None:
             return {'message': 'S^n name tentacles are online'}
         else:
-            return self.get_records(namestr, True)
+            return self.get_records(namestr, count_only=False)
 
+# .............................................................................
+if __name__ == '__main__':
+    # test
+    from LmRex.common.lmconstants import TEST_VALUES
+    
+    
+    for name in TEST_VALUES.NAMES:
+        print('Name = {}'.format(name))
+        gapi = GAcName()
+        grecs = gapi.get_gbif_accepted_taxon(TEST_VALUES.NAMES[0])
+
+        iapi = ITISName()
+        irecs = iapi.get_itis_taxon(name)
+            
+        i2api = ITISSolrName()
+        i2recs = i2api.get_itis_accepted_taxon(name)
+    
+        napi = NameSvc()
+        nrecs  = napi.get_records(name)
+        print('')
