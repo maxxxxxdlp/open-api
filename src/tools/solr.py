@@ -1,7 +1,7 @@
 import requests
 import subprocess
 
-from LmRex.common.lmconstants import TEST_VALUES
+from LmRex.common.lmconstants import TST_VALUES
 from LmRex.tools.api import APIQuery
 
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
@@ -151,7 +151,7 @@ def update(collection, solr_location='localhost'):
 if __name__ == '__main__':
     # test
     
-    for guid in TEST_VALUES.BIRD_GUIDS:
+    for guid in TST_VALUES.BIRD_OCC_GUIDS:
         doc = query_guid('spcoco', guid, solr_location='129.237.201.192')
         print('Found {} record for guid {}'.format(doc, guid))
 

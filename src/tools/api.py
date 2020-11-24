@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 # import idigbio
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, MorphoSource, 
-    URL_ESCAPES, ENCODING, JSON_HEADERS, TEST_VALUES)
+    URL_ESCAPES, ENCODING, JSON_HEADERS, TST_VALUES)
 from LmRex.fileop.ready_file import ready_filename
 from LmRex.fileop.logtools import (log_info, log_warn, log_error)
 from LmRex.tools.lm_xml import fromstring, deserialize
@@ -982,7 +982,7 @@ class GbifAPI(APIQuery):
                 # Throttle during testing
                 if offset >= (GBIF.LIMIT * 2):
                     is_end = True
-        return recs
+        return all_recs
 
 
     # ...............................................
@@ -1664,7 +1664,7 @@ if __name__ == '__main__':
     # test
     
     log_info('Mopho records:')
-    for guid in TEST_VALUES.BIRD_GUIDS:
+    for guid in TST_VALUES.BIRD_OCC_GUIDS:
         recs = MorphoSourceAPI.get_specimen_records_by_occid(guid)
         for r in recs:
             try:
@@ -1697,7 +1697,7 @@ if __name__ == '__main__':
 #         log_info ('')
         
 #         names = ['ursidae', 'Poa annua']
-#         recs = GbifAPI.get_records_by_dataset(TEST_VALUES.DATASET_GUIDS[0])
+#         recs = GbifAPI.get_records_by_dataset(TST_VALUES.DATASET_GUIDS[0])
 #         log_info('Returned {} records for dataset:'.format(len(recs)))
 #         names = ['Poa annua']
 #         for name in names:
