@@ -120,9 +120,9 @@ class APIQuery:
             for k, val in all_filters.items():
                 if isinstance(val, bool):
                     val = str(val).lower()
-                elif isinstance(val, str):
-                    for oldstr, newstr in URL_ESCAPES:
-                        val = val.replace(oldstr, newstr)
+#                 elif isinstance(val, str):
+#                     for oldstr, newstr in URL_ESCAPES:
+#                         val = val.replace(oldstr, newstr)
                 # works for GBIF, iDigBio, ITIS web services (no manual escaping)
                 all_filters[k] = str(val).encode(ENCODING)
             filter_string = urllib.parse.urlencode(all_filters)
@@ -777,6 +777,26 @@ class GbifAPI(APIQuery):
         APIQuery.__init__(self, url, other_filters=other_filters, logger=logger)
 
     # ...............................................
+    def _assemble_filter_string(self, filter_string=None):
+        # Assemble key/value pairs
+        if filter_string is None:
+            all_filters = self._other_filters.copy()
+            if self._q_filters:
+                q_val = self._assemble_q_val(self._q_filters)
+                all_filters[self._q_key] = q_val
+            for k, val in all_filters.items():
+                if isinstance(val, bool):
+                    val = str(val).lower()
+                # works for GBIF, iDigBio, ITIS web services (no manual escaping)
+                all_filters[k] = str(val).encode(ENCODING)
+            filter_string = urllib.parse.urlencode(all_filters)
+        # Escape filter string
+        else:
+            for oldstr, newstr in URL_ESCAPES:
+                filter_string = filter_string.replace(oldstr, newstr)
+        return filter_string
+
+    # ...............................................
     @staticmethod
     def _get_output_val(out_dict, name):
         try:
@@ -1144,6 +1164,9 @@ class GbifAPI(APIQuery):
             A record as a dictionary containing a parsed scientific name, with 
             keys being the part of a scientific name, and values being the 
             element or elements that correspond to that part.
+            
+        sent (bad) http://api.gbif.org/v1/parser/name?name=Acer%5C%2520caesium%5C%2520Wall.%5C%2520ex%5C%2520Brandis
+        send good http://api.gbif.org/v1/parser/name?name=Acer%20heldreichii%20Orph.%20ex%20Boiss.
         """
         rec = None
         # Query GBIF

@@ -7,14 +7,15 @@ from LmRex.tools.api import (GbifAPI, ItisAPI)
 class GAcName:
     
     # ...............................................
-    def get_gbif_accepted_taxon(self, namestr, kingdom=None):
-        rec = GbifAPI.parse_name(namestr)
-        try:
-            can_name = rec['canonicalName']
-        except:
-            # Default to original namestring if parsing fails
-            can_name = namestr
-        good_names = GbifAPI.match_name(can_name, status='accepted')
+    def get_gbif_accepted_taxon(self, namestr, do_parse):
+        if do_parse:
+            rec = GbifAPI.parse_name(namestr)
+            try:
+                namestr = rec['canonicalName']
+            except:
+                # Default to original namestring if parsing fails
+                pass
+        good_names = GbifAPI.match_name(namestr, status='accepted')
         if len(good_names) == 0:
             return {'spcoco.error': 
                     'No matching GBIF taxon records for {}'.format(namestr)}
@@ -23,33 +24,36 @@ class GAcName:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None):
+    def GET(self, namestr=None, do_parse=True):
         """Get a one GBIF accepted taxon record for a scientific name string
         
         Args:
             namestr: a scientific name
+            do_parse: flag to indicate whether to first use the GBIF parser 
+                to parse a scientific name into canonical name 
         Return:
-            one dictionary containing a message or GBIF record corresponding 
-            to the accepted name in the GBIF Backbone taxonomy
+            a list of dictionaries containing a message or GBIF record 
+            corresponding to a name in the GBIF backbone taxonomy
         """
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF name resolution is online'}
         else:
-            return self.get_gbif_accepted_taxon(namestr)
+            return self.get_gbif_accepted_taxon(namestr, do_parse)
 
 # .............................................................................
 @cherrypy.expose
 class ITISName:
     
     # ...............................................
-    def get_itis_taxon(self, namestr):
-        rec = GbifAPI.parse_name(namestr)
-        try:
-            can_name = rec['canonicalName']
-        except:
-            # Default to original namestring if parsing fails
-            can_name = namestr
-        good_names = ItisAPI.match_name(can_name)
+    def get_itis_taxon(self, namestr, do_parse):
+        if do_parse:
+            rec = GbifAPI.parse_name(namestr)
+            try:
+                namestr = rec['canonicalName']
+            except:
+                # Default to original namestring if parsing fails
+                pass
+        good_names = ItisAPI.match_name(namestr)
         if len(good_names) == 0:
             return {'spcoco.error': 
                     'No matching ITIS taxon records for {}'.format(namestr)}
@@ -58,33 +62,37 @@ class ITISName:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None):
-        """Get a one GBIF accepted taxon record for a scientific name string
+    def GET(self, namestr=None, do_parse=True):
+        """Get one or more ITIS taxon records for a scientific name string
         
         Args:
             namestr: a scientific name
+            do_parse: flag to indicate whether to first use the GBIF parser 
+                to parse a scientific name into canonical name 
         Return:
-            one dictionary containing a message or GBIF record corresponding 
-            to the accepted name in the GBIF Backbone taxonomy
+            a list of dictionaries containing a message or ITIS record 
+            corresponding to a name in the ITIS taxonomy
         """
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF name resolution is online'}
         else:
-            return self.get_itis_taxon(namestr)
+            return self.get_itis_taxon(namestr, do_parse)
 
 # .............................................................................
 @cherrypy.expose
 class ITISSolrName:
     
     # ...............................................
-    def get_itis_accepted_taxon(self, namestr, status=None, kingdom=None):
+    def get_itis_accepted_taxon(
+            self, namestr, do_parse, status=None, kingdom=None):
         rec = GbifAPI.parse_name(namestr)
         try:
-            can_name = rec['canonicalName']
+            namestr = rec['canonicalName']
         except:
             # Default to original namestring if parsing fails
-            can_name = namestr
-        good_names = ItisAPI.match_name_solr(can_name, status=None, kingdom=None)
+            pass
+        good_names = ItisAPI.match_name_solr(
+            namestr, status=status, kingdom=kingdom)
         if len(good_names) == 0:
             return {'spcoco.error': 
                     'No matching GBIF taxon records for {}'.format(namestr)}
@@ -93,19 +101,22 @@ class ITISSolrName:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None):
-        """Get a one GBIF accepted taxon record for a scientific name string
+    def GET(self, namestr=None, do_parse=True, status=None, kingdom=None):
+        """Get one or more ITIS taxon records for a scientific name string
         
         Args:
             namestr: a scientific name
+            do_parse: flag to indicate whether to first use the GBIF parser 
+                to parse a scientific name into canonical name 
         Return:
-            one dictionary containing a message or GBIF record corresponding 
-            to the accepted name in the GBIF Backbone taxonomy
+            a list of dictionaries containing a message or ITIS record 
+            corresponding to a name in the ITIS taxonomy
         """
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF name resolution is online'}
         else:
-            return self.get_itis_accepted_taxon(namestr)
+            return self.get_itis_accepted_taxon(
+                namestr, do_parse, status=status, kingdom=kingdom)
 
 # .............................................................................
 @cherrypy.expose
@@ -137,45 +148,73 @@ class NameSvc:
         return svc_output
     
     # ...............................................
-    def get_records(self, namestr, count_only=False):
+    def get_records(self, namestr, do_parse, count_only=False):
         all_output = {}
             
         # GBIF Taxon Record
         gacc = GAcName()
-        recs = gacc.get_gbif_accepted_taxon(namestr)
+        recs = gacc.get_gbif_accepted_taxon(namestr, do_parse)
         all_output['GBIF Records'] = self._assemble_output(recs, count_only)
         # ITIS Taxon Record
         itis = ITISName()
-        recs = itis.get_itis_taxon(namestr)
-        all_output['ITIS Taxon Records'] = self._assemble_output(recs, count_only)
+        recs = itis.get_itis_taxon(namestr, do_parse)
+        all_output['ITIS WS Taxon Records'] = self._assemble_output(
+            recs, count_only)
+        # ITIS Solr Taxon Record
+        itis = ITISSolrName()
+        recs = itis.get_itis_accepted_taxon(namestr, do_parse)
+        all_output['ITIS Solr Taxon Records'] = self._assemble_output(
+            recs, count_only)
         return all_output
 
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None):
+    def GET(self, namestr=None, do_parse=True, count_only=False):
+        """Get one or more taxon records for a scientific name string from each
+        available name service.
+        
+        Args:
+            namestr: a scientific name
+            do_parse: flag to indicate whether to first use the GBIF parser 
+                to parse a scientific name into canonical name 
+            count_only: flag to indicate whether to return full results or 
+                record counts for each service
+        Return:
+            a dictionary with keys for each service queried.  Values contain 
+                either a list of dictionaries/records returned for that service 
+                or a count.
+        """
         if namestr is None:
             return {'message': 'S^n name tentacles are online'}
         else:
-            return self.get_records(namestr, count_only=False)
+            return self.get_records(namestr, do_parse, count_only=count_only)
 
 # .............................................................................
 if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TST_VALUES
     
-    
-    for name in TST_VALUES.NAMES:
-        print('Name = {}'.format(name))
+    do_parse = False    
+    for namestr in TST_VALUES.NAMES:
+        print('Name = {}'.format(namestr))
+        rec = GbifAPI.parse_name(namestr)
+        try:
+            namestr = rec['canonicalName']
+        except:
+            # Default to original namestring if parsing fails
+            pass
+
+        print('Parsed name = {}'.format(namestr))
         gapi = GAcName()
-        grecs = gapi.get_gbif_accepted_taxon(TST_VALUES.NAMES[0])
+        grecs = gapi.get_gbif_accepted_taxon(namestr, do_parse)
 
         iapi = ITISName()
-        irecs = iapi.get_itis_taxon(name)
+        irecs = iapi.get_itis_taxon(namestr, do_parse)
             
         i2api = ITISSolrName()
-        i2recs = i2api.get_itis_accepted_taxon(name)
+        i2recs = i2api.get_itis_accepted_taxon(namestr, do_parse)
     
         napi = NameSvc()
-        nrecs  = napi.get_records(name)
+        nrecs  = napi.get_records(namestr, do_parse)
         print('')
