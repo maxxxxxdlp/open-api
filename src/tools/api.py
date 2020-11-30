@@ -1218,9 +1218,15 @@ class GbifAPI(APIQuery):
 
         if output:
             recs = GbifAPI._trim_parsed_output(output, logger=logger)
-            log_info(
-                'GBIF returned {} parsed records for file {}'.format(
-                    filename), logger=logger)
+            if filename is not None:
+                log_info(
+                    'GBIF returned {} parsed records for file {}'.format(
+                        len(recs), filename), logger=logger)
+            else:
+                log_info(
+                    'GBIF returned {} parsed records for {} names'.format(
+                        len(recs), len(names)), logger=logger)
+
         return recs
 
     # ...............................................
@@ -1698,15 +1704,15 @@ if __name__ == '__main__':
                 r['specimen.occurrence_id'], notes))
         log_info ('')
     
-#     namestr = names[0]
-#     clean_names = GbifAPI.parse_names(names=names)
-#     can_name = GbifAPI.parse_name(namestr)
-#     try:
-#         acc_name = can_name['canonicalName']
-#     except Exception as e:
-#         log_error('Failed to match {}'.format(namestr))
-#     else:
-#         acc_names = GbifAPI.match_name(acc_name, status='accepted')
+    namestr = TST_VALUES.NAMES[0]
+    clean_names = GbifAPI.parse_names(names=TST_VALUES.NAMES)
+    can_name = GbifAPI.parse_name(namestr)
+    try:
+        acc_name = can_name['canonicalName']
+    except Exception as e:
+        log_error('Failed to match {}'.format(namestr))
+    else:
+        acc_names = GbifAPI.match_name(acc_name, status='accepted')
 #         log_info('Matched accepted names:')
 #         for n in acc_names:
 #             log_info('{}: {}, {}'.format(

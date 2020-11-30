@@ -4,6 +4,7 @@ import subprocess
 from LmRex.common.lmconstants import TST_VALUES
 from LmRex.tools.api import APIQuery
 
+SOLR_SERVER = '129.237.201.192'
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_COMMAND = '/opt/solr/bin/solr'
 CURL_COMMAND = '/usr/bin/curl'
@@ -23,7 +24,7 @@ def count_docs(collection, solr_location=None):
     return count
 
 # ...............................................
-def _post_remote(collection, fname, solr_location='localhost', headers={}):
+def _post_remote(collection, fname, solr_location=SOLR_SERVER, headers={}):
     response = output = retcode = None
     solr_endpt = 'http://{}:8983/solr'.format(solr_location)
     url = '{}/{}/update'.format(solr_endpt, collection)
@@ -96,7 +97,7 @@ def post(collection, fname, solr_location=None, headers=None):
     return retcode, output
 
 # .............................................................................
-def query_guid(collection, guid, solr_location='localhost'):
+def query_guid(collection, guid, solr_location=SOLR_SERVER):
     """
     Query a Specify resolver index and return results for an occurrence in 
     JSON format.
@@ -104,7 +105,7 @@ def query_guid(collection, guid, solr_location='localhost'):
     Args:
         collection: name of the Solr index
         guid: Unique identifier for record of interest
-        solr_location: FQDN or IP of the Solr server or 'localhost' 
+        solr_location: FQDN or IP of the Solr server
     
     Returns:
         Zero or one Solr records
@@ -117,7 +118,7 @@ def query_guid(collection, guid, solr_location='localhost'):
     return doc
     
 # .............................................................................
-def query(collection, filters={'*': '*'}, solr_location='localhost'):
+def query(collection, filters={'*': '*'}, solr_location=SOLR_SERVER):
     """
     Query a solr index and return results in JSON format
     """
@@ -141,7 +142,7 @@ def query(collection, filters={'*': '*'}, solr_location='localhost'):
     return count, docs
 
 # .............................................................................
-def update(collection, solr_location='localhost'):
+def update(collection, solr_location=SOLR_SERVER):
     url = '{}/{}/update'.format(solr_location, collection)
     cmd = '{} {}'.format(CURL_COMMAND, url)
     output, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
@@ -161,6 +162,6 @@ Post:
 /opt/solr/bin/post -c spcoco /state/partition1/git/t-rex/data/solrtest/occurrence.solr.csv
 
 Query:
-curl http://localhost:8983/solr/spcoco/select?q=occurrence_guid:47d04f7e-73fa-4cc7-b50a-89eeefdcd162
+curl http://notyeti-192.lifemapper.org:8983/solr/spcoco/select?q=occurrence_guid:47d04f7e-73fa-4cc7-b50a-89eeefdcd162
 curl http://notyeti-192.lifemapper.org:8983/solr/spcoco/select?q=*:*
 """

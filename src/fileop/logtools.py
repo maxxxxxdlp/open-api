@@ -91,3 +91,16 @@ def log_error(msg, logger=None):
 #         log = get_logger(logname, logfname)
 #     return log
 
+"""
+{'Date': 'Mon, 30 Nov 2020 17:12:14 GMT', 
+'Content-Type': 'application/json', 
+'Access-Control-Allow-Origin': '*', 
+'Access-Control-Allow-Methods': 'HEAD, GET, POST, DELETE, PUT, OPTIONS', 
+'Server': 'Jetty(9.3.z-SNAPSHOT)', 
+'Cache-Control': 'public, max-age=3601', 
+'X-Varnish': '614072909', 
+'Age': '0', 
+'Via': '1.1 varnish (Varnish/6.0)', 
+'Content-Length': '4986', 
+'Connection': 'keep-alive'}
+"""

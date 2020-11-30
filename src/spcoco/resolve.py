@@ -36,11 +36,7 @@ def _get_server_addr():
         '/usr/bin/hostname', shell=True, stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE).communicate()
     hn = output.strip().decode(ENCODING)
-    parts = hn.split('.')
-    if parts[0] == 'notyeti-192':
-        return 'localhost'
-    else:
-        return hn
+    return hn
 
 # ......................................................
 def is_guid(idstr):
