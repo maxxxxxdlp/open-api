@@ -7,16 +7,35 @@ from LmRex.api.sparks import SpecifyArk
 
 from LmRex.common.lmconstants import (APIMount, CHERRYPY_CONFIG_FILE)
 
+# .............................................................................
+def CORS():
+    """This function enables CORS for a web request
+    Function to be called before processing a request.  This will add response
+    headers required for CORS (Cross-Origin Resource Sharing) requests.  This
+    is needed for browsers running JavaScript code from a different domain.
+    """
+    cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
+    cherrypy.response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    cherrypy.response.headers["Access-Control-Allow-Headers"] = "*"
+    cherrypy.response.headers["Access-Control-Allow-Credentials"] = "true"
+    if cherrypy.request.method.lower() == 'options':
+        cherrypy.response.headers['Content-Type'] = 'text/plain'
+    return 'OK'
+
+# .............................................................................
 def main():
     conf = {
         '/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()} 
         }
-    
+    # .............................................................................
+    # Tell CherryPy to add headers needed for CORS
+    cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
+
 #     cherrypy.config.update(CHERRYPY_CONFIG_FILE)
     cherrypy.config.update({'server.socket_port': 80,
                             'server.socket_host': '129.237.201.192'})
     cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-        
+    
     # ARK service
     cherrypy.tree.mount(SpecifyArk(), APIMount.SpecifyArk, conf)
 
