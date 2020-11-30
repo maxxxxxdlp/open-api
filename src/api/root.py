@@ -18,8 +18,8 @@ def CORS():
     cherrypy.response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
     cherrypy.response.headers["Access-Control-Allow-Headers"] = "*"
     cherrypy.response.headers["Access-Control-Allow-Credentials"] = "true"
-    if cherrypy.request.method.lower() == 'options':
-        cherrypy.response.headers['Content-Type'] = 'text/plain'
+#     if cherrypy.request.method.lower() == 'options':
+#         cherrypy.response.headers['Content-Type'] = 'text/plain'
     return 'OK'
 
 # .............................................................................
