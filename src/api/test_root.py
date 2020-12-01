@@ -18,6 +18,7 @@ class SimpleCPTest(helper.CPWebCase):
     
 # ......................................................
     def _query_by_url(self, url):
+        output = None
         self.response = None
         self.status = None
         try:

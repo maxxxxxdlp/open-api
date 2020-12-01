@@ -11,11 +11,15 @@ class GNameCount:
         recs = []
         gan = GAcName()
         good_names = gan.get_gbif_accepted_taxon(namestr, do_parse)
-        for name in good_names:
-            taxon_key = name['usageKey']
-            sciname = name['scientificName']
-            count, url = GbifAPI.count_accepted_name(taxon_key)
-            recs.append({'scientificName': sciname, 'count': count, 'url': url})
+        for namerec in good_names:
+            try:
+                taxon_key = namerec['usageKey']
+                sciname = namerec['scientificName']
+                count, url = GbifAPI.count_accepted_name(taxon_key)
+                recs.append({'scientificName': sciname, 'count': count, 'url': url})
+            except Exception as e:
+                print('Exception on {}: {}'.format(namestr, e))
+                print('name = {}'.format(namerec))
         return recs
 
     # ...............................................
