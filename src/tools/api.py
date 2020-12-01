@@ -1213,7 +1213,7 @@ class GbifAPI(APIQuery):
                 pass
 #             log_info('GBIF returned {} parsed records for {}'.format(
 #                 len(recs), namestr), logger=logger)
-        return rec
+        return recs
 
     # ...............................................
     @staticmethod

@@ -59,6 +59,13 @@ class SimpleCPTest(helper.CPWebCase):
 #         # from LmRex.api.root
 #         start_cherrypy_services()
 
+    def test_get_counts(self):
+        for namestr in TST_VALUES.NAMES:
+            do_parse = True
+            url = 'http://{}{}/{}'.format(
+                TST_SERVER, APIMount.GNameCountOcc, namestr)
+            output = self._query_by_url(url)
+            print(namestr, output)
 # ......................................................
     def test_get_fish(self):
         for svc in APIMount.occurrence_services():
@@ -69,8 +76,9 @@ class SimpleCPTest(helper.CPWebCase):
                 self.status, output, url))
             for guid in TST_VALUES.FISH_OCC_GUIDS:
                 url = '{}{}/{}'.format(TST_SERVER, svc, guid)
-                self._query_by_url(url)
-          
+                output = self._query_by_url(url)
+                print(guid, output)
+                
 # .............................................................................
 if __name__ == '__main__':
     tst = SimpleCPTest()
@@ -78,5 +86,5 @@ if __name__ == '__main__':
     hname = socket.gethostname()
 #     if hname == TST_SERVER:
 #         tst.setup_server()
-    tst.test_get_fish()
-
+#     tst.test_get_fish()
+    tst.test_get_counts()

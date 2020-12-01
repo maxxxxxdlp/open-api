@@ -18,6 +18,26 @@ class GNameCount:
             recs.append({'scientificName': sciname, 'count': count, 'url': url})
         return recs
 
+    # ...............................................
+    @cherrypy.tools.json_out()
+    def GET(self, namestr=None, do_parse=True):
+        """Get the number of occurrence records for all names "matching" the
+        given scientific name string.
+        
+        Args:
+            namestr: a scientific name
+            do_parse: flag to indicate whether to first use the GBIF parser 
+                to parse a scientific name into canonical name 
+        Return:
+            a list of dictionaries containing a matching name 
+            (synonym, invalid, etc), record count, and query URL for retrieving 
+            the records.
+        """
+        if namestr is None:
+            return {'spcoco.message': 'S^n GBIF name resolution is online'}
+        else:
+            return self.get_gbif_count_for_taxon(namestr, do_parse)
+
 
 # .............................................................................
 @cherrypy.expose
@@ -38,24 +58,6 @@ class GAcName:
                     'No matching GBIF taxon records for {}'.format(namestr)}
         else:
             return good_names
-
-    # ...............................................
-#     def _get_gbif_count_for_taxon(self, taxon_key):
-#         GAcName
-#         good_names = gapi.get_gbif_accepted_taxon(self, namestr, do_parse)
-#         if do_parse:
-#             rec = GbifAPI.parse_name(namestr)
-#             try:
-#                 namestr = rec['canonicalName']
-#             except:
-#                 # Default to original namestring if parsing fails
-#                 pass
-#         good_names = GbifAPI.match_name(namestr, status='accepted')
-#         if len(good_names) == 0:
-#             return {'spcoco.error': 
-#                     'No matching GBIF taxon records for {}'.format(namestr)}
-#         else:
-#             return good_names
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -233,7 +235,7 @@ if __name__ == '__main__':
     for namestr in TST_VALUES.NAMES:
         do_parse = True
         print('Name = {}'.format(namestr))
-        gapi = GAcName()
+        gapi = GNameCount()
         grecs = gapi.get_gbif_count_for_taxon(namestr, do_parse)
         
         rec = GbifAPI.parse_name(namestr)
