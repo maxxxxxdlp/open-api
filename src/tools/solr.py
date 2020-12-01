@@ -14,13 +14,8 @@ ENCODING='utf-8'
 Defined solrcores in /var/solr/data/cores/
 """
 # ......................................................
-def count_docs(collection, solr_location=None):
-    count = -1
-    output = query(collection, solr_location=solr_location)
-    try:
-        count = output['response']['numFound']
-    except Exception as e:
-        print('Failed to return count {}'.format(e))
+def count_docs(collection, solr_location=SOLR_SERVER):
+    count, docs = query(collection, solr_location=solr_location)
     return count
 
 # ...............................................
@@ -151,11 +146,12 @@ def update(collection, solr_location=SOLR_SERVER):
 # .............................................................................
 if __name__ == '__main__':
     # test
-    
+    TST_COLLECTION = 'spcoco'
+    doc = count_docs(TST_COLLECTION)
+    print('Found {} records in {}'.format(doc, TST_COLLECTION))
     for guid in TST_VALUES.BIRD_OCC_GUIDS:
-        doc = query_guid('spcoco', guid, solr_location='129.237.201.192')
+        doc = query_guid(TST_COLLECTION, guid)
         print('Found {} record for guid {}'.format(doc, guid))
-
 
 """
 Post:

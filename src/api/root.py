@@ -23,7 +23,7 @@ def CORS():
     return 'OK'
 
 # .............................................................................
-def main():
+def start_cherrypy_services():
     conf = {
         '/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()} 
         }
@@ -64,4 +64,5 @@ if __name__ == '__main__':
         curl http://129.237.201.192/sparks/2c1becd5-e641-4e83-b3f5-76a55206539a
         curl http://129.237.201.192/occ/idbocc/2c1becd5-e641-4e83-b3f5-76a55206539a
     """
-    main()
+    start_cherrypy_services()
+    

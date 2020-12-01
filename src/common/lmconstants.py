@@ -1,5 +1,6 @@
 import os
 
+# .............................................................................
 # hierarchySoFarWRanks <class 'list'>: ['41107:$Kingdom:Plantae$Subkingdom:Viridiplantae$Infrakingdom:Streptophyta$Superdivision:Embryophyta$Division:Tracheophyta$Subdivision:Spermatophytina$Class:Magnoliopsida$Superorder:Lilianae$Order:Poales$Family:Poaceae$Genus:Poa$Species:Poa annua$']
 # hierarchyTSN <class 'list'>: ['$202422$954898$846494$954900$846496$846504$18063$846542$846620$40351$41074$41107$']
 APP_PATH = '/opt/lifemapper'
@@ -19,7 +20,9 @@ DWC_URL = 'http://rs.tdwg.org/dwc'
 DWC_RECORD_TITLE = 'digital specimen object'
 
 JSON_HEADERS = {'Content-Type': 'application/json'}
+CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, CONFIG_DIR, 'cherrypy.conf')
 
+# .............................................................................
 class TST_VALUES:
     FISH_DS_GUIDS = ['56caf05f-1364-4f24-85f6-0c82520c2792', 
                      '8f79c802-a58c-447f-99aa-1d6a0790825a']
@@ -52,8 +55,7 @@ class TST_VALUES:
         'Acer nigrum Michx.f.', 'Acer skutchii Rehder', 'Acer saccharum Marshall']
     ITIS_TSNS = [526853, 183671, 182662, 566578]
 
-CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, CONFIG_DIR, 'cherrypy.conf')
-
+# .............................................................................
 class APIMount:
     # occurrence services
     OccurrenceSvc = '/occ/tentacles'
@@ -62,6 +64,7 @@ class APIMount:
     IDBOcc = '/occ/idb'
     MophOcc = '/occ/mopho'
     SPOcc = '/occ/specify'
+    # dataset services
     GColl = '/dataset/gbif'
     # name services
     NameSvc = '/name/tentacles'
@@ -69,6 +72,21 @@ class APIMount:
     ITISSolrName = '/name/itis'
     ITISName = '/name/itis2'
 
+    @staticmethod
+    def occurrence_services():
+        return [
+            APIMount.SpecifyArk, APIMount.OccurrenceSvc, APIMount.GOcc, 
+            APIMount.IDBOcc, APIMount.SPOcc]
+    @staticmethod
+    def name_services():
+        return [
+            APIMount.NameSvc, APIMount.GAcName, APIMount.ITISName, 
+            APIMount.ITISSolrName]
+    @staticmethod
+    def dataset_services():
+        return [APIMount.GColl]
+
+# .............................................................................
 class DWCA:
     NS = '{http://rs.tdwg.org/dwc/text/}'
     META_FNAME = 'meta.xml'
@@ -92,6 +110,7 @@ class DWCA:
         'year',
         'month',
         'day']
+# .............................................................................
 
 URL_ESCAPES = [[" ", "\%20"], [",", "\%2C"]]
 ENCODING = 'utf-8'
@@ -332,8 +351,7 @@ class Itis:
 # .                           iDigBio constants                               .
 # .............................................................................
 class Idigbio:
-    """iDigBio constants enumeration
-    """
+    """iDigBio constants enumeration"""
     LINK_PREFIX = 'https://www.idigbio.org/portal/records/'
     SEARCH_PREFIX = 'https://search.idigbio.org/v2'
     SEARCH_POSTFIX = 'search'
