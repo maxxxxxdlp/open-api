@@ -15,11 +15,12 @@ class GNameCount:
             try:
                 taxon_key = namerec['usageKey']
                 sciname = namerec['scientificName']
-                count, url = GbifAPI.count_accepted_name(taxon_key)
-                recs.append({'scientificName': sciname, 'count': count, 'url': url})
             except Exception as e:
                 print('Exception on {}: {}'.format(namestr, e))
                 print('name = {}'.format(namerec))
+            else:
+                count, url = GbifAPI.count_accepted_name(taxon_key)
+                recs.append({'scientificName': sciname, 'count': count, 'url': url})
         return recs
 
     # ...............................................
@@ -38,7 +39,7 @@ class GNameCount:
             the records.
         """
         if namestr is None:
-            return {'spcoco.message': 'S^n GBIF name resolution is online'}
+            return {'spcoco.message': 'S^n GBIF count-occurrences-for-name is online'}
         else:
             return self.get_gbif_count_for_taxon(namestr, do_parse)
 

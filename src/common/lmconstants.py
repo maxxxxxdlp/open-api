@@ -276,6 +276,7 @@ class GBIF:
     WAIT_TIME = 180
     LIMIT = 300
     REST_URL = 'http://api.gbif.org/v1'
+    SPECIES_URL = 'https://www.gbif.org/species'
     QUALIFIER = 'gbif:'
 
     SPECIES_SERVICE = 'species'
