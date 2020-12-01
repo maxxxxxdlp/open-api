@@ -1095,6 +1095,35 @@ class GbifAPI(APIQuery):
             len(matches), name_clean), logger=logger)
         return matches
 
+    # ...............................................
+    @staticmethod
+    def count_accepted_name(taxon_key, logger=None):
+        """Return a count of records in GBIF with the indicated taxon.
+                
+        Args:
+            taxon_key: A GBIF unique identifier indicating a taxon object.
+                
+        Returns:
+            A record as a dictionary containing the record count of occurrences
+            with this accepted taxon, and a URL to retrieve these records.            
+        """
+        count = -1
+        url =  None
+        # Query GBIF
+        name_api = GbifAPI(
+            service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+            other_filters={'taxonKey': taxon_key},
+            logger=logger)
+        name_api.query_by_get()
+        # Parse results (should be only one)
+        if name_api.output is not None:
+            url = name_api.url
+            try:
+                count = name_api.output['count']
+            except:
+                pass
+        return count, url
+
     # ......................................
     @staticmethod
     def _post_json_to_parser(url, data, logger=None):

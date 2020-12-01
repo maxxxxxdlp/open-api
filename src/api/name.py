@@ -2,6 +2,23 @@ import cherrypy
 
 from LmRex.tools.api import (GbifAPI, ItisAPI)
 
+
+# .............................................................................
+@cherrypy.expose
+class GNameCount:
+    # ...............................................
+    def get_gbif_count_for_taxon(self, namestr, do_parse):
+        recs = []
+        gan = GAcName()
+        good_names = gan.get_gbif_accepted_taxon(namestr, do_parse)
+        for name in good_names:
+            taxon_key = name['usageKey']
+            sciname = name['scientificName']
+            count, url = GbifAPI.count_accepted_name(taxon_key)
+            recs.append({'scientificName': sciname, 'count': count, 'url': url})
+        return recs
+
+
 # .............................................................................
 @cherrypy.expose
 class GAcName:
@@ -21,6 +38,24 @@ class GAcName:
                     'No matching GBIF taxon records for {}'.format(namestr)}
         else:
             return good_names
+
+    # ...............................................
+#     def _get_gbif_count_for_taxon(self, taxon_key):
+#         GAcName
+#         good_names = gapi.get_gbif_accepted_taxon(self, namestr, do_parse)
+#         if do_parse:
+#             rec = GbifAPI.parse_name(namestr)
+#             try:
+#                 namestr = rec['canonicalName']
+#             except:
+#                 # Default to original namestring if parsing fails
+#                 pass
+#         good_names = GbifAPI.match_name(namestr, status='accepted')
+#         if len(good_names) == 0:
+#             return {'spcoco.error': 
+#                     'No matching GBIF taxon records for {}'.format(namestr)}
+#         else:
+#             return good_names
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -195,12 +230,16 @@ if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TST_VALUES
     
-    do_parse = False    
     for namestr in TST_VALUES.NAMES:
+        do_parse = True
         print('Name = {}'.format(namestr))
+        gapi = GAcName()
+        grecs = gapi.get_gbif_count_for_taxon(namestr, do_parse)
+        
         rec = GbifAPI.parse_name(namestr)
         try:
             namestr = rec['canonicalName']
+            do_parse = False
         except:
             # Default to original namestring if parsing fails
             pass

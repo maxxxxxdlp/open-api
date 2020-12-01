@@ -69,8 +69,23 @@ class APIMount:
     # name services
     NameSvc = '/name/tentacles'
     GAcName = '/name/gbif'
+    GNameCountOcc = '/name/gbif/count'
+    
     ITISSolrName = '/name/itis'
     ITISName = '/name/itis2'
+    # Service testing
+    GBIF_PARSE = '/hb/gbif/parse'
+    GBIF_SPECIES = '/hb/gbif/species'
+    GBIF_OCCURRENCE = '/hb/gbif/occurrence'
+    GBIF_DATASET = '/hb/gbif/dataset'
+    GBIF_ORGANIZATION = '/hb/gbif/organization'
+    
+    
+    SPECIES_SERVICE = 'species'
+    PARSER_SERVICE = 'parser/name'
+    OCCURRENCE_SERVICE = 'occurrence'
+    DATASET_SERVICE = 'dataset'
+    ORGANIZATION_SERVICE = 'organization'
 
     @staticmethod
     def occurrence_services():

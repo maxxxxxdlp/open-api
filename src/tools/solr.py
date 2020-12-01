@@ -149,7 +149,7 @@ if __name__ == '__main__':
     TST_COLLECTION = 'spcoco'
     doc = count_docs(TST_COLLECTION)
     print('Found {} records in {}'.format(doc, TST_COLLECTION))
-    for guid in TST_VALUES.BIRD_OCC_GUIDS:
+    for guid in TST_VALUES.FISH_OCC_GUIDS:
         doc = query_guid(TST_COLLECTION, guid)
         print('Found {} record for guid {}'.format(doc, guid))
 
