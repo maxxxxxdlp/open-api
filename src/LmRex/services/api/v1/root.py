@@ -2,9 +2,9 @@
 import cherrypy
 import cherrypy_cors
 
-from LmRex.api.name import (GAcName, GNameCount, ITISName, ITISSolrName, NameSvc)
-from LmRex.api.occ import (GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccurrenceSvc)
-from LmRex.api.sparks import SpecifyArk
+from LmRex.services.api.v1.name import (GAcName, GNameCount, ITISName, ITISSolrName, NameSvc)
+from LmRex.services.api.v1.occ import (GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccurrenceSvc)
+from LmRex.services.api.v1.sparks import SpecifyArk
 
 from LmRex.common.lmconstants import (APIMount, CHERRYPY_CONFIG_FILE)
 

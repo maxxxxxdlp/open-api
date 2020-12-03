@@ -9,7 +9,7 @@ from LmRex.tools.api import GbifAPI, LifemapperAPI
 class LmMap:
     # ...............................................
     def get_sdmproject_map_url(
-            self, namestr, scenariocode=Lifemapper.OBSERVED_SCENARIO_CODE):
+            self, namestr, scenariocode):
         recs = []
         good_names = GbifAPI.match_name(namestr)
 
@@ -30,7 +30,7 @@ class LmMap:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None):
+    def GET(self, namestr=None, scenariocode=Lifemapper.OBSERVED_SCENARIO_CODE):
         """Get the number of occurrence records for all names "matching" the
         given scientific name string.
         
@@ -44,9 +44,9 @@ class LmMap:
             the records.
         """
         if namestr is None:
-            return {'spcoco.message': 'S^n GBIF count-occurrences-for-name is online'}
+            return {'spcoco.message': 'S^n Lifemapper mapper is online'}
         else:
-            return self.get_gbif_count_for_taxon(namestr)
+            return self.get_sdmproject_map_url(namestr, scenariocode)
 
 # .............................................................................
 if __name__ == '__main__':
@@ -57,7 +57,6 @@ if __name__ == '__main__':
     namestr = TST_VALUES.NAMES[0]
     print('Name = {}'.format(namestr))
     
-    gapi = GAcName()
-    do_parse = True
-    grecs = gapi.get_gbif_accepted_taxon(namestr, do_parse)
+    lmapi = LmMap()
+    lmapi.GET(namestr)
     
