@@ -74,35 +74,51 @@ class APIMount:
     Specify = '/specify'
     SpecifyArk = '/sparks'
     # occurrence services
-    OccurrenceSvc = APIMount.Root + APIMount.OccurrenceSvc
-    SpecifyArkSvc = APIMount.Root + APIMount.SpecifyArk
-    GOccSvc = APIMount.OccurrenceSvc + APIMount.Gbif
-    IDBOccSvc = APIMount.OccurrenceSvc + APIMount.Idigbio
-    MophOccSvc = APIMount.OccurrenceSvc + APIMount.MorphoSource
-    SPOccSvc = APIMount.OccurrenceSvc + APIMount.Specify
+    @property
+    def OccurrenceSvc(self):
+        return APIMount.Root + APIMount.OccurrenceSvc  
+    @property
+    def SpecifyArkSvc(self):
+        return APIMount.Root + APIMount.SpecifyArk
+    @property
+    def GOccSvc(self):
+        return APIMount.OccurrenceSvc + APIMount.Gbif
+    @property
+    def IDBOccSvc(self):
+        return APIMount.OccurrenceSvc + APIMount.Idigbio
+    @property
+    def MophOccSvc(self):
+        return APIMount.OccurrenceSvc + APIMount.MorphoSource
+    @property
+    def SPOccSvc(self):
+        return APIMount.OccurrenceSvc + APIMount.Specify
     # dataset services
-    DatasetSvc = APIMount.Root + APIMount.Dataset
-    GCollSvc = APIMount.DatasetSvc + APIMount.Gbif
+    @property
+    def DatasetSvc(self):
+        return APIMount.Root + APIMount.Dataset
+    @property
+    def GCollSvc(self):
+        return APIMount.DatasetSvc + APIMount.Gbif
     # name services
-    NameSvc = APIMount.RootSvc + APIMount.Name
-    GAcNameSvc = APIMount.NameSvc + APIMount.Gbif
-    ITISSolrNameSvc = APIMount.NameSvc + APIMount.ITISSolrName
-    ITISNameSvc = APIMount.NameSvc + APIMount.ITISName
+    @property
+    def NameSvc(self):
+        return APIMount.RootSvc + APIMount.Name
+    @property
+    def GAcNameSvc(self):
+        return APIMount.NameSvc + APIMount.Gbif
+    @property
+    def ITISSolrNameSvc(self):
+        return APIMount.NameSvc + APIMount.ITISSolrName
+    @property
+    def ITISNameSvc(self):
+        return APIMount.NameSvc + APIMount.ITISName
     # Service testing
-    HeartbeatSvc = APIMount.RootSvc + APIMount.Heartbeat
-    HeartbeatGbifSvc = APIMount.HeartbeatSvc + APIMount.Gbif
-    GBIF_PARSE = APIMount.HeartbeatGbifSvc + '/parse'
-    GBIF_SPECIES = APIMount.HeartbeatGbifSvc + '/species'
-    GBIF_OCCURRENCE = APIMount.HeartbeatGbifSvc + '/occurrence'
-    GBIF_DATASET = APIMount.HeartbeatGbifSvc + '/dataset'
-    GBIF_ORGANIZATION = APIMount.HeartbeatGbifSvc + '/organization'
-    
-    
-    SPECIES_SERVICE = 'species'
-    PARSER_SERVICE = 'parser/name'
-    OCCURRENCE_SERVICE = 'occurrence'
-    DATASET_SERVICE = 'dataset'
-    ORGANIZATION_SERVICE = 'organization'
+    @property
+    def HeartbeatSvc(self):
+        return APIMount.RootSvc + APIMount.Heartbeat
+    @property
+    def HeartbeatGbifSvc(self):
+        return APIMount.HeartbeatSvc + APIMount.Gbif
 
     @staticmethod
     def occurrence_services():
