@@ -50,11 +50,23 @@ class GAcName:
     
     # ...............................................
     def get_gbif_accepted_taxon(self, namestr, count_only, do_parse):
-        gan = GAcName()
-        recs = gan.get_gbif_accepted_taxon(namestr, do_parse)
-        if count_only is True:
+        if do_parse:
+            rec = GbifAPI.parse_name(namestr)
+            try:
+                namestr = rec['canonicalName']
+            except:
+                # Default to original namestring if parsing fails
+                pass
+        good_names = GbifAPI.match_name(namestr, status='accepted')
+        
+        if count_only is False:
+            if len(good_names) == 0:
+                return {'spcoco.error': 
+                        'No matching GBIF taxon records for {}'.format(namestr)}
+            return good_names
+        else:
             recs = []
-            for namerec in recs:
+            for namerec in good_names:
                 try:
                     taxon_key = namerec['usageKey']
                     sciname = namerec['scientificName']
@@ -64,9 +76,8 @@ class GAcName:
                 else:
                     count, url = GbifAPI.count_accepted_name(taxon_key)
                     recs.append({'scientificName': sciname, 'count': count, 'url': url})
-        return recs
-
-
+            return recs
+        
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, namestr=None, count_only=False, do_parse=True):
