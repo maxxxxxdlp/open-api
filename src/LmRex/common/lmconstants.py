@@ -60,7 +60,7 @@ class TST_VALUES:
 # .............................................................................
 class APIMount:
     # occurrence services
-    OccurrenceSvc = '/occ/tentacles'
+    OccurrenceSvc = '/occ'
     SpecifyArk = '/sparks'
     GOcc = '/occ/gbif'
     IDBOcc = '/occ/idb'
@@ -69,10 +69,8 @@ class APIMount:
     # dataset services
     GColl = '/dataset/gbif'
     # name services
-    NameSvc = '/name/tentacles'
-    GAcName = '/name/gbif'
-    GNameCountOcc = '/name/gbif/count'
-    
+    NameSvc = '/name'
+    GAcName = '/name/gbif'    
     ITISSolrName = '/name/itis'
     ITISName = '/name/itis2'
     # Service testing

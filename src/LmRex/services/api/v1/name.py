@@ -47,26 +47,10 @@ class GNameCount:
 # .............................................................................
 @cherrypy.expose
 class GAcName:
-    
-    # ...............................................
-    def get_gbif_accepted_taxon(self, namestr, do_parse):
-        if do_parse:
-            rec = GbifAPI.parse_name(namestr)
-            try:
-                namestr = rec['canonicalName']
-            except:
-                # Default to original namestring if parsing fails
-                pass
-        good_names = GbifAPI.match_name(namestr, status='accepted')
-        if len(good_names) == 0:
-            return {'spcoco.error': 
-                    'No matching GBIF taxon records for {}'.format(namestr)}
-        else:
-            return good_names
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None, do_parse=True):
+    def GET(self, namestr=None, count_only=False, do_parse=True):
         """Get a one GBIF accepted taxon record for a scientific name string
         
         Args:
@@ -79,6 +63,8 @@ class GAcName:
         """
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF name resolution is online'}
+        elif count_only is True:
+            return self.get_gbif_count_for_taxon(namestr, do_parse)
         else:
             return self.get_gbif_accepted_taxon(namestr, do_parse)
 
