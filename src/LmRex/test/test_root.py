@@ -60,13 +60,13 @@ class SimpleCPTest(helper.CPWebCase):
 #         # from LmRex.api.root
 #         start_cherrypy_services()
 
-    def test_get_counts(self):
-        for namestr in TST_VALUES.NAMES:
-            do_parse = True
-            url = 'http://{}{}/{}'.format(
-                TST_SERVER, APIMount.GNameCountOcc, namestr)
-            output = self._query_by_url(url)
-            print(namestr, output)
+#     def test_get_counts(self):
+#         for namestr in TST_VALUES.NAMES:
+#             do_parse = True
+#             url = 'http://{}{}/{}'.format(
+#                 TST_SERVER, APIMount.GAcNameSvc, namestr)
+#             output = self._query_by_url(url)
+#             print(namestr, output)
 # ......................................................
     def test_get_fish(self):
         for svc in APIMount.occurrence_services():

@@ -2,8 +2,10 @@
 import cherrypy
 import cherrypy_cors
 
-from LmRex.services.api.v1.name import (GAcName, GNameCount, ITISName, ITISSolrName, NameSvc)
-from LmRex.services.api.v1.occ import (GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccurrenceSvc)
+from LmRex.services.api.v1.name import (
+    GAcName, ITISName, ITISSolrName, NameSvc)
+from LmRex.services.api.v1.occ import (
+    GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccurrenceSvc)
 from LmRex.services.api.v1.sparks import SpecifyArk
 
 from LmRex.common.lmconstants import (APIMount, CHERRYPY_CONFIG_FILE)
@@ -29,22 +31,22 @@ def start_cherrypy_services():
     cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
     
     # ARK service
-    cherrypy.tree.mount(SpecifyArk(), APIMount.SpecifyArk, conf)
+    cherrypy.tree.mount(SpecifyArk(), APIMount.SpecifyArkSvc, conf)
 
     # Occurrence services
     cherrypy.tree.mount(OccurrenceSvc(), APIMount.OccurrenceSvc, conf)
-    cherrypy.tree.mount(GOcc(), APIMount.GOcc, conf)
-    cherrypy.tree.mount(IDBOcc(), APIMount.IDBOcc, conf)
-    cherrypy.tree.mount(MophOcc(), APIMount.MophOcc, conf)
-    cherrypy.tree.mount(SPOcc(), APIMount.SPOcc, conf)
+    cherrypy.tree.mount(GOcc(), APIMount.GOccSvc, conf)
+    cherrypy.tree.mount(IDBOcc(), APIMount.IDBOccSvc, conf)
+    cherrypy.tree.mount(MophOcc(), APIMount.MophOccSvc, conf)
+    cherrypy.tree.mount(SPOcc(), APIMount.SPOccSvc, conf)
     # Occurrence by dataset
-    cherrypy.tree.mount(GColl(), APIMount.GColl, conf)
+    cherrypy.tree.mount(GColl(), APIMount.GCollSvc, conf)
     
     # Name services
     cherrypy.tree.mount(NameSvc(), APIMount.NameSvc, conf)
-    cherrypy.tree.mount(GAcName(), APIMount.GAcName, conf)
-    cherrypy.tree.mount(ITISName(), APIMount.ITISName, conf)
-    cherrypy.tree.mount(ITISSolrName(), APIMount.ITISSolrName, conf)   
+    cherrypy.tree.mount(GAcName(), APIMount.GAcNameSvc, conf)
+    cherrypy.tree.mount(ITISName(), APIMount.ITISNameSvc, conf)
+    cherrypy.tree.mount(ITISSolrName(), APIMount.ITISSolrNameSvc, conf)   
 
     cherrypy.engine.start()
     cherrypy.engine.block()
@@ -54,7 +56,7 @@ if __name__ == '__main__':
     """
     Example calls:
         curl http://129.237.201.192/sparks/2c1becd5-e641-4e83-b3f5-76a55206539a
-        curl http://129.237.201.192/occ/idbocc/2c1becd5-e641-4e83-b3f5-76a55206539a
+        curl http://129.237.201.192/api/v1/occ/idb/2c1becd5-e641-4e83-b3f5-76a55206539a
     """
     start_cherrypy_services()
     
