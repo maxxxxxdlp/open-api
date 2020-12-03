@@ -1757,7 +1757,7 @@ class MorphoSourceAPI(APIQuery):
     # ...............................................
     @staticmethod
     def _page_specimen_records(start, occid, logger=None):
-        output = {'curr_count': 0, 'count': 0}
+        output = {'curr_count': 0, 'count': 0, 'records': []}
         api = MorphoSourceAPI(
             resource=MorphoSource.OCC_RESOURCE, 
             q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
@@ -1781,8 +1781,7 @@ class MorphoSourceAPI(APIQuery):
     def get_specimen_records_by_occid(occid, count_only=False, logger=None):
         start = 0
         output = {}
-        if count_only is False:
-            output['records'] = []
+        all_recs = []
         is_end = False
 
         while not is_end:
@@ -1802,8 +1801,8 @@ class MorphoSourceAPI(APIQuery):
             if count_only is True:
                 is_end = True
             else:
-                output['records'].extend(curr_output['records'])
-                if len(output['records']) >= curr_output['count']:
+                all_recs.extend(curr_output['records'])
+                if len(all_recs) >= output['count']:
                     is_end = True
                     
                 start += MorphoSource.LIMIT

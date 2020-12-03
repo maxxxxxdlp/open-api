@@ -4,11 +4,17 @@ from LmRex.tools.api import (
     GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI)
 from LmRex.services.api.v1.sparks import SpecifyArk
 
+def convert_to_bool(obj):
+    if obj in (1, 'yes', 'true', 'True'):
+        return True
+    else:
+        return False
+    
 # .............................................................................
 @cherrypy.expose
 class GOcc:
     # ...............................................
-    def get_gbif_recs(self, occid):
+    def get_gbif_recs(self, occid, count_only):
         recs = GbifAPI.get_specimen_records_by_occid(
             occid, count_only=count_only)
         if len(recs) == 0:
@@ -29,6 +35,7 @@ class GOcc:
             a dictionary containing a message or a count and optional list of 
             GBIF records corresponding to the Specify GUID
         """
+        count_only = convert_to_bool(count_only)
         if occid is None:
             return {'spcoco.message': 'S^n GBIF occurrence resolution is online'}
         else:
@@ -79,6 +86,7 @@ class IDBOcc:
             a dictionary containing a message, or a list of dictionaries 
             containing iDigBio record corresponding to the occurrenceId
         """
+        count_only = convert_to_bool(count_only)
         if occid is None:
             return {'message': 'S^n iDigBio occurrence resolution is online'}
         else:
@@ -105,6 +113,7 @@ class MophOcc:
             one dictionary containing a message or a list of MorphoSource 
             records corresponding to the occurrenceId
         """
+        count_only = convert_to_bool(count_only)
         if occid is None:
             return {'spcoco.message': 
                     'S^n MorphoSource occurrence resolution is online'}
@@ -137,6 +146,7 @@ class SPOcc:
             one dictionary containing a message or Specify record corresponding 
             to the Specify GUID
         """
+        count_only = convert_to_bool(count_only)
         if occid is None:
             return {'spcoco.message': 'S^n Specify occurrence resolution is online'}
         else:
@@ -209,6 +219,7 @@ class OccurrenceSvc:
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None, count_only=False):
+        count_only = convert_to_bool(count_only)
         if occid is None:
             return {'message': 'S^n occurrence tentacles are online'}
         else:
