@@ -9,7 +9,8 @@ from LmRex.services.api.v1.sparks import SpecifyArk
 class GOcc:
     # ...............................................
     def get_gbif_recs(self, occid):
-        recs = GbifAPI.get_specimen_records_by_occid(occid)
+        recs = GbifAPI.get_specimen_records_by_occid(
+            occid, count_only=count_only)
         if len(recs) == 0:
             return {'spcoco.error': 
                     'No GBIF records with the occurrenceId {}'.format(occid)}
@@ -18,36 +19,32 @@ class GOcc:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None):
+    def GET(self, occid=None, count_only=False):
         """Get a one or more GBIF records for a Specify GUID or 
         info/error message.
         
         Args:
             occid: a Specify occurrence GUID, from the occurrenceId field
         Return:
-            one dictionary or a list of dictionaries.  Each dictionary contains
-            a message or GBIF record corresponding to the Specify GUID
+            a dictionary containing a message or a count and optional list of 
+            GBIF records corresponding to the Specify GUID
         """
         if occid is None:
             return {'spcoco.message': 'S^n GBIF occurrence resolution is online'}
         else:
-            return self.get_gbif_recs(occid)
+            return self.get_gbif_recs(occid, count_only)
 
 # .............................................................................
 @cherrypy.expose
 class GColl:
     # ...............................................
-    def get_dataset_recs(self, dataset_key):
-        recs = GbifAPI.get_records_by_dataset(dataset_key)
-        if len(recs) == 0:
-            return {'spcoco.error': 
-                    'No GBIF records with the dataset_key {}'.format(dataset_key)}
-        else:
-            return recs
+    def get_dataset_recs(self, dataset_key, count_only):
+        output = GbifAPI.get_records_by_dataset(dataset_key, count_only)
+        return output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, dataset_key=None):
+    def GET(self, dataset_key=None, count_only=True):
         """Get a one or more GBIF records for a Specify GUID or 
         info/error message.
         
@@ -60,23 +57,19 @@ class GColl:
         if dataset_key is None:
             return {'spcoco.message': 'S^n GBIF dataset query is online'}
         else:
-            return self.get_dataset_recs(dataset_key)
+            return self.get_dataset_recs(dataset_key, count_only)
 
 # .............................................................................
 @cherrypy.expose
 class IDBOcc:
     # ...............................................
-    def get_idb_recs(self, occid):
-        recs = IdigbioAPI.get_records_by_occid(occid)
-        if len(recs) == 0:
-            return {'spcoco.error': 
-                    'No iDigBio records with the occurrenceId {}'.format(occid)}
-        else:
-            return recs
+    def get_idb_recs(self, occid, count_only):
+        output = IdigbioAPI.get_records_by_occid(occid, count_only=count_only)
+        return output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None):
+    def GET(self, occid=None, count_only=False):
         """Get a one or more iDigBio records for a Specify GUID or 
         info/error message.
         
@@ -89,20 +82,21 @@ class IDBOcc:
         if occid is None:
             return {'message': 'S^n iDigBio occurrence resolution is online'}
         else:
-            return self.get_idb_recs(occid)
+            return self.get_idb_recs(occid, count_only)
 
 
 # .............................................................................
 @cherrypy.expose
 class MophOcc:
     # ...............................................
-    def get_mopho_recs(self, occid):
-        recs = MorphoSourceAPI.get_specimen_records_by_occid(occid=occid)
-        return recs
+    def get_mopho_recs(self, occid, count_only):
+        output = MorphoSourceAPI.get_specimen_records_by_occid(
+            occid, count_only=count_only)
+        return output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None):
+    def GET(self, occid=None, count_only=False):
         """Get a one Specify record for a Specify GUID or info/error message.
         
         Args:
@@ -115,7 +109,7 @@ class MophOcc:
             return {'spcoco.message': 
                     'S^n MorphoSource occurrence resolution is online'}
         else:
-            return self.get_mopho_recs(occid)
+            return self.get_mopho_recs(occid, count_only)
 
 # .............................................................................
 @cherrypy.expose
@@ -177,7 +171,7 @@ class OccurrenceSvc:
         return svc_output
     
     # ...............................................
-    def get_records(self, occid, count_only=False):
+    def get_records(self, occid, count_only):
         all_output = {}
         # Specify ARK Record
         spark = SpecifyArk()
@@ -199,30 +193,33 @@ class OccurrenceSvc:
             
         # GBIF copy/s of Specify Record
         gocc = GOcc()
-        recs = gocc.get_gbif_recs(occid)
+        recs = gocc.get_gbif_recs(occid, count_only)
         all_output['GBIF Records'] = self._assemble_output(recs, count_only)
         # iDigBio copy/s of Specify Record
         idbocc = IDBOcc()
-        recs = idbocc.get_idb_recs(occid)
+        recs = idbocc.get_idb_recs(occid, count_only)
         all_output['iDigBio Records'] = self._assemble_output(recs, count_only)
         
         mopho = MophOcc()
-        mopho.get_mopho_recs(occid)
-        all_output['MorphoSource Records'] = self._assemble_output(recs, count_only)
+        mopho.get_mopho_recs(occid, count_only)
+        all_output['MorphoSource Records'] = self._assemble_output(
+            recs, count_only)
         return all_output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None):
+    def GET(self, occid=None, count_only=False):
         if occid is None:
             return {'message': 'S^n occurrence tentacles are online'}
         else:
-            return self.get_records(occid, count_only=False)
+            return self.get_records(occid, count_only)
         
 # .............................................................................
 if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TST_VALUES
+    
+    count_only = False
     
     gdapi = GColl()
     gdrecs = gdapi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0])
@@ -231,7 +228,7 @@ if __name__ == '__main__':
     occid2 = TST_VALUES.BIRD_OCC_GUIDS[0]
     for occid in [occid2]:
         oapi = OccurrenceSvc()
-        orecs = oapi.get_records(occid, count_only=False)
+        orecs = oapi.get_records(occid, count_only)
             
         gapi = GOcc()
         grecs = gapi.get_gbif_recs(occid)

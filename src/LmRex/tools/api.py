@@ -946,11 +946,11 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_specimen_records_by_occid(occid, logger=None):
+    def get_specimen_records_by_occid(occid, count_only=False, logger=None):
         """Return GBIF occurrences for this occurrenceId.  This should retrieve 
         a single record if the occurrenceId is unique.
         """
-        recs = []
+        output = {}
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'occurrenceID': occid}, logger=logger)
@@ -961,12 +961,13 @@ class GbifAPI(APIQuery):
             log_error('Failed on {}'.format(occid), logger=logger)
         else:
             # First query, report count
-            total = api.output['count']
+            output['count'] = api.output['count']
             log_info(
-                'GBIF returned {} recs for occurrenceId {}'.format(total, occid), 
-                logger=logger)
-            recs = api.output['results']
-        return recs
+                'GBIF returned {} recs for occurrenceId {}'.format(
+                    output['count'], occid), logger=logger)
+            if count_only is False:
+                output['records'] = api.output['results']
+        return output
 
     # ...............................................
     @staticmethod
@@ -981,7 +982,8 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_records_by_dataset(dataset_key, logger=None):
+    def get_records_by_dataset(dataset_key, count_only, logger=None):
+        output = {'provider': 'GBIF', 'dataset_key': dataset_key, 'count': 0}
         all_recs = []
         offset = 0
         is_end = False        
@@ -993,23 +995,31 @@ class GbifAPI(APIQuery):
                     'limit': GBIF.LIMIT}, logger=logger)
             try:
                 api.query()
-            except Exception:
-                log_error('Failed on {}'.format(dataset_key), logger=logger)
+            except Exception as e:
+                msg = 'Failed on {} ({})'.format(api.url, e)
+                output['error'] = msg
+                log_error(msg, logger=logger)
             else:
-                total = api.output['count']
-                is_end = bool(api.output['endOfRecords'])
-                recs = api.output['results']
-                if recs:
-                    all_recs.extend(recs)
-                    offset += len(recs)
-                    log_info(
-                        'Returned {} of {} GBIF recs for dataset {}'.format(
-                            len(recs), total, dataset_key), logger=logger)
-                # TODO: handle large queries another way
-                # Throttle during testing
-                if offset >= (GBIF.LIMIT * 2):
+                output['count'] = api.output['count']
+                if count_only is True:
                     is_end = True
-        return all_recs
+                else:
+                    is_end = bool(api.output['endOfRecords'])
+                    recs = api.output['results']
+                    if recs:
+                        all_recs.extend(recs)
+                        offset += len(recs)
+                        log_info(
+                            'Returned {} of {} GBIF recs for dataset {}'.format(
+                                len(recs), output['count'], dataset_key), 
+                            logger=logger)
+                    # TODO: handle large queries asynchronously
+                    # Throttle during testing
+                    if offset >= (GBIF.LIMIT * 2):
+                        is_end = True
+        if count_only is False:
+            output['records'] = all_recs
+        return output
 
 
     # ...............................................
@@ -1362,11 +1372,11 @@ class IdigbioAPI(APIQuery):
 
     # ...............................................
     @staticmethod
-    def get_records_by_occid(occid, logger=None):
+    def get_records_by_occid(occid, count_only=False, logger=None):
         """Return iDigBio occurrences for this occurrenceId.  This will
         retrieve a one or more records with the given occurrenceId.
         """
-        recs = []
+        output = {}
         qf = {Idigbio.QKEY: 
               '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + occid + '"}'}
         api = IdigbioAPI(other_filters=qf, logger=logger)
@@ -1376,14 +1386,14 @@ class IdigbioAPI(APIQuery):
         except Exception:
             log_error('Failed on {}'.format(occid), logger=logger)
         else:
-            recs = []
             if api.output is not None:
-                total = api.output['itemCount']
+                output['count'] = api.output['itemCount']
                 log_info(
                     'iDigBio returned {} recs for Specify occurrenceId {}'.format(
-                        total, occid), logger=logger)
-                recs = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
-        return recs
+                        output['count'], occid), logger=logger)
+                if count_only is False:
+                    output['records'] = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
+        return output
 
     # ...............................................
     @staticmethod
@@ -1747,8 +1757,7 @@ class MorphoSourceAPI(APIQuery):
     # ...............................................
     @staticmethod
     def _page_specimen_records(start, occid, logger=None):
-        recs = []
-        total = curr_total = 0
+        output = {'curr_count': 0, 'count': 0}
         api = MorphoSourceAPI(
             resource=MorphoSource.OCC_RESOURCE, 
             q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
@@ -1756,33 +1765,52 @@ class MorphoSourceAPI(APIQuery):
         try:
             api.query_by_get()
         except Exception:
-            log_error('Failed on {}'.format(occid), logger=logger)
+            msg = 'Failed on {}, ({})'.format(api.url, e)
+            output['error'] = msg
+            log_error(msg, logger=logger)
         else:
             # First query, report count
             data = api.output
-            curr_total = data['returnedResults']
-            total = data['totalResults']
-            recs = data['results']
-        return recs, curr_total, total
+            output['curr_count'] = data['returnedResults']
+            output['count'] = data['totalResults']
+            output['records'] = data['results']
+        return output
 
     # ...............................................
     @staticmethod
-    def get_specimen_records_by_occid(occid, logger=None):
+    def get_specimen_records_by_occid(occid, count_only=False, logger=None):
         start = 0
-        recs, curr_total, total = MorphoSourceAPI._page_specimen_records(
-            start, occid, logger=logger)
-        if curr_total < total:
-            start = MorphoSource.LIMIT
-            loops = int(total/MorphoSource.LIMIT)
-            for i in loops:
-                curr_recs, curr_total, total = MorphoSourceAPI._page_specimen_records(
-                    start, occid, logger=logger)
-                if curr_recs:
-                    recs.extend(curr_recs)
+        output = {}
+        if count_only is False:
+            output['records'] = []
+        is_end = False
+
+        while not is_end:
+            curr_output = MorphoSourceAPI._page_specimen_records(
+                start, occid, logger=logger)
+            # Total found
+            output['count'] = curr_output['count']
+            # Check for api failure
+            try:
+                curr_output['error']
+            except:
+                pass
+            else:
+                is_end = True
+                output['error'] = curr_output['error']
+            # Loop only once for count
+            if count_only is True:
+                is_end = True
+            else:
+                output['records'].extend(curr_output['records'])
+                if len(output['records']) >= curr_output['count']:
+                    is_end = True
+                    
+                start += MorphoSource.LIMIT
         log_info(
-            'Returned {} of {} MorphoSource recs for occurrence {}'.format(
-                len(recs), total, occid), logger=logger)
-        return recs
+            'Found {} MorphoSource recs for occurrence {}'.format(
+                curr_output['count'], occid), logger=logger)
+        return output
 
 # .............................................................................
 class SpecifyPortalAPI(APIQuery):
