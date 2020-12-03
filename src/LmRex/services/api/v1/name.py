@@ -47,6 +47,25 @@ class GNameCount:
 # .............................................................................
 @cherrypy.expose
 class GAcName:
+    
+    # ...............................................
+    def get_gbif_accepted_taxon(self, namestr, count_only, do_parse):
+        gan = GAcName()
+        recs = gan.get_gbif_accepted_taxon(namestr, do_parse)
+        if count_only is True:
+            recs = []
+            for namerec in recs:
+                try:
+                    taxon_key = namerec['usageKey']
+                    sciname = namerec['scientificName']
+                except Exception as e:
+                    print('Exception on {}: {}'.format(namestr, e))
+                    print('name = {}'.format(namerec))
+                else:
+                    count, url = GbifAPI.count_accepted_name(taxon_key)
+                    recs.append({'scientificName': sciname, 'count': count, 'url': url})
+        return recs
+
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -63,10 +82,8 @@ class GAcName:
         """
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF name resolution is online'}
-        elif count_only is True:
-            return self.get_gbif_count_for_taxon(namestr, do_parse)
         else:
-            return self.get_gbif_accepted_taxon(namestr, do_parse)
+            return self.get_gbif_accepted_taxon(namestr, count_only, do_parse)
 
 # .............................................................................
 @cherrypy.expose

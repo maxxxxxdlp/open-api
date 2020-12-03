@@ -58,67 +58,52 @@ class TST_VALUES:
     ITIS_TSNS = [526853, 183671, 182662, 566578]
 
 # .............................................................................
-class APIMount:
+class S2NEndpoint:
     Root = '/api/v1'
     # Service types
-    Occurrence = '/occ'
-    Name = '/name'
-    Dataset = '/dataset'
-    Heartbeat = '/hb'
+    Occurrence = 'occ'
+    Name = 'name'
+    Dataset = 'dataset'
+    Heartbeat = 'hb'
     # Service providers
-    Gbif = '/gbif'
-    Idigbio = '/idb'
-    ITISSolrName = '/itis'
-    ITISName = '/itis2'
-    MorphoSource = '/mopho'
-    Specify = '/specify'
-    SpecifyArk = '/sparks'
+    Gbif = 'gbif'
+    Idigbio = 'idb'
+    ITISSolrName = 'itis'
+    ITISName = 'itis2'
+    MorphoSource = 'mopho'
+    Specify = 'specify'
+    SpecifyArk = 'sparks'
+# .............................................................................
+class APIMount:
     # occurrence services
-    @property
-    def OccurrenceSvc(self):
-        return APIMount.Root + APIMount.OccurrenceSvc  
-    @property
-    def SpecifyArkSvc(self):
-        return APIMount.Root + APIMount.SpecifyArk
-    @property
-    def GOccSvc(self):
-        return APIMount.OccurrenceSvc + APIMount.Gbif
-    @property
-    def IDBOccSvc(self):
-        return APIMount.OccurrenceSvc + APIMount.Idigbio
-    @property
-    def MophOccSvc(self):
-        return APIMount.OccurrenceSvc + APIMount.MorphoSource
-    @property
-    def SPOccSvc(self):
-        return APIMount.OccurrenceSvc + APIMount.Specify
+    OccurrenceSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Occurrence)
+    SpecifyArkSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.SpecifyArk)
+    GOccSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Gbif)
+    IDBOccSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Idigbio)
+    MophOccSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.MorphoSource)
+    SPOccSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Specify)
     # dataset services
-    @property
-    def DatasetSvc(self):
-        return APIMount.Root + APIMount.Dataset
-    @property
-    def GCollSvc(self):
-        return APIMount.DatasetSvc + APIMount.Gbif
+    DatasetSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Dataset)
+    GCollSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Gbif)
     # name services
-    @property
-    def NameSvc(self):
-        return APIMount.RootSvc + APIMount.Name
-    @property
-    def GAcNameSvc(self):
-        return APIMount.NameSvc + APIMount.Gbif
-    @property
-    def ITISSolrNameSvc(self):
-        return APIMount.NameSvc + APIMount.ITISSolrName
-    @property
-    def ITISNameSvc(self):
-        return APIMount.NameSvc + APIMount.ITISName
+    NameSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Name)
+    GAcNameSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.Gbif)
+    ITISSolrNameSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISSolrName)
+    ITISNameSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISName)
     # Service testing
-    @property
-    def HeartbeatSvc(self):
-        return APIMount.RootSvc + APIMount.Heartbeat
-    @property
-    def HeartbeatGbifSvc(self):
-        return APIMount.HeartbeatSvc + APIMount.Gbif
+    HeartbeatSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Heartbeat, S2NEndpoint.Heartbeat)
+    HeartbeatGbifSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Heartbeat, S2NEndpoint.Gbif)
 
     @staticmethod
     def occurrence_services():
