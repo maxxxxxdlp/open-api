@@ -1,31 +1,36 @@
 import cherrypy
 
+from LmRex.common.lmconstants import Lifemapper
 from LmRex.services.api.v1.name import GAcName
-from LmRex.tools.api import GbifAPI
+from LmRex.tools.api import GbifAPI, LifemapperAPI
 
 # .............................................................................
 @cherrypy.expose
 class LmMap:
     # ...............................................
-    def get_sdm_map(self, namestr):
+    def get_sdmproject_map_url(
+            self, namestr, scenariocode=Lifemapper.OBSERVED_SCENARIO_CODE):
         recs = []
         good_names = GbifAPI.match_name(namestr)
 
         for namerec in good_names:
             try:
-                taxon_key = namerec['usageKey']
                 sciname = namerec['scientificName']
             except Exception as e:
                 print('Exception on {}: {}'.format(namestr, e))
                 print('name = {}'.format(namerec))
             else:
-                count, url = GbifAPI.count_accepted_name(taxon_key)
-                recs.append({'scientificName': sciname, 'count': count, 'url': url})
+                # 2-step until LM returns full objects
+                atoms = LifemapperAPI.find_sdmprojections_by_name(
+                    sciname, prjscenariocode=scenariocode)
+                for atom in atoms:
+                    prjid = atom['id']
+                    rec = LifemapperAPI.get_sdmprojection_map(prjid)                    
         return recs
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None, do_parse=True):
+    def GET(self, namestr=None):
         """Get the number of occurrence records for all names "matching" the
         given scientific name string.
         
@@ -41,7 +46,7 @@ class LmMap:
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF count-occurrences-for-name is online'}
         else:
-            return self.get_gbif_count_for_taxon(namestr, do_parse)
+            return self.get_gbif_count_for_taxon(namestr)
 
 # .............................................................................
 if __name__ == '__main__':
@@ -55,15 +60,4 @@ if __name__ == '__main__':
     gapi = GAcName()
     do_parse = True
     grecs = gapi.get_gbif_accepted_taxon(namestr, do_parse)
-    if len(grecs) == 1:
-        
-
-    iapi = ITISName()
-    irecs = iapi.get_itis_taxon(namestr, do_parse)
-        
-    i2api = ITISSolrName()
-    i2recs = i2api.get_itis_accepted_taxon(namestr, do_parse)
-
-    napi = NameSvc()
-    nrecs  = napi.get_records(namestr, do_parse)
-    print('')
+    

@@ -46,6 +46,7 @@ class TST_VALUES:
         'KU :KUIZ:1743', 'KU :KUIZ:3019', 'KU :KUIZ:1816', 'KU :KUIZ:2542', 
         'KU :KUIZ:2396']
     NAMES = [
+        'Phlox longifolia Nutt.',
         'Acer caesium Wall. ex Brandis', 'Acer heldreichii Orph. ex Boiss.', 
         'Acer pseudoplatanus L.', 'Acer velutinum Boiss.', 
         'Acer hyrcanum Fisch. & Meyer', 'Acer monspessulanum L.', 
@@ -53,6 +54,7 @@ class TST_VALUES:
         'Acer sempervirens L.', 'Acer floridanum (Chapm.) Pax', 
         'Acer grandidentatum Torr. & Gray', 'Acer leucoderme Small', 
         'Acer nigrum Michx.f.', 'Acer skutchii Rehder', 'Acer saccharum Marshall']
+    
     ITIS_TSNS = [526853, 183671, 182662, 566578]
 
 # .............................................................................
@@ -248,6 +250,22 @@ class BisonQuery:
 #         # Very long integer
 #         '_version_': None
 #     }
+
+# ......................................................
+class Lifemapper:
+    URL = 'http://client.lifemapper.org/api/v2'
+    PROJ_RESOURCE = 'sdmproject'
+    MAP_RESOURCE = 'ogc' 
+    OBSERVED_SCENARIO_CODE = 'worldclim-curr'
+    PAST_SCENARIO_CODES = ['CMIP5-CCSM4-lgm-10min', 'CMIP5-CCSM4-mid-10min']
+    FUTURE_SCENARIO_CODES = [
+        'AR5-CCSM4-RCP8.5-2050-10min', 'AR5-CCSM4-RCP4.5-2050-10min', 
+        'AR5-CCSM4-RCP4.5-2070-10min', 'AR5-CCSM4-RCP8.5-2070-10min'] 
+    OCC_RESOURCE = 'occurrence'
+    OTHER_RESOURCES = ['taxonomy', 'scenario', 'envlayer']
+    NAME_KEY = 'displayname'
+    SCENARIO_KEY = 'projectionscenariocode'
+    COMMANDS = ['count']
 
 # ......................................................
 class MorphoSource:

@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 
 # import idigbio
 from LmRex.common.lmconstants import (
-    BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, MorphoSource, 
+    BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, Lifemapper, MorphoSource, 
     URL_ESCAPES, ENCODING, JSON_HEADERS, TST_VALUES)
 from LmRex.fileop.ready_file import ready_filename
 from LmRex.fileop.logtools import (log_info, log_warn, log_error)
@@ -305,8 +305,7 @@ class BisonAPI(APIQuery):
     # ...............................................
     def __init__(self, q_filters=None, other_filters=None, filter_string=None,
                  headers=None, logger=None):
-        """Constructor for BisonAPI class
-        """
+        """Constructor for BisonAPI class"""
         if headers is None:
             headers = {'Content-Type': 'application/json'}
         all_q_filters = copy(BisonQuery.QFILTERS)
@@ -769,7 +768,15 @@ class GbifAPI(APIQuery):
     # ...............................................
     def __init__(self, service=GBIF.SPECIES_SERVICE, key=None,
                  other_filters=None, logger=None):
-        """Constructor for GbifAPI class
+        """
+        Constructor for GbifAPI class
+        
+        Args:
+            service: GBIF service to query
+            key: unique identifier for an object of this service
+            other_filters: optional filters
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout
         """
         url = '/'.join((GBIF.REST_URL, service))
         if key is not None:
@@ -1108,7 +1115,7 @@ class GbifAPI(APIQuery):
             with this accepted taxon, and a URL to retrieve these records.            
         """
         count = -1
-        url =  None
+        url = None
         # Query GBIF
         name_api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
@@ -1117,9 +1124,9 @@ class GbifAPI(APIQuery):
         name_api.query_by_get()
         # Parse results (should be only one)
         if name_api.output is not None:
-            url = name_api.url
             try:
                 count = name_api.output['count']
+                url =  '{}/{}'.format(GBIF.SPECIES_URL, taxon_key)
             except:
                 pass
         return count, url
@@ -1535,6 +1542,194 @@ class IdigbioAPI(APIQuery):
 
         return summary
 
+# .............................................................................
+class LifemapperAPI(APIQuery):
+    """Class to query Lifemapper portal APIs and return results"""
+    # ...............................................
+    def __init__(
+            self, resource=Lifemapper.PROJ_RESOURCE, ident=None, command=None,  
+            other_filters={}, logger=None):
+        """Constructor
+        
+        Args:
+            resource: Lifemapper service to query
+            ident: a Lifemapper database key for the specified resource.  If 
+                ident is None, list using other_filters
+            command: optional 'count' to query with other_filters
+            other_filters: optional filters
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+        """
+        url = '{}/{}'.format(Lifemapper.URL, resource)
+        if ident is not None:
+            url = '{}/{}'.format(url, ident)
+            # do not send filters if retrieving a known object
+            other_filters = {}
+        elif command in Lifemapper.COMMANDS:
+            url = '{}/{}'.format(url, command)
+        APIQuery.__init__(self, url, other_filters=other_filters, logger=logger)
+
+    # ...............................................
+    @staticmethod
+    def find_sdmprojections_by_name(
+            name, prjscenariocode=None, logger=None):
+        """
+        List projections for a given scientific name.  
+        
+        Args:
+            name: a scientific name 'Accepted' according to the GBIF Backbone 
+                Taxonomy
+            prjscenariocode: a Lifemapper code indicating whether the 
+                environmental data used for creating the projection is 
+                observed, or modeled past or future.  Codes are in 
+                LmREx.common.lmconstants Lifemapper.*_SCENARIO_CODE*
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Note: 
+            Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
+            Taxonomy and this method requires them for success.
+
+        Todo:
+            handle full record returns instead of atoms
+        """
+        recs = []
+        q_filters={Lifemapper.NAME_KEY: name}
+        if prjscenariocode is not None:
+            q_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
+        api = LifemapperAPI(
+            resource=Lifemapper.PROJ_RESOURCE, q_filters=q_filters)
+        try:
+            api.query_by_get()
+        except Exception:
+            log_error('Failed on {}'.format(name), logger=logger)
+        else:
+            # First query, report count
+            recs = api.output
+        return recs
+
+    # ...............................................
+    @staticmethod
+    def _construct_map_url(
+            rec, service, request, version, srs, bbox, width, height):
+        """
+        service=wms&request=getmap&version=1.0&srs=epsg:4326&bbox=-180,-90,180,90&format=png&width=600&height=300&layers=prj_1848399
+        """
+        rec = {}
+        map_url = None
+        try:
+            mapname = rec['map']['mapName']
+            lyrname = rec['map']['layerName']
+            url = rec['map']['endpoint']
+        except Exception as e:
+            msg = 'Failed to retrieve map data from {}, {}'.format(rec, e)
+            rec = {'spcoco.error': msg}
+        else:
+            filters = {
+                'service': service, 'request': request, 'version': version,
+                'srs': srs, 'bbox': bbox, 'format': format, 'width': width,
+                'height': height, 'layers': lyrname}
+            filter_str = None
+            for (key, val) in filters.items():
+                pair = '='.join(key, val)
+                if filter_str is None:
+                    filter_str = pair
+                else:
+                    filter_str = '&'.join(filter_str, pair) 
+            map_url = '{}/{}?{}'.format(url, mapname, filter_str)
+            rec = {'map_url': map_url}
+        return rec
+        
+    # ...............................................
+    @staticmethod
+    def find_sdmprojection(proj_id, logger=None):
+        """
+        Get a projection for a given projection id.  
+        
+        Args:
+            name: a Lifemapper unique identifier for an SDM projection
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Note: 
+            Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
+            Taxonomy and this method requires them for success.
+        """
+        rec = {}
+        api = LifemapperAPI(resource=Lifemapper.PROJ_RESOURCE, ident=proj_id)
+        try:
+            api.query_by_get()
+        except Exception:
+            log_error('Failed on {}'.format(api.url), logger=logger)
+        else:
+            # First query, report count
+            recs = api.output
+            if len(recs) == 1:
+                rec = recs[0]
+            elif len(recs) > 1:
+                log_error('Returned > 1 projection for {}'.format(api.url))
+        return rec
+    
+    # ...............................................
+    @staticmethod
+    def get_sdmprojection_map(
+            proj_id, service='wms', request='getmap', version='1.0', 
+            srs='epsg:4326', bbox='-180,-90,180,90', width=600, height=400, 
+            logger=None):
+        """
+        Get a url for a projection map for a given projection id.  
+        
+        Args:
+            name: a Lifemapper unique identifier for an SDM projection
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Note: 
+            Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
+            Taxonomy and this method requires them for success.
+        """
+        rec = LifemapperAPI.find_sdmprojection(proj_id, logger=logger)
+        url = LifemapperAPI._construct_map_url(rec, service, request, version, srs, bbox, width, height)
+        
+        return recs
+
+    # ...............................................
+    @staticmethod
+    def find_occurrencesets_by_name(name, logger=None):
+        """
+        List occurrences for a given scientific name.  
+        
+        Args:
+            name: a scientific name 'Accepted' according to the GBIF Backbone 
+                Taxonomy
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Note: 
+            Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
+            Taxonomy and this method requires them for success.
+
+        Todo:
+            handle full record returns instead of atoms
+        """
+        recs = []
+        api = LifemapperAPI(
+            resource=Lifemapper.OCC_RESOURCE, 
+            q_filters={Lifemapper.NAME_KEY: name})
+        try:
+            api.query_by_get()
+        except Exception:
+            log_error('Failed on {}'.format(api.url), logger=logger)
+        else:
+            # First query, report count
+            recs = api.output
+        return recs
+
+
+"""
+http://client.lifemapper.org/api/v2/sdmproject?displayname=Conibiosoma%20elongatum&projectionscenariocode=worldclim-curr
+http://client.lifemapper.org/api/v2/occurrence?displayname=Conibiosoma%20elongatum
+"""
 # .............................................................................
 class MorphoSourceAPI(APIQuery):
     """Class to query Specify portal APIs and return results"""
