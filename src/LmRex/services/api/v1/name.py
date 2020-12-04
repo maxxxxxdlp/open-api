@@ -28,15 +28,11 @@ def parse_name_with_gbif(namestr):
 @cherrypy.expose
 class GAcName:
     # ...............................................
-    def get_gbif_matching_taxon(self, namestr, gbif_accepted, do_parse):
+    def get_gbif_matching_taxon(self, namestr, status, do_parse):
         output = {}
         if do_parse:
             namestr = parse_name_with_gbif(namestr)
-        status = None
-        if gbif_accepted:
-            status = 'accepted'
-        # Get name from Gbif
-        
+        # Get name from Gbif        
         moutput = GbifAPI.match_name(namestr, status=status)        
         good_names = moutput['records']
         output['count'] = moutput['count']
@@ -68,10 +64,16 @@ class GAcName:
             corresponding to a name in the GBIF backbone taxonomy
         """
         do_parse = convert_to_bool(do_parse)
+        gbif_accepted = convert_to_bool(gbif_accepted)
+        if gbif_accepted is True:
+            status = 'accepted'
+        else:
+            status = None
+            
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF name resolution is online'}
         else:
-            return self.get_gbif_matching_taxon(namestr, gbif_accepted, do_parse)
+            return self.get_gbif_matching_taxon(namestr, status, do_parse)
 
 # .............................................................................
 @cherrypy.expose
@@ -131,6 +133,10 @@ class ITISSolrName:
         Return:
             a list of dictionaries containing a message or ITIS record 
             corresponding to a name in the ITIS taxonomy
+
+        Todo:
+            Find ITIS status strings
+            Test parameters/boolean
         """
         do_parse = convert_to_bool(do_parse)
         if namestr is None:

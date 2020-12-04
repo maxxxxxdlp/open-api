@@ -23,7 +23,7 @@ class SimpleCPTest(helper.CPWebCase):
         status = None
         headers = {'Content-Type': 'application/json'}
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=headers)
         except Exception as e:
             print('Failed on URL {}, ({})'.format(url, e))
         else:
@@ -54,11 +54,6 @@ class SimpleCPTest(helper.CPWebCase):
         return output
     
 # ......................................................
-#     @staticmethod
-#     def setup_server():
-#         # from LmRex.api.root
-#         start_cherrypy_services()
-
 #     def test_get_counts(self):
 #         for namestr in TST_VALUES.NAMES:
 #             do_parse = True
@@ -66,6 +61,7 @@ class SimpleCPTest(helper.CPWebCase):
 #                 TST_SERVER, APIMount.GAcNameSvc, namestr)
 #             output = self._query_by_url(url)
 #             print(namestr, output)
+
 # ......................................................
     def test_get_fish(self):
         for svc in APIMount.occurrence_services():
@@ -95,9 +91,9 @@ if __name__ == '__main__':
     tst = SimpleCPTest()
     import socket
     hname = socket.gethostname()
-#     if hname == TST_SERVER:
-#         tst.setup_server()
+
 #     tst.test_get_fish()
+
     guids = TST_VALUES.FISH_OCC_GUIDS[:1]
     tst.test_one(APIMount.GOccSvc, guids)
     tst.test_one(APIMount.IDBOccSvc, guids)
