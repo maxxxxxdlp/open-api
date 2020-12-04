@@ -1022,7 +1022,7 @@ class GbifAPI(APIQuery):
                         offset += len(recs)
                     # TODO: handle large queries asynchronously
                     # Throttle during testing
-                    if offset >= (GBIF.LIMIT * 2):
+                    if offset >= (GBIF.LIMIT):
                         is_end = True
         if count_only is False:
             output['records'] = all_recs
@@ -1862,7 +1862,8 @@ class SpecifyPortalAPI(APIQuery):
                 output['error'] = msg
                 log_error(msg, logger=logger)
             else:
-                output = api.output
+                output['records'] = [api.output]
+                output['count'] = len(output['records'])
         return output
 
 

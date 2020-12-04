@@ -214,16 +214,19 @@ if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TST_VALUES
     
-    count_only = False
+    count_only = True
     
-    gdapi = GColl()
-    gdoutput = gdapi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0], False)
+#     gdapi = GColl()
+#     gdoutput = gdapi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0], False)
 
-    for occid in TST_VALUES.BIRD_OCC_GUIDS:
-        # Queries all services
-        oapi = OccurrenceSvc()
-        occoutput = oapi.get_records(occid, count_only)
-        
+    occid = '2c1becd5-e641-4e83-b3f5-76a55206539a'
+    oapi = OccurrenceSvc()
+    occoutput = oapi.get_records(occid, True)
+#     for occid in TST_VALUES.BIRD_OCC_GUIDS:
+#         # Queries all services
+#         oapi = OccurrenceSvc()
+#         occoutput = oapi.get_records(occid, count_only)
+    pass        
 """
 
 api = OccurrenceSvc()

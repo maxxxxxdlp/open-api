@@ -87,7 +87,7 @@ class APIMount:
     SPOccSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Specify)
     # dataset services
-    DatasetSvc = '{}/{}/{}'.format(
+    DatasetSvc = '{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Dataset)
     GCollSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Dataset, S2NEndpoint.Gbif)
