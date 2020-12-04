@@ -134,25 +134,25 @@ class APIQuery:
         return filter_string
 
     # ...............................................
-    @staticmethod
-    def _interpret_q_clause(key, val, logger=None):
-        cls = None
+    @classmethod
+    def _interpret_q_clause(cls, key, val, logger=None):
+        clause = None
         if isinstance(val, (float, int, str)):
-            cls = '{}:{}'.format(key, str(val))
+            clause = '{}:{}'.format(key, str(val))
         # Tuple for negated or range value
         elif isinstance(val, tuple):
             # negated filter
             if isinstance(val[0], bool) and val[0] is False:
-                cls = 'NOT ' + key + ':' + str(val[1])
+                clause = 'NOT ' + key + ':' + str(val[1])
             # range filter (better be numbers)
             elif isinstance(
                     val[0], (float, int)) and isinstance(val[1], (float, int)):
-                cls = '{}:[{} TO {}]'.format(key, str(val[0]), str(val[1]))
+                clause = '{}:[{} TO {}]'.format(key, str(val[0]), str(val[1]))
             else:
                 log_warn('Unexpected value type {}'.format(val), logger=logger)
         else:
             log_warn('Unexpected value type {}'.format(val), logger=logger)
-        return cls
+        return clause
 
     # ...............................................
     def _assemble_q_item(self, key, val):
@@ -190,7 +190,6 @@ class APIQuery:
         ElementTree object.
         """
         self.output = None
-        ret_code = None
         try:
             response = requests.get(self.url, headers=self.headers)
         except Exception as e:
@@ -358,8 +357,8 @@ class BisonAPI(APIQuery):
         return this_dict
 
     # ...............................................
-    @staticmethod
-    def get_tsn_list_for_binomials(logger=None):
+    @classmethod
+    def get_tsn_list_for_binomials(cls, logger=None):
         """Returns a list of sequences containing tsn and tsnCount
         """
         bison_qry = BisonAPI(
@@ -382,8 +381,8 @@ class BisonAPI(APIQuery):
         return data_list
 
     # ...............................................
-    @staticmethod
-    def get_itis_tsn_values(itis_tsn, logger=None):
+    @classmethod
+    def get_itis_tsn_values(cls, itis_tsn, logger=None):
         """Return ItisScientificName, kingdom, and TSN info for occ record
         """
         itis_name = king = tsn_hier = None
@@ -523,8 +522,8 @@ class ItisAPI(APIQuery):
         return row
 
 # ...............................................
-    @staticmethod
-    def _get_fld_value(doc, fldname):
+    @classmethod
+    def _get_fld_value(cls, doc, fldname):
         try:
             val = doc[fldname]
         except:
@@ -532,8 +531,8 @@ class ItisAPI(APIQuery):
         return val
 
     # ...............................................
-    @staticmethod
-    def _get_rank_from_path(tax_path, rank_key):
+    @classmethod
+    def _get_rank_from_path(cls, tax_path, rank_key):
         for rank, tsn, name in tax_path:
             if rank == rank_key:
                 return (int(tsn), name)
@@ -562,54 +561,44 @@ class ItisAPI(APIQuery):
         return tax_path
 
 # ...............................................
-    @staticmethod
-    def _get_itis_solr_recs(output):
+    @classmethod
+    def _get_itis_solr_recs(cls, itis_output):
+        output = {}
         try:
-            data = output['response']
+            data = itis_output['response']
         except:
-            raise Exception('Failed to return response element')
+            output['error'] = 'Failed to return response element ({})'.format(
+                cls.__class__.__name__)
         try:
-            docs = data['docs']
+            output['records'] = data['docs']
         except:
-            raise Exception('Failed to return docs')
-        return docs
+            output['error'] = 'Failed to return element ({})'.format(
+                cls.__class__.__name__)
+        return output
     
-# ...............................................
-    @staticmethod
-    def _get_itis_json_recs(output):
-        try:
-            data = output['response']
-        except:
-            raise Exception('Failed to return response element')
-        try:
-            docs = data['docs']
-        except:
-            raise Exception('Failed to return docs')
-        return docs
-    
-# ...............................................
-    @staticmethod
-    def map_record(rec, mapping):
-        """
-        Map old record to new, pulling values from returned record which may be 
-        nested several levels.
-        
-        Args:
-            rec: json/dictionary returned from a web service
-            mapping: dictionary mapping new records to returned records with 
-                keys = new fieldnames and values = a sequence of filed
-        """
-        newrec = {}
-        for new_fld, orig_fields in mapping.items():
-            val = rec
-            for ofld in orig_fields:
-                val = val[ofld]
-            newrec[new_fld] = val
+# # ...............................................
+#     @classmethod
+#     def map_record(cls, rec, mapping):
+#         """
+#         Map old record to new, pulling values from returned record which may be 
+#         nested several levels.
+#         
+#         Args:
+#             rec: json/dictionary returned from a web service
+#             mapping: dictionary mapping new records to returned records with 
+#                 keys = new fieldnames and values = a sequence of filed
+#         """
+#         newrec = {}
+#         for new_fld, orig_fields in mapping.items():
+#             val = rec
+#             for ofld in orig_fields:
+#                 val = val[ofld]
+#             newrec[new_fld] = val
             
             
 # ...............................................
-    @staticmethod
-    def match_name_solr(sciname, status=None, kingdom=None, logger=None):
+    @classmethod
+    def match_name_solr(cls, sciname, status=None, kingdom=None, logger=None):
         """Return an ITIS record for a scientific name using the 
         ITIS Solr service.
         
@@ -617,29 +606,43 @@ class ItisAPI(APIQuery):
             sciname: a scientific name designating a taxon
             status: optional designation for taxon status, 
                 kingdom Plantae are valid/invalid, others are accepted 
-            kingdom: optional designation for kingdom 
+            kingdom: optional designation for kingdom
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Return: 
+            a dictionary containing one or more keys: 
+                count, records, error, warning
             
-        Ex: http://services.itis.gov/?q=nameWOInd:Spinus\%20tristis&wt=json
+        Example URL: 
+            http://services.itis.gov/?q=nameWOInd:Spinus\%20tristis&wt=json
         """
+        output = {}
         matches = []
         q_filters = {Itis.NAME_KEY: sciname}
         if kingdom is not None:
             q_filters['kingdom'] = kingdom
         apiq = ItisAPI(Itis.SOLR_URL, q_filters=q_filters, logger=logger)
         apiq.query()
-#         apiq.query_by_get()
-        docs = apiq._get_itis_solr_recs(apiq.output)
-
-        for doc in docs:
-            if status is None:
-                matches.append(doc)
-            else:
-                usage = doc['usage'].lower()
-                if (status in ('accepted', 'valid') and 
-                    usage in ('accepted', 'valid')):
+        itis_output = apiq._get_itis_solr_recs(apiq.output)
+        
+        try: 
+            docs = itis_output['records']
+        except:
+            output['error'] = itis_output['error']
+        else:
+            for doc in docs:
+                if status is None:
                     matches.append(doc)
-                elif status == usage:
-                    matches.append(doc)
+                else:
+                    usage = doc['usage'].lower()
+                    if (status in ('accepted', 'valid') and 
+                        usage in ('accepted', 'valid')):
+                        matches.append(doc)
+                    elif status == usage:
+                        matches.append(doc)
+        output['count'] = len(matches)
+        output['records'] = matches
 #             else:
 #                 accepted_tsn_list = apiq._get_fld_value(doc, 'acceptedTSN')
 #                 for tsn in accepted_tsn_list:
@@ -650,8 +653,8 @@ class ItisAPI(APIQuery):
         return matches
     
 # ...............................................
-    @staticmethod
-    def match_name(sciname, outformat='json', logger=None):
+    @classmethod
+    def match_name(cls, sciname, outformat='json', logger=None):
         """Return matching names for scienfific name using the ITIS Web service.
         
         Args:
@@ -659,7 +662,7 @@ class ItisAPI(APIQuery):
             
         Ex: https://services.itis.gov/?q=tsn:566578&wt=json
         """
-        recs = []
+        output = {}
         if outformat == 'json':
             url = Itis.JSONSVC_URL
         else:
@@ -670,15 +673,16 @@ class ItisAPI(APIQuery):
             other_filters={Itis.SEARCH_KEY: sciname}, logger=logger)
         apiq.query_by_get(output_type=outformat)
         
+        recs = []
         if outformat == 'json':    
-#             recs = apiq._get_itis_json_recs(apiq.output)
             outjson = apiq.output
             try:
                 recs = outjson['itisTerms']
             except:
-                log_error(
-                    'itisTerms is not present in output, keys = {}'.format(
-                        outjson.keys()), logger=logger)
+                msg = 'itisTerms not returned from {}, ({})'.format(
+                        apiq.url, cls.__class__name__)
+                log_error(msg, logger=logger)
+                output['error'] = msg
         else:
             root = apiq.output    
             retElt = root.find('{}return'.format(Itis.NAMESPACE))
@@ -691,13 +695,15 @@ class ItisAPI(APIQuery):
                         rec[e.tag] = e.text
                     if rec:
                         recs.append(rec)
+        output['count'] = len(recs)
+        output['records'] = recs
         log_info('ITIS WS returned {} matches for sciname {}'.format(
             len(recs), sciname), logger=logger)
-        return recs
+        return output
 
 # ...............................................
-    @staticmethod
-    def get_name_by_tsn_solr(tsn, logger=None):
+    @classmethod
+    def get_name_by_tsn_solr(cls, tsn, logger=None):
         """Return a name and kingdom for an ITIS TSN using the ITIS Solr service.
         
         Args:
@@ -705,6 +711,7 @@ class ItisAPI(APIQuery):
             
         Ex: https://services.itis.gov/?q=tsn:566578&wt=json
         """
+        output = {}
         apiq = ItisAPI(
             Itis.SOLR_URL, q_filters={Itis.TSN_KEY: tsn}, logger=logger)
         docs = apiq.get_itis_recs()
@@ -713,11 +720,13 @@ class ItisAPI(APIQuery):
             usage = doc['usage']
             if usage in ('accepted', 'valid'):
                 recs.append(doc)
-        return recs
+        output['count'] = len(recs)
+        output['records'] = recs
+        return output
 
 # # ...............................................
-#     @staticmethod
-#     def get_vernacular_by_tsn(tsn, logger=None):
+#     @classmethod
+#     def get_vernacular_by_tsn(cls, tsn, logger=None):
 #         """Return vernacular names for an ITIS TSN.
 #         
 #         Args:
@@ -739,8 +748,8 @@ class ItisAPI(APIQuery):
 #         return common_names
 
     # ...............................................
-    @staticmethod
-    def get_tsn_hierarchy(tsn, logger=None):
+    @classmethod
+    def get_tsn_hierarchy(cls, tsn, logger=None):
         """Retrieve taxon hierarchy"""
         url = '{}/{}'.format(Itis.WEBSVC_URL, Itis.TAXONOMY_HIERARCHY_QUERY)
         apiq = APIQuery(
@@ -804,8 +813,8 @@ class GbifAPI(APIQuery):
         return filter_string
 
     # ...............................................
-    @staticmethod
-    def _get_output_val(out_dict, name):
+    @classmethod
+    def _get_output_val(cls, out_dict, name):
         try:
             tmp = out_dict[name]
             val = str(tmp).encode(ENCODING)
@@ -814,8 +823,8 @@ class GbifAPI(APIQuery):
         return val
 
     # ...............................................
-    @staticmethod
-    def get_taxonomy(taxon_key, logger=None):
+    @classmethod
+    def get_taxonomy(cls, taxon_key, logger=None):
         """Return GBIF backbone taxonomy for this GBIF Taxon ID
         """
         accepted_key = accepted_str = nub_key = None
@@ -862,31 +871,8 @@ class GbifAPI(APIQuery):
             family_str, genus_str, species_str, genus_key, species_key)
 
     # ...............................................
-    @staticmethod
-    def _get_taiwan_row(occ_api, taxon_key, canonical_name, rec):
-        row = None
-        occ_key = occ_api._get_output_val(rec, 'gbifID')
-        lon_str = occ_api._get_output_val(rec, 'decimalLongitude')
-        lat_str = occ_api._get_output_val(rec, 'decimalLatitude')
-        try:
-            float(lon_str)
-        except ValueError:
-            return row
-
-        try:
-            float(lat_str)
-        except ValueError:
-            return row
-
-        if (occ_key is not None
-                and not lat_str.startswith('0.0')
-                and not lon_str.startswith('0.0')):
-            row = [taxon_key, canonical_name, occ_key, lon_str, lat_str]
-        return row
-
-    # ...............................................
-    @staticmethod
-    def get_occurrences(taxon_key, canonical_name, out_f_name,
+    @classmethod
+    def get_occurrences(cls, taxon_key, canonical_name, out_f_name,
                         other_filters=None, max_points=None, logger=None):
         """Return GBIF occurrences for this GBIF Taxon ID
         """
@@ -945,10 +931,20 @@ class GbifAPI(APIQuery):
                         complete = True
 
     # ...............................................
-    @staticmethod
-    def get_specimen_records_by_occid(occid, count_only=False, logger=None):
+    @classmethod
+    def get_specimen_records_by_occid(cls, occid, count_only=False, logger=None):
         """Return GBIF occurrences for this occurrenceId.  This should retrieve 
         a single record if the occurrenceId is unique.
+        
+        Args:
+            occid: occurrenceID for query
+            count_only: boolean flag signaling to return records or only count
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Return: 
+            a dictionary containing one or more keys: 
+                count, records, error, warning
         """
         output = {}
         api = GbifAPI(
@@ -970,8 +966,8 @@ class GbifAPI(APIQuery):
         return output
 
     # ...............................................
-    @staticmethod
-    def _get_fld_vals(big_rec):
+    @classmethod
+    def _get_fld_vals(cls, big_rec):
         rec = {}
         for fld_name in GbifAPI.NameMatchFieldnames:
             try:
@@ -981,8 +977,22 @@ class GbifAPI(APIQuery):
         return rec
 
     # ...............................................
-    @staticmethod
-    def get_records_by_dataset(dataset_key, count_only, logger=None):
+    @classmethod
+    def get_records_by_dataset(cls, dataset_key, count_only, logger=None):
+        """
+        Get or count records with the given dataset_key.
+        
+        Args:
+            dataset_key: unique identifier for the dataset, assigned by GBIF
+                and retained by Specify
+            count_only: boolean flag signaling to return records or only count
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Return: 
+            a dictionary containing one or more keys: 
+                count, records, error, warning
+        """
         output = {'provider': 'GBIF', 'dataset_key': dataset_key, 'count': 0}
         all_recs = []
         offset = 0
@@ -996,7 +1006,8 @@ class GbifAPI(APIQuery):
             try:
                 api.query()
             except Exception as e:
-                msg = 'Failed on {} ({})'.format(api.url, e)
+                msg = 'Failed on {} in {} ({})'.format(
+                    api.url, cls.__class__.__name__, e)
                 output['error'] = msg
                 log_error(msg, logger=logger)
             else:
@@ -1023,8 +1034,8 @@ class GbifAPI(APIQuery):
 
 
     # ...............................................
-    @staticmethod
-    def match_name(name_str, status=None, logger=None):
+    @classmethod
+    def match_name(cls, name_str, status=None, logger=None):
         """Return closest accepted species in GBIF backbone taxonomy,
         
         Args:
@@ -1115,8 +1126,8 @@ class GbifAPI(APIQuery):
             return matches
 
     # ...............................................
-    @staticmethod
-    def count_accepted_name(taxon_key, logger=None):
+    @classmethod
+    def count_accepted_name(cls, taxon_key, logger=None):
         """Return a count of records in GBIF with the indicated taxon.
                 
         Args:
@@ -1144,8 +1155,8 @@ class GbifAPI(APIQuery):
         return count, url
 
     # ......................................
-    @staticmethod
-    def _post_json_to_parser(url, data, logger=None):
+    @classmethod
+    def _post_json_to_parser(cls, url, data, logger=None):
         response = output = None
         try:
             response = requests.post(url, json=data)
@@ -1184,8 +1195,8 @@ class GbifAPI(APIQuery):
     
     
 # ...............................................
-    @staticmethod
-    def _trim_parsed_output(output, logger=None):
+    @classmethod
+    def _trim_parsed_output(cls, output, logger=None):
         recs = []
         for rec in output:
             # Only return parsed records
@@ -1199,8 +1210,8 @@ class GbifAPI(APIQuery):
         return recs
 
 # ...............................................
-    @staticmethod
-    def parse_name(namestr, logger=None):
+    @classmethod
+    def parse_name(cls, namestr, logger=None):
         """
         Send a scientific name to the GBIF Parser returning a canonical name.
         
@@ -1233,8 +1244,8 @@ class GbifAPI(APIQuery):
         return output
 
     # ...............................................
-    @staticmethod
-    def parse_names(names=[], filename=None, logger=None):
+    @classmethod
+    def parse_names(cls, names=[], filename=None, logger=None):
         """
         Send a list or file (or both) of scientific names to the GBIF Parser,
         returning a dictionary of results.  Each scientific name can possibly 
@@ -1276,8 +1287,8 @@ class GbifAPI(APIQuery):
         return recs
 
     # ...............................................
-    @staticmethod
-    def get_publishing_org(pub_org_key, logger=None):
+    @classmethod
+    def get_publishing_org(cls, pub_org_key, logger=None):
         """Return title from one organization record with this key
 
         Args:
@@ -1371,8 +1382,8 @@ class IdigbioAPI(APIQuery):
         return specimen_list
 
     # ...............................................
-    @staticmethod
-    def get_records_by_occid(occid, count_only=False, logger=None):
+    @classmethod
+    def get_records_by_occid(cls, occid, count_only=False, logger=None):
         """Return iDigBio occurrences for this occurrenceId.  This will
         retrieve a one or more records with the given occurrenceId.
         """
@@ -1398,13 +1409,13 @@ class IdigbioAPI(APIQuery):
         return output
 
     # ...............................................
-    @staticmethod
-    def _write_idigbio_metadata(orig_fld_names, meta_f_name):
+    @classmethod
+    def _write_idigbio_metadata(cls, orig_fld_names, meta_f_name):
         pass
 
     # ...............................................
-    @staticmethod
-    def _get_idigbio_fields(rec):
+    @classmethod
+    def _get_idigbio_fields(cls, rec):
         """Get iDigBio fields
         """
         fld_names = list(rec['indexTerms'].keys())
@@ -1414,8 +1425,8 @@ class IdigbioAPI(APIQuery):
         return fld_names
 
 #     # ...............................................
-#     @staticmethod
-#     def _count_idigbio_records(gbif_taxon_id):
+#     @classmethod
+#     def _count_idigbio_records(cls, gbif_taxon_id):
 #         """Count iDigBio records for a GBIF taxon id.
 #         """
 #         api = idigbio.json()
@@ -1582,9 +1593,9 @@ class LifemapperAPI(APIQuery):
         APIQuery.__init__(self, url, other_filters=other_filters, logger=logger)
 
     # ...............................................
-    @staticmethod
+    @classmethod
     def find_sdmprojections_by_name(
-            name, prjscenariocode=None, logger=None):
+            cls, name, prjscenariocode=None, logger=None):
         """
         List projections for a given scientific name.  
         
@@ -1621,9 +1632,9 @@ class LifemapperAPI(APIQuery):
         return recs
 
     # ...............................................
-    @staticmethod
+    @classmethod
     def _construct_map_url(
-            rec, service, request, version, srs, bbox, width, height):
+            cls, rec, service, request, version, srs, bbox, width, height):
         """
         service=wms&request=getmap&version=1.0&srs=epsg:4326&bbox=-180,-90,180,90&format=png&width=600&height=300&layers=prj_1848399
         """
@@ -1653,8 +1664,8 @@ class LifemapperAPI(APIQuery):
         return rec
         
     # ...............................................
-    @staticmethod
-    def find_sdmprojection(proj_id, logger=None):
+    @classmethod
+    def find_sdmprojection(cls, proj_id, logger=None):
         """
         Get a projection for a given projection id.  
         
@@ -1683,9 +1694,9 @@ class LifemapperAPI(APIQuery):
         return rec
     
     # ...............................................
-    @staticmethod
+    @classmethod
     def get_sdmprojection_map(
-            proj_id, service='wms', request='getmap', version='1.0', 
+            cls, proj_id, service='wms', request='getmap', version='1.0', 
             srs='epsg:4326', bbox='-180,-90,180,90', width=600, height=400, 
             logger=None):
         """
@@ -1706,8 +1717,8 @@ class LifemapperAPI(APIQuery):
         return recs
 
     # ...............................................
-    @staticmethod
-    def find_occurrencesets_by_name(name, logger=None):
+    @classmethod
+    def find_occurrencesets_by_name(cls, name, logger=None):
         """
         List occurrences for a given scientific name.  
         
@@ -1757,8 +1768,8 @@ class MorphoSourceAPI(APIQuery):
             other_filters=other_filters, logger=logger)
 
     # ...............................................
-    @staticmethod
-    def _page_specimen_records(start, occid, logger=None):
+    @classmethod
+    def _page_specimen_records(cls, start, occid, logger=None):
         output = {'curr_count': 0, 'count': 0, 'records': []}
         api = MorphoSourceAPI(
             resource=MorphoSource.OCC_RESOURCE, 
@@ -1779,8 +1790,8 @@ class MorphoSourceAPI(APIQuery):
         return output
 
     # ...............................................
-    @staticmethod
-    def get_specimen_records_by_occid(occid, count_only=False, logger=None):
+    @classmethod
+    def get_specimen_records_by_occid(cls, occid, count_only=False, logger=None):
         start = 0
         output = {}
         all_recs = []
@@ -1824,8 +1835,8 @@ class SpecifyPortalAPI(APIQuery):
         APIQuery.__init__(self, url, headers=JSON_HEADERS, logger=logger)
 
     # ...............................................
-    @staticmethod
-    def get_specify_record(url, logger=None):
+    @classmethod
+    def get_specify_record(cls, url, logger=None):
         """Return Specify record published at this url.  
         
         Args:
@@ -1836,17 +1847,19 @@ class SpecifyPortalAPI(APIQuery):
             in the Solr Specify Resolver but are not resolvable to the host 
             database.  URLs returned for these records begin with 'unknown_url'.
         """
-        rec = {}
+        output = {}
         if url.startswith('http'):
             api = APIQuery(url, headers=JSON_HEADERS, logger=logger)
     
             try:
                 api.query_by_get()
             except Exception:
-                log_error('Failed on {}'.format(url), logger=logger)
+                msg = 'Failed on {}, ({})'.format(url, cls.__class__.__name__)
+                output['error'] = msg
+                log_error(msg, logger=logger)
             else:
-                rec = api.output
-        return rec
+                output = api.output
+        return output
 
 
 
@@ -1981,17 +1994,17 @@ if __name__ == '__main__':
 #         names = ['ursidae', 'Poa annua']
 #         recs = GbifAPI.get_records_by_dataset(TST_VALUES.DATASET_GUIDS[0])
 #         log_info('Returned {} records for dataset:'.format(len(recs)))
-#         names = ['Poa annua']
-#         for name in names:
-#             pass
-#             good_names = GbifAPI.match_name(
-#                 name, match_backbone=True, rank='species')
-#             log_info('Matched {} with {} GBIF names:'.format(name, len(good_names)))
-#             for n in good_names:
-#                 log_info('{}: {}, {}'.format(
-#                     n['scientificName'], n['status'], n['rank']))
-#             log_info ('')
-#             itis_names = ItisAPI.match_name_solr(name)
+        names = ['Poa annua']
+        for name in names:
+            pass
+            good_names = GbifAPI.match_name(
+                name, match_backbone=True, rank='species')
+            log_info('Matched {} with {} GBIF names:'.format(name, len(good_names)))
+            for n in good_names:
+                log_info('{}: {}, {}'.format(
+                    n['scientificName'], n['status'], n['rank']))
+            log_info ('')
+            itis_names = ItisAPI.match_name_solr(name)
 #             log_info ('Matched {} with {} ITIS names using Solr'.format(
 #                 name, len(itis_names)))
 #             for n in itis_names:

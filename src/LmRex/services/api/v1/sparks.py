@@ -12,19 +12,12 @@ class SpecifyArk:
     
     # ...............................................
     def get_specify_arc_rec(self, occid):
-        rec = SpSolr.query_guid(collection, occid, solr_location=solr_location)
-        if not rec:
-            rec = {
-                'spcoco.error': 
-                'Failed to find ARK for Specify occurrence GUID {}'.format(occid)
-                }
-        return rec
+        output = SpSolr.query_guid(collection, occid, solr_location=solr_location)
+        return output
 
     # ...............................................
     def count_specify_arc_recs(self):
-        total = SpSolr.count_docs(collection, solr_location)
-        rec = {'spcoco.total': total} 
-        return rec
+        return SpSolr.count_docs(collection, solr_location)
 
     # ...............................................
     @cherrypy.tools.json_out()

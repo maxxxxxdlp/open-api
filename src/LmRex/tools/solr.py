@@ -15,8 +15,9 @@ Defined solrcores in /var/solr/data/cores/
 """
 # ......................................................
 def count_docs(collection, solr_location=SOLR_SERVER):
-    count, docs = query(collection, solr_location=solr_location)
-    return count
+    output = query(collection, solr_location=solr_location)
+    output.pop('docs')
+    return output
 
 # ...............................................
 def _post_remote(collection, fname, solr_location=SOLR_SERVER, headers={}):
@@ -100,25 +101,27 @@ def query_guid(collection, guid, solr_location=SOLR_SERVER):
     Args:
         collection: name of the Solr index
         guid: Unique identifier for record of interest
-        solr_location: FQDN or IP of the Solr server
-    
-    Returns:
-        Zero or one Solr records
+        solr_location: IP or FQDN for solr index
+
+    Return: 
+        a dictionary containing one or more keys: count, docs, error
     """
-    doc = {}
-    filters = {'id': guid}
-    count, docs = query(collection, filters=filters, solr_location=solr_location)
-    if count == 1: 
-        doc = docs[0]
-    return doc
+    return query(collection, filters={'id': guid}, solr_location=solr_location)
     
 # .............................................................................
 def query(collection, filters={'*': '*'}, solr_location=SOLR_SERVER):
     """
     Query a solr index and return results in JSON format
+    
+    Args:
+        collection: solr index for query
+        filters: q filters for solr query
+        solr_location: IP or FQDN for solr index
+
+    Return: 
+        a dictionary containing one or more keys: count, docs, error
     """
-    count = 0 
-    docs = {}
+    output = {}
     solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
     api = APIQuery(solr_endpt, q_filters=filters)
     api.query_by_get(output_type='json')
@@ -127,14 +130,18 @@ def query(collection, filters={'*': '*'}, solr_location=SOLR_SERVER):
     except:
         raise Exception('Failed to return response element')
     try:
-        docs = data['docs']
+        output['docs'] = data['docs']
     except:
-        raise Exception('Failed to return docs')
+        output['error'] = 'Failed to return docs from solr'
     try:
-        count = data['numFound']
+        output['count'] = data['numFound']
     except:
-        raise Exception('Failed to return docs')
-    return count, docs
+        msg = 'Failed to return numFound from solr'
+        try:
+            output['error'].append(msg)
+        except:
+            output['error'] = msg
+    return output
 
 # .............................................................................
 def update(collection, solr_location=SOLR_SERVER):

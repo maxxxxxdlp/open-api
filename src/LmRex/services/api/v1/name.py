@@ -1,5 +1,6 @@
 import cherrypy
 
+from LmRex.common.lmconstants import TST_VALUES
 from LmRex.tools.api import (GbifAPI, ItisAPI)
 
 
@@ -248,9 +249,7 @@ class NameSvc:
 
 # .............................................................................
 if __name__ == '__main__':
-    # test
-    from LmRex.common.lmconstants import TST_VALUES
-    
+    # test    
     for namestr in TST_VALUES.NAMES:
         do_parse = True
         print('Name = {}'.format(namestr))

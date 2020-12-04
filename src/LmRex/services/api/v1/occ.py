@@ -15,13 +15,9 @@ def convert_to_bool(obj):
 class GOcc:
     # ...............................................
     def get_gbif_recs(self, occid, count_only):
-        recs = GbifAPI.get_specimen_records_by_occid(
+        output = GbifAPI.get_specimen_records_by_occid(
             occid, count_only=count_only)
-        if len(recs) == 0:
-            return {'spcoco.error': 
-                    'No GBIF records with the occurrenceId {}'.format(occid)}
-        else:
-            return recs
+        return output
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -125,15 +121,21 @@ class MophOcc:
 class SPOcc:
     # ...............................................
     def get_specify_rec(self, occid):
+        output = {}
         spark = SpecifyArk()
-        rec = spark.get_specify_arc_rec(occid=occid)
+        solr_output = spark.get_specify_arc_rec(occid=occid)
         try:
-            url = rec['url']
+            recs = solr_output['docs']
         except Exception as e:
-            pass
+            output['error'] = 'Failed to return ARK from Specify Resolver'
         else:
-            rec = SpecifyPortalAPI.get_specify_record(url)
-        return rec
+            try:
+                url = recs[0]['url']
+            except:
+                output['error'] = 'Failed to return URL from Specify GUID ARK'
+            else:
+                output = SpecifyPortalAPI.get_specify_record(url)
+        return output
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -146,7 +148,6 @@ class SPOcc:
             one dictionary containing a message or Specify record corresponding 
             to the Specify GUID
         """
-        count_only = convert_to_bool(count_only)
         if occid is None:
             return {'spcoco.message': 'S^n Specify occurrence resolution is online'}
         else:
@@ -156,64 +157,47 @@ class SPOcc:
 @cherrypy.expose
 class OccurrenceSvc:
     # ...............................................
-    def _assemble_output(self, records, count_only):
-        if count_only:
-            svc_output = 0
-        else:
-            svc_output = []
-        # Handle dict record/s as a list
-        if isinstance(records, dict):
-            records = [records]
-        for rec in records:
-            is_rec = True
-            # Error/info records use 'spcoco.' prefix for all keys
-            for k in rec.keys():
-                if k.startswith('spcoco'):
-                    is_rec = False
-                    break
-            # Do not count error/info records
-            if count_only:
-                if is_rec:
-                    svc_output += 1
-            # Return data and error/info records
-            else:
-                svc_output.append(rec)
-        return svc_output
-    
-    # ...............................................
     def get_records(self, occid, count_only):
         all_output = {}
         # Specify ARK Record
         spark = SpecifyArk()
-        rec = spark.get_specify_arc_rec(occid=occid)
-        all_output['Specify ARK'] = self._assemble_output([rec], count_only)
+        solr_output = spark.get_specify_arc_rec(occid=occid)
+        try:
+            solr_doc = solr_output['docs'][0]
+        except:
+            solr_doc = {}
+        else:
+            if count_only:
+                solr_output.pop('docs')
+            all_output['Specify ARK'] = solr_output
         # Get url from ARK for Specify query
         try:
-            url = rec['url']
+            url = solr_doc['url']
         except Exception as e:
             pass
         else:
             if not url.startswith('http'):
-                rec = {}
+                sp_output = {
+                    'warning': 'Invalid URL {} returned from ARK'.format(url)}
             else:
                 # Original Specify Record
-                rec = SpecifyPortalAPI.get_specify_record(url)
-                all_output['Specify Record'] = self._assemble_output(
-                    [rec], count_only)
+                sp_output = SpecifyPortalAPI.get_specify_record(url)
+                if count_only:
+                    sp_output.pop('records')
+            all_output['Specify Record'] = sp_output
             
         # GBIF copy/s of Specify Record
         gocc = GOcc()
-        recs = gocc.get_gbif_recs(occid, count_only)
-        all_output['GBIF Records'] = self._assemble_output(recs, count_only)
+        gbif_output = gocc.get_gbif_recs(occid, count_only)
+        all_output['GBIF Records'] = gbif_output
         # iDigBio copy/s of Specify Record
         idbocc = IDBOcc()
-        recs = idbocc.get_idb_recs(occid, count_only)
-        all_output['iDigBio Records'] = self._assemble_output(recs, count_only)
+        idb_output = idbocc.get_idb_recs(occid, count_only)
+        all_output['iDigBio Records'] = idb_output
         
         mopho = MophOcc()
-        mopho.get_mopho_recs(occid, count_only)
-        all_output['MorphoSource Records'] = self._assemble_output(
-            recs, count_only)
+        mopho_output = mopho.get_mopho_recs(occid, count_only)
+        all_output['MorphoSource Records'] = mopho_output
         return all_output
 
     # ...............................................
