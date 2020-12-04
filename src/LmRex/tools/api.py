@@ -945,6 +945,8 @@ class GbifAPI(APIQuery):
         Return: 
             a dictionary containing one or more keys: 
                 count, records, error, warning
+                
+        Todo: enable paging
         """
         output = {}
         api = GbifAPI(
@@ -1388,6 +1390,8 @@ class IdigbioAPI(APIQuery):
     def get_records_by_occid(cls, occid, count_only=False, logger=None):
         """Return iDigBio occurrences for this occurrenceId.  This will
         retrieve a one or more records with the given occurrenceId.
+        
+        Todo: enable paging
         """
         output = {}
         qf = {Idigbio.QKEY: 

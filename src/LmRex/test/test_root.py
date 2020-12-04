@@ -19,39 +19,38 @@ class SimpleCPTest(helper.CPWebCase):
 # ......................................................
     def _query_by_url(self, url):
         output = None
-        self.response = None
-        self.status = None
+        response = None
+        status = None
+        headers = {'Content-Type': 'application/json'}
         try:
-            self.response = requests.get(
-                url, headers={'Content-Type': 'application/json'})
+            response = requests.get(url)
         except Exception as e:
-            print(
-                'Failed on URL {}, ({})'.format(url, str(e)))
+            print('Failed on URL {}, ({})'.format(url, e))
         else:
             try:
-                output_type = self.response.headers['Content-Type']
+                output_type = response.headers['Content-Type']
             except: 
                 output_type = None
             
-            self.status = self.response.status_code
+            status = response.status_code
             
-            if self.response.status_code == HTTPStatus.OK:
+            if status == HTTPStatus.OK:
                 if output_type.endswith('json'):
                     try:
-                        output = self.response.json()
+                        output = response.json()
                     except Exception as e:
-                        tmp = self.response.content
+                        tmp = response.content
                         output = deserialize(fromstring(tmp))
                 elif output_type.endswith('xml'):
                     try:
-                        output = fromstring(self.response.text)
+                        output = fromstring(response.text)
                     except Exception as e:
-                        output = self.response.text
+                        output = response.text
                 else:
                     print('Unrecognized output type {}'.format(output_type))
             else:
                 print('Failed on URL {}, code = {}, reason = {}'.format(
-                    url, self.response.status_code, self.response.reason))
+                    url, response.status_code, response.reason))
         return output
     
 # ......................................................
@@ -72,14 +71,26 @@ class SimpleCPTest(helper.CPWebCase):
         for svc in APIMount.occurrence_services():
             url = 'http://{}{}'.format(TST_SERVER, svc)
             output = self._query_by_url(url)
-#             self.assertEqual(200, self.status)
             print('Returned status {}, output {} from {}'.format(
                 self.status, output, url))
             for guid in TST_VALUES.FISH_OCC_GUIDS:
-                url = '{}{}/{}'.format(TST_SERVER, svc, guid)
+                url = 'http://{}{}/{}'.format(TST_SERVER, svc, guid)
                 output = self._query_by_url(url)
                 print(guid, output)
                 
+# ......................................................
+    def test_one(self, svc, ident):
+        baseurl = 'http://{}{}'.format(TST_SERVER, svc)
+        for x in ident:
+            print(x)
+            for count_flag in (0, 1):
+                url = '{}/{}?count_only={}'.format(baseurl, x, count_flag)
+                print(url)
+                output = self._query_by_url(url)
+                for k, v in output.items():
+                    print('  {}: {}'.format(k, v))
+                print()
+
 # .............................................................................
 if __name__ == '__main__':
     tst = SimpleCPTest()
@@ -88,4 +99,8 @@ if __name__ == '__main__':
 #     if hname == TST_SERVER:
 #         tst.setup_server()
 #     tst.test_get_fish()
-    tst.test_get_counts()
+    guids = TST_VALUES.FISH_OCC_GUIDS[2:]
+    tst.test_one(APIMount.GOccSvc, guids)
+    tst.test_one(APIMount.IDBOccSvc, guids)
+    tst.test_one(APIMount.MophOccSvc, guids)
+    tst.test_one(APIMount.SPOccSvc, guids)

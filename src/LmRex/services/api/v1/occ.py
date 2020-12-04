@@ -5,7 +5,11 @@ from LmRex.tools.api import (
 from LmRex.services.api.v1.sparks import SpecifyArk
 
 def convert_to_bool(obj):
-    if obj in (1, 'yes', 'true', 'True'):
+    try:
+        obj = obj.lower()
+    except:
+        pass
+    if obj in (1, 'yes', 'true'):
         return True
     else:
         return False
@@ -139,11 +143,12 @@ class SPOcc:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None):
+    def GET(self, occid=None, **kwargs):
         """Get one Specify record for a Specify GUID or info/error message.
         
         Args:
             occid: a Specify occurrence GUID, from the occurrenceId field
+            kwargs: ignore unsupported keyword args (i.e. count_only)
         Return:
             one dictionary containing a message or Specify record corresponding 
             to the Specify GUID
@@ -216,21 +221,19 @@ if __name__ == '__main__':
     
     count_only = True
     
-#     gdapi = GColl()
-#     gdoutput = gdapi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0], False)
-
-    occid = '2c1becd5-e641-4e83-b3f5-76a55206539a'
-    oapi = OccurrenceSvc()
-    occoutput = oapi.get_records(occid, True)
+#     s2napi = GColl()
+#     gdoutput = s2napi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0], False)
+# 
+#     occid = '2c1becd5-e641-4e83-b3f5-76a55206539a'
+#     oapi = OccurrenceSvc()
+#     occoutput = oapi.get_records(occid, True)
 #     for occid in TST_VALUES.BIRD_OCC_GUIDS:
 #         # Queries all services
-#         oapi = OccurrenceSvc()
-#         occoutput = oapi.get_records(occid, count_only)
-    pass        
-"""
+#         s2napi = OccurrenceSvc()
+#         occoutput = s2napi.get_records(occid, count_only)
+    for occid in TST_VALUES.BIRD_OCC_GUIDS:
+        # Queries all services
+        s2napi = GOcc()
+        output = s2napi.get_gbif_recs(occid, count_only)
+        print(output)
 
-api = OccurrenceSvc()
-recs = api.get_records()
-
-
-"""
