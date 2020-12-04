@@ -88,9 +88,9 @@ class APIMount:
         S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Specify)
     # dataset services
     DatasetSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Dataset)
+        S2NEndpoint.Root, S2NEndpoint.Dataset)
     GCollSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Gbif)
+        S2NEndpoint.Root, S2NEndpoint.Dataset, S2NEndpoint.Gbif)
     # name services
     NameSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Name)
     GAcNameSvc = '{}/{}/{}'.format(
