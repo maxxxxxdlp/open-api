@@ -233,22 +233,20 @@ if __name__ == '__main__':
     count_only = False
     
     gdapi = GColl()
-    gdrecs = gdapi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0])
+    gdrecs = gdapi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0], True)
 
-    occid1 = TST_VALUES.FISH_OCC_GUIDS[2]
-    occid2 = TST_VALUES.BIRD_OCC_GUIDS[0]
-    for occid in [occid2]:
+    for occid in TST_VALUES.BIRD_OCC_GUIDS:
         oapi = OccurrenceSvc()
         orecs = oapi.get_records(occid, count_only)
             
         gapi = GOcc()
-        grecs = gapi.get_gbif_recs(occid)
+        grecs = gapi.get_gbif_recs(occid, count_only)
     
         iapi = IDBOcc()
-        irecs  = iapi.get_idb_recs(occid)
+        irecs  = iapi.get_idb_recs(occid, count_only)
         
         mapi = MophOcc()
-        mrecs = mapi.get_mopho_recs(occid)
+        mrecs = mapi.get_mopho_recs(occid, count_only)
     
         sapi = SPOcc()
         srecs = sapi.get_specify_rec(occid)

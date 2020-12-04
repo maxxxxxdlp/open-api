@@ -963,7 +963,7 @@ class GbifAPI(APIQuery):
             # First query, report count
             output['count'] = api.output['count']
             log_info(
-                'GBIF returned {} recs for occurrenceId {}'.format(
+                'Found {} recs in GBIF for occurrenceId {}'.format(
                     output['count'], occid), logger=logger)
             if count_only is False:
                 output['records'] = api.output['results']
@@ -1009,16 +1009,16 @@ class GbifAPI(APIQuery):
                     if recs:
                         all_recs.extend(recs)
                         offset += len(recs)
-                        log_info(
-                            'Returned {} of {} GBIF recs for dataset {}'.format(
-                                len(recs), output['count'], dataset_key), 
-                            logger=logger)
                     # TODO: handle large queries asynchronously
                     # Throttle during testing
                     if offset >= (GBIF.LIMIT * 2):
                         is_end = True
         if count_only is False:
             output['records'] = all_recs
+        log_info(
+            'Found {} GBIF recs for dataset {}'.format(
+                output['count'], dataset_key), 
+            logger=logger)
         return output
 
 
@@ -1043,6 +1043,7 @@ class GbifAPI(APIQuery):
         Note:
             This function uses the name search API, 
         """
+        results = {}
         matches = []
         name_clean = name_str.strip()
 
@@ -1058,59 +1059,60 @@ class GbifAPI(APIQuery):
             name_api.query()
             output = name_api.output
         except Exception as e:
-            log_error(
-                'Failed to get a response for species match on {}, ({})'.format(
-                    name_clean, str(e)), logger=logger)
-            raise
-
-        # Pull alternatives out of record
-        try:
-            alternatives = output.pop('alternatives')
-        except Exception as e:
-            alternatives = []
-            
-        is_match = True
-        try:
-            if output['matchType'].lower() == 'none':
-                is_match = False
-        except AttributeError:
-            log_error(
-                'No matchType for record matching {}'.format(name_clean), 
-                logger=logger)
+            msg = 'Failed to get a response for {} ({})'.format(name_api.url, e)
+            log_error(msg, logger=logger)
+            results['error'] = msg
         else:
-            # No filter by status
-            if is_match:
-                if status is None:
-                    matches.append(output)
-                    for alt in alternatives:
-                        matches.append(alt)
-                # Check status of upper level result
-                else:
-                    outstatus = None
-                    try:
-                        outstatus = output['status'].lower()
-                    except AttributeError:
-                        log_error(
-                            'No status for record matching {}'.format(
-                                name_clean), logger=logger)
+            # Pull alternatives out of record
+            try:
+                alternatives = output.pop('alternatives')
+            except Exception as e:
+                alternatives = []
+                
+            is_match = True
+            try:
+                if output['matchType'].lower() == 'none':
+                    is_match = False
+            except AttributeError:
+                msg = 'No matchType returned from {}'.format(name_api.url)
+                log_error(msg, logger=logger)
+                results['error'] = msg
+            else:
+                if is_match:
+                    if status is None:
+                        # No filter by status
+                        matches.append(output)
+                        for alt in alternatives:
+                            matches.append(alt)
                     else:
-                        if outstatus == status:
-                            matches.append(output)
-                    # Check status of alternative results result            
-                    for alt in alternatives:
+                        # Check status of upper level result
                         outstatus = None
                         try:
-                            outstatus = alt['status'].lower()
+                            outstatus = output['status'].lower()
                         except AttributeError:
-                            log_error(
-                                'No status for alternative matching {}'.format(
-                                    name_clean), logger=logger)
+                            msg = ('No status returned for primary record from {}'
+                                   .format(name_api.url))
+                            results['error'] = msg
+                            log_error(msg, logger=logger)
                         else:
                             if outstatus == status:
-                                matches.append(alt)
-        log_info('GBIF returned {} matches for name {}'.format(
-            len(matches), name_clean), logger=logger)
-        return matches
+                                matches.append(output)
+                        # Check status of alternative results result            
+                        for alt in alternatives:
+                            outstatus = None
+                            try:
+                                outstatus = alt['status'].lower()
+                            except AttributeError:
+                                msg = ('No status returned for alt record from {}'
+                                       .format(name_api.url))
+                                results['error'] = msg
+                                log_error(msg, logger=logger)
+                            else:
+                                if outstatus == status:
+                                    matches.append(alt)
+            log_info('Found {} matches in GBIF for name {}'.format(
+                len(matches), name_clean), logger=logger)
+            return matches
 
     # ...............................................
     @staticmethod
@@ -1214,7 +1216,7 @@ class GbifAPI(APIQuery):
         sent (bad) http://api.gbif.org/v1/parser/name?name=Acer%5C%2520caesium%5C%2520Wall.%5C%2520ex%5C%2520Brandis
         send good http://api.gbif.org/v1/parser/name?name=Acer%20heldreichii%20Orph.%20ex%20Boiss.
         """
-        rec = None
+        output = {}
         # Query GBIF
         name_api = GbifAPI(
             service=GBIF.PARSER_SERVICE, 
@@ -1225,12 +1227,10 @@ class GbifAPI(APIQuery):
         if name_api.output is not None:
             recs = name_api._trim_parsed_output(name_api.output)
             try:
-                rec = recs[0]
+                output['record'] = recs[0]
             except:
                 pass
-#             log_info('GBIF returned {} parsed records for {}'.format(
-#                 len(recs), namestr), logger=logger)
-        return recs
+        return output
 
     # ...............................................
     @staticmethod
@@ -1266,11 +1266,11 @@ class GbifAPI(APIQuery):
             recs = GbifAPI._trim_parsed_output(output, logger=logger)
             if filename is not None:
                 log_info(
-                    'GBIF returned {} parsed records for file {}'.format(
+                    'Wrote {} parsed records from GBIF to file {}'.format(
                         len(recs), filename), logger=logger)
             else:
                 log_info(
-                    'GBIF returned {} parsed records for {} names'.format(
+                    'Found {} parsed records from GBIF for {} names'.format(
                         len(recs), len(names)), logger=logger)
 
         return recs
@@ -1384,12 +1384,14 @@ class IdigbioAPI(APIQuery):
         try:
             api.query()
         except Exception:
-            log_error('Failed on {}'.format(occid), logger=logger)
+            msg = 'Failed on {}'.format(api.url)
+            output['error'] = msg
+            log_error(msg, logger=logger)
         else:
             if api.output is not None:
                 output['count'] = api.output['itemCount']
                 log_info(
-                    'iDigBio returned {} recs for Specify occurrenceId {}'.format(
+                    'Found {} recs in iDigBio for Specify occurrenceId {}'.format(
                         output['count'], occid), logger=logger)
                 if count_only is False:
                     output['records'] = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
