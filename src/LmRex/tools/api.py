@@ -1220,9 +1220,8 @@ class GbifAPI(APIQuery):
                 rank marker or other name information.
                 
         Returns:
-            A record as a dictionary containing a parsed scientific name, with 
-            keys being the part of a scientific name, and values being the 
-            element or elements that correspond to that part.
+            A dictionary containing a single record for a parsed scientific name
+            and any optional error messages.
             
         sent (bad) http://api.gbif.org/v1/parser/name?name=Acer%5C%2520caesium%5C%2520Wall.%5C%2520ex%5C%2520Brandis
         send good http://api.gbif.org/v1/parser/name?name=Acer%20heldreichii%20Orph.%20ex%20Boiss.
@@ -1240,7 +1239,10 @@ class GbifAPI(APIQuery):
             try:
                 output['record'] = recs[0]
             except:
-                pass
+                msg = 'Failed to return results from {}, ({})'.format(
+                    name_api.url, cls.__class__.__name__)
+                log_error(msg, logger=logger)
+                output['error'] = msg
         return output
 
     # ...............................................
@@ -1819,6 +1821,8 @@ class MorphoSourceAPI(APIQuery):
                     is_end = True
                     
                 start += MorphoSource.LIMIT
+        if count_only is False:
+            output['records'] = all_recs
         log_info(
             'Found {} MorphoSource recs for occurrence {}'.format(
                 curr_output['count'], occid), logger=logger)

@@ -51,10 +51,11 @@ class GAcName:
     
     # ...............................................
     def get_gbif_accepted_taxon(self, namestr, count_only, do_parse):
+        output = {}
         if do_parse:
-            rec = GbifAPI.parse_name(namestr)
+            goutput = GbifAPI.parse_name(namestr)
             try:
-                namestr = rec['canonicalName']
+                namestr = goutput['record']['canonicalName']
             except:
                 # Default to original namestring if parsing fails
                 pass

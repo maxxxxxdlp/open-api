@@ -125,22 +125,21 @@ def query(collection, filters={'*': '*'}, solr_location=SOLR_SERVER):
     solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
     api = APIQuery(solr_endpt, q_filters=filters)
     api.query_by_get(output_type='json')
+    errors = []
     try:
-        data = api.output['response']
+        response = api.output['response']
     except:
-        raise Exception('Failed to return response element')
+        errors.append('Failed to return response element')
     try:
-        output['docs'] = data['docs']
+        output['docs'] = response['docs']
     except:
-        output['error'] = 'Failed to return docs from solr'
+        errors.append('Failed to return docs from solr')
     try:
-        output['count'] = data['numFound']
+        output['count'] = response['numFound']
     except:
-        msg = 'Failed to return numFound from solr'
-        try:
-            output['error'].append(msg)
-        except:
-            output['error'] = msg
+        errors.append('Failed to return numFound from solr')
+    if errors:
+        output['errors'] = errors
     return output
 
 # .............................................................................
