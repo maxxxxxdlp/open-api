@@ -25,7 +25,7 @@ class GOcc:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=False):
+    def GET(self, occid=None, count_only=False, **kwargs):
         """Get a one or more GBIF records for a Specify GUID or 
         info/error message.
         
@@ -51,7 +51,7 @@ class GColl:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, dataset_key=None, count_only=True):
+    def GET(self, dataset_key=None, count_only=True, **kwargs):
         """Get a one or more GBIF records for a Specify GUID or 
         info/error message.
         
@@ -76,7 +76,7 @@ class IDBOcc:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=False):
+    def GET(self, occid=None, count_only=False, **kwargs):
         """Get a one or more iDigBio records for a Specify GUID or 
         info/error message.
         
@@ -104,7 +104,7 @@ class MophOcc:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=False):
+    def GET(self, occid=None, count_only=False, **kwargs):
         """Get a one Specify record for a Specify GUID or info/error message.
         
         Args:
@@ -166,48 +166,53 @@ class OccurrenceSvc:
         all_output = {}
         # Specify ARK Record
         spark = SpecifyArk()
-        solr_output = spark.get_specify_arc_rec(occid=occid)
-        try:
-            solr_doc = solr_output['docs'][0]
-        except:
-            solr_doc = {}
-        else:
-            if count_only:
-                solr_output.pop('docs')
-            all_output['Specify ARK'] = solr_output
-        # Get url from ARK for Specify query
-        try:
-            url = solr_doc['url']
-        except Exception as e:
-            pass
-        else:
-            if not url.startswith('http'):
-                sp_output = {
-                    'warning': 'Invalid URL {} returned from ARK'.format(url)}
-            else:
-                # Original Specify Record
-                sp_output = SpecifyPortalAPI.get_specify_record(url)
-                if count_only:
-                    sp_output.pop('records')
-            all_output['Specify Record'] = sp_output
-            
+        solr_output = spark.GET(occid=occid)
+        all_output['Specify ARK'] = solr_output
+#         try:
+#             solr_doc = solr_output['docs'][0]
+#         except:
+#             solr_doc = {}
+#         else:
+#             if count_only:
+#                 solr_output.pop('docs')
+#             all_output['Specify ARK'] = solr_output
+#         # Get url from ARK for Specify query
+#         try:
+#             url = solr_doc['url']
+#         except Exception as e:
+#             pass
+#         else:
+#             if not url.startswith('http'):
+#                 sp_output = {
+#                     'warning': 'Invalid URL {} returned from ARK'.format(url)}
+#             else:
+#                 # Original Specify Record
+#                 spocc = SPOcc()
+#                 sp_output = SPOcc.GET(url)
+#                 if count_only:
+#                     sp_output.pop('records')
+#             all_output['Specify Record'] = sp_output
+
+        spocc = SPOcc()
+        sp_output = spocc.GET(occid=occid)
+        all_output['Specify Record'] = sp_output   
         # GBIF copy/s of Specify Record
         gocc = GOcc()
-        gbif_output = gocc.get_gbif_recs(occid, count_only)
+        gbif_output = gocc.GET(occid=occid, count_only=count_only)
         all_output['GBIF Records'] = gbif_output
         # iDigBio copy/s of Specify Record
         idbocc = IDBOcc()
-        idb_output = idbocc.get_idb_recs(occid, count_only)
+        idb_output = idbocc.GET(occid=occid, count_only=count_only)
         all_output['iDigBio Records'] = idb_output
         
         mopho = MophOcc()
-        mopho_output = mopho.get_mopho_recs(occid, count_only)
+        mopho_output = mopho.GET(occid=occid, count_only=count_only)
         all_output['MorphoSource Records'] = mopho_output
         return all_output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=False):
+    def GET(self, occid=None, count_only=False, **kwargs):
         count_only = convert_to_bool(count_only)
         if occid is None:
             return {'message': 'S^n occurrence tentacles are online'}
@@ -220,20 +225,18 @@ if __name__ == '__main__':
     from LmRex.common.lmconstants import TST_VALUES
     
     count_only = True
+    dsid = TST_VALUES.FISH_DS_GUIDS[0]
     
-#     s2napi = GColl()
-#     gdoutput = s2napi.get_dataset_recs(TST_VALUES.FISH_DS_GUIDS[0], False)
-# 
-#     occid = '2c1becd5-e641-4e83-b3f5-76a55206539a'
-#     oapi = OccurrenceSvc()
-#     occoutput = oapi.get_records(occid, True)
-#     for occid in TST_VALUES.BIRD_OCC_GUIDS:
-#         # Queries all services
-#         s2napi = OccurrenceSvc()
-#         occoutput = s2napi.get_records(occid, count_only)
+    s2napi = GColl()
+    gdoutput = s2napi.GET(dataset_key=dsid, count_only=count_only)
+    print(gdoutput)
+    print('')
+    
     for occid in TST_VALUES.BIRD_OCC_GUIDS:
+        print(occid)
         # Queries all services
-        s2napi = GOcc()
-        output = s2napi.get_gbif_recs(occid, count_only)
-        print(output)
-
+        s2napi = OccurrenceSvc()
+        output = s2napi.GET(occid=occid, count_only=count_only)
+        for k, v in output.items():
+            print('  {}: {}'.format(k, v))
+        print('')

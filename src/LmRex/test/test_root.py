@@ -89,7 +89,6 @@ class SimpleCPTest(helper.CPWebCase):
                 output = self._query_by_url(url)
                 for k, v in output.items():
                     print('  {}: {}'.format(k, v))
-                print()
 
 # .............................................................................
 if __name__ == '__main__':
@@ -99,7 +98,7 @@ if __name__ == '__main__':
 #     if hname == TST_SERVER:
 #         tst.setup_server()
 #     tst.test_get_fish()
-    guids = TST_VALUES.FISH_OCC_GUIDS[2:]
+    guids = TST_VALUES.FISH_OCC_GUIDS[:1]
     tst.test_one(APIMount.GOccSvc, guids)
     tst.test_one(APIMount.IDBOccSvc, guids)
     tst.test_one(APIMount.MophOccSvc, guids)

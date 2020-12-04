@@ -45,7 +45,6 @@ def start_cherrypy_services():
     # Name services
     cherrypy.tree.mount(NameSvc(), APIMount.NameSvc, conf)
     cherrypy.tree.mount(GAcName(), APIMount.GAcNameSvc, conf)
-    cherrypy.tree.mount(ITISName(), APIMount.ITISNameSvc, conf)
     cherrypy.tree.mount(ITISSolrName(), APIMount.ITISSolrNameSvc, conf)   
 
     cherrypy.engine.start()

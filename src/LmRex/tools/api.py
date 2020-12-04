@@ -564,16 +564,23 @@ class ItisAPI(APIQuery):
     @classmethod
     def _get_itis_solr_recs(cls, itis_output):
         output = {}
+        
         try:
             data = itis_output['response']
         except:
             output['error'] = 'Failed to return response element ({})'.format(
                 cls.__class__.__name__)
-        try:
-            output['records'] = data['docs']
-        except:
-            output['error'] = 'Failed to return element ({})'.format(
-                cls.__class__.__name__)
+        else:
+            try:
+                output['count'] = data['numFound']
+            except:
+                output['error'] = 'Failed to return numFound element ({})'.format(
+                    cls.__class__.__name__)
+            try:
+                output['records'] = data['docs']
+            except:
+                output['error'] = 'Failed to return docs element ({})'.format(
+                    cls.__class__.__name__)
         return output
     
 # # ...............................................
@@ -648,13 +655,11 @@ class ItisAPI(APIQuery):
 #                 for tsn in accepted_tsn_list:
 #                     acc_recs = ItisAPI.get_name(tsn)
 #                     matches.extend(acc_recs)
-        log_info('ITIS Solr returned {} matches for sciname {}'.format(
-            len(matches), sciname), logger=logger)
-        return matches
+        return output
     
 # ...............................................
     @classmethod
-    def match_name(cls, sciname, outformat='json', logger=None):
+    def match_name(cls, sciname, count_only=False, outformat='json', logger=None):
         """Return matching names for scienfific name using the ITIS Web service.
         
         Args:
@@ -696,7 +701,8 @@ class ItisAPI(APIQuery):
                     if rec:
                         recs.append(rec)
         output['count'] = len(recs)
-        output['records'] = recs
+        if count_only is False:
+            output['records'] = recs
         log_info('ITIS WS returned {} matches for sciname {}'.format(
             len(recs), sciname), logger=logger)
         return output
@@ -960,9 +966,6 @@ class GbifAPI(APIQuery):
         else:
             # First query, report count
             output['count'] = api.output['count']
-            log_info(
-                'Found {} recs in GBIF for occurrenceId {}'.format(
-                    output['count'], occid), logger=logger)
             if count_only is False:
                 output['records'] = api.output['results']
         return output
@@ -1028,10 +1031,6 @@ class GbifAPI(APIQuery):
                         is_end = True
         if count_only is False:
             output['records'] = all_recs
-        log_info(
-            'Found {} GBIF recs for dataset {}'.format(
-                output['count'], dataset_key), 
-            logger=logger)
         return output
 
 
@@ -1123,14 +1122,14 @@ class GbifAPI(APIQuery):
                             else:
                                 if outstatus == status:
                                     matches.append(alt)
-            log_info('Found {} matches in GBIF for name {}'.format(
-                len(matches), name_clean), logger=logger)
-            return matches
+            results['count'] = len(matches)
+            results['records'] = matches
+            return results
 
     # ...............................................
     @classmethod
-    def count_accepted_name(cls, taxon_key, logger=None):
-        """Return a count of records in GBIF with the indicated taxon.
+    def count_occurrences_for_taxon(cls, taxon_key, logger=None):
+        """Return a count of occurrence records in GBIF with the indicated taxon.
                 
         Args:
             taxon_key: A GBIF unique identifier indicating a taxon object.
@@ -1139,6 +1138,7 @@ class GbifAPI(APIQuery):
             A record as a dictionary containing the record count of occurrences
             with this accepted taxon, and a URL to retrieve these records.            
         """
+        output = {}
         count = -1
         url = None
         # Query GBIF
@@ -1154,7 +1154,10 @@ class GbifAPI(APIQuery):
                 url =  '{}/{}'.format(GBIF.SPECIES_URL, taxon_key)
             except:
                 pass
-        return count, url
+            else:
+                output['count'] = count
+                output['url'] = url
+        return output
 
     # ......................................
     @classmethod
@@ -1407,9 +1410,6 @@ class IdigbioAPI(APIQuery):
         else:
             if api.output is not None:
                 output['count'] = api.output['itemCount']
-                log_info(
-                    'Found {} recs in iDigBio for Specify occurrenceId {}'.format(
-                        output['count'], occid), logger=logger)
                 if count_only is False:
                     output['records'] = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
         return output
@@ -1827,9 +1827,6 @@ class MorphoSourceAPI(APIQuery):
                 start += MorphoSource.LIMIT
         if count_only is False:
             output['records'] = all_recs
-        log_info(
-            'Found {} MorphoSource recs for occurrence {}'.format(
-                curr_output['count'], occid), logger=logger)
         return output
 
 # .............................................................................
