@@ -1636,9 +1636,11 @@ class LifemapperAPI(APIQuery):
             log_error(msg, logger=logger)
             output['error'] = msg
         else:
-            # output returns single record
-            if len(api.output) > 0:
-                recs = [api.output]
+            # output returns a list of records
+            recs = api.output
+            if len(recs) == 0:
+                output['warning'] = 'Failed to find projections for {}'.format(
+                    name)
         output['count'] = len(recs)
         output['records'] = recs
         return output
@@ -1698,7 +1700,7 @@ class LifemapperAPI(APIQuery):
             log_error(msg, logger=logger)
             output['error'] = msg
         else:
-            # Output is a single record
+            # Output is a dictionary of one record
             if len(api.output) > 0:
                 recs = [api.output]
             output['records'] = recs

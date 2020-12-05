@@ -29,23 +29,27 @@ class LmMap:
                           .format(namerec, namestr))
         # 2-step until LM returns full objects
         records = []
+        msgs = []
         for sname in scinames:
             # Step 1, get projection atoms
             atom_output = LifemapperAPI.find_sdmprojections_by_name(
                 sname, prjscenariocode=scenariocode)
+            for key in ['warning', 'error']:
+                try:
+                    msgs.append(atom_output[key])
+                except:
+                    pass
             atoms = atom_output['records']
             for atom in atoms:
                 prjid = atom['id']
                 # Step 2, use full projection records with constructed map url
                 lmoutput = LifemapperAPI.get_sdmprojections_with_map(
                     prjid, height=height, width=width)
-                try:
-                    output['error'] = lmoutput['error']
-                except:
-                    pass
                 # Add to output
                 # TODO: make sure these include projection displayName
                 records.extend(lmoutput['records'])
+        if len(msgs) > 0:
+            output['errors'] = msgs
         output['records'] = records
         output['count'] = len(records)
         return output
