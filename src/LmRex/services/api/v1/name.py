@@ -28,7 +28,7 @@ def parse_name_with_gbif(namestr):
 @cherrypy.expose
 class GAcName:
     # ...............................................
-    def get_gbif_matching_taxon(self, namestr, status, do_parse):
+    def get_gbif_matching_taxon(self, namestr, status, do_count, do_parse):
         output = {}
         if do_parse:
             namestr = parse_name_with_gbif(namestr)
@@ -36,23 +36,25 @@ class GAcName:
         moutput = GbifAPI.match_name(namestr, status=status)        
         good_names = moutput['records']
         output['count'] = moutput['count']
-        for namerec in good_names:
-            try:
-                taxon_key = namerec['usageKey']
-            except Exception as e:
-                print('Exception on {}: {}'.format(namestr, e))
-                print('name = {}'.format(namerec))
-            else:
-                # Add more info to each record
-                output2 = GbifAPI.count_occurrences_for_taxon(taxon_key)
-                namerec['occurrence_count'] = output2['count']
-                namerec['occurrences_url'] = output2['url']
+        if do_count is True:
+            for namerec in good_names:
+                try:
+                    taxon_key = namerec['usageKey']
+                except Exception as e:
+                    print('Exception on {}: {}'.format(namestr, e))
+                    print('name = {}'.format(namerec))
+                else:
+                    # Add more info to each record
+                    output2 = GbifAPI.count_occurrences_for_taxon(taxon_key)
+                    namerec['occurrence_count'] = output2['count']
+                    namerec['occurrences_url'] = output2['url']
         output['records'] = good_names
         return output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None, gbif_accepted=True, do_parse=True, **kwargs):
+    def GET(self, namestr=None, gbif_accepted=True, do_parse=True, 
+            do_count=True, **kwargs):
         """Get a one GBIF accepted taxon record for a scientific name string
         
         Args:
@@ -73,7 +75,7 @@ class GAcName:
         if namestr is None:
             return {'spcoco.message': 'S^n GBIF name resolution is online'}
         else:
-            return self.get_gbif_matching_taxon(namestr, status, do_parse)
+            return self.get_gbif_matching_taxon(namestr, status, do_count, do_parse)
 
 # .............................................................................
 @cherrypy.expose

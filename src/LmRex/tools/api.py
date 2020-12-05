@@ -1601,7 +1601,7 @@ class LifemapperAPI(APIQuery):
     # ...............................................
     @classmethod
     def find_sdmprojections_by_name(
-            cls, name, prjscenariocode=None, logger=None):
+            cls, name, prjscenariocode=None, other_filters={}, logger=None):
         """
         List projections for a given scientific name.  
         
@@ -1622,29 +1622,34 @@ class LifemapperAPI(APIQuery):
         Todo:
             handle full record returns instead of atoms
         """
+        output = {}
         recs = []
-        q_filters={Lifemapper.NAME_KEY: name}
+        other_filters[Lifemapper.NAME_KEY] = name
         if prjscenariocode is not None:
-            q_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
+            other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
-            resource=Lifemapper.PROJ_RESOURCE, q_filters=q_filters)
+            resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
         try:
             api.query_by_get()
         except Exception:
-            log_error('Failed on {}'.format(name), logger=logger)
+            msg = 'Failed on {}'.format(api.url)
+            log_error(msg, logger=logger)
+            output['error'] = msg
         else:
-            # First query, report count
-            recs = api.output
-        return recs
+            # output returns single record
+            if len(api.output) > 0:
+                recs = [api.output]
+        output['count'] = len(recs)
+        output['records'] = recs
+        return output
 
     # ...............................................
     @classmethod
     def _construct_map_url(
-            cls, rec, service, request, version, srs, bbox, width, height):
+            cls, rec, service, request, version, srs, bbox, width, height, frmat):
         """
         service=wms&request=getmap&version=1.0&srs=epsg:4326&bbox=-180,-90,180,90&format=png&width=600&height=300&layers=prj_1848399
         """
-        rec = {}
         map_url = None
         try:
             mapname = rec['map']['mapName']
@@ -1656,18 +1661,17 @@ class LifemapperAPI(APIQuery):
         else:
             filters = {
                 'service': service, 'request': request, 'version': version,
-                'srs': srs, 'bbox': bbox, 'format': format, 'width': width,
+                'srs': srs, 'bbox': bbox, 'format': frmat, 'width': width,
                 'height': height, 'layers': lyrname}
             filter_str = None
             for (key, val) in filters.items():
-                pair = '='.join(key, val)
+                pair = '{}={}'.format(key, val)
                 if filter_str is None:
                     filter_str = pair
                 else:
-                    filter_str = '&'.join(filter_str, pair) 
+                    filter_str = '{}&{}'.format(filter_str, pair) 
             map_url = '{}/{}?{}'.format(url, mapname, filter_str)
-            rec = {'map_url': map_url}
-        return rec
+        return map_url
         
     # ...............................................
     @classmethod
@@ -1684,27 +1688,33 @@ class LifemapperAPI(APIQuery):
             Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
             Taxonomy and this method requires them for success.
         """
-        rec = {}
+        output = {}
+        recs = []
         api = LifemapperAPI(resource=Lifemapper.PROJ_RESOURCE, ident=proj_id)
         try:
             api.query_by_get()
         except Exception:
-            log_error('Failed on {}'.format(api.url), logger=logger)
+            msg = 'Failed on {}'.format(api.url)
+            log_error(msg, logger=logger)
+            output['error'] = msg
         else:
-            # First query, report count
-            recs = api.output
-            if len(recs) == 1:
-                rec = recs[0]
-            elif len(recs) > 1:
-                log_error('Returned > 1 projection for {}'.format(api.url))
-        return rec
+            # Output is a single record
+            if len(api.output) > 0:
+                recs = [api.output]
+            output['records'] = recs
+            output['count'] = len(recs)
+            if output['count'] == 0:
+                msg = 'Failed to find projections for {}'.format(api.url)
+                log_error(msg, logger=logger)
+                output['error'] = msg
+        return output
     
     # ...............................................
     @classmethod
-    def get_sdmprojection_map(
+    def get_sdmprojections_with_map(
             cls, proj_id, service='wms', request='getmap', version='1.0', 
-            srs='epsg:4326', bbox='-180,-90,180,90', width=600, height=400, 
-            logger=None):
+            srs='epsg:4326', bbox='-180,-90,180,90', width=600, height=300, 
+            frmat='png', logger=None):
         """
         Get a url for a projection map for a given projection id.  
         
@@ -1717,10 +1727,27 @@ class LifemapperAPI(APIQuery):
             Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
             Taxonomy and this method requires them for success.
         """
-        rec = LifemapperAPI.find_sdmprojection(proj_id, logger=logger)
-        url = LifemapperAPI._construct_map_url(rec, service, request, version, srs, bbox, width, height)
-        
-        return recs
+        output = {}
+        full_recs = []
+        prjoutput = LifemapperAPI.find_sdmprojection(proj_id, logger=logger)
+        try:
+            records = prjoutput['records']
+        except:
+            output['error'] = prjoutput['error']
+        else:
+            if prjoutput['count'] == 0:
+                output['error'] = prjoutput['error']
+            else:
+                for rec in records:
+                    url = LifemapperAPI._construct_map_url(
+                        rec, service, request, version, srs, bbox, width, 
+                        height, frmat)
+                    if url is not None:
+                        rec['map_url'] = url
+                        full_recs.append(rec)
+        output['count'] = len(full_recs)
+        output['records'] = full_recs
+        return output
 
     # ...............................................
     @classmethod
@@ -1741,6 +1768,7 @@ class LifemapperAPI(APIQuery):
         Todo:
             handle full record returns instead of atoms
         """
+        output = []
         recs = []
         api = LifemapperAPI(
             resource=Lifemapper.OCC_RESOURCE, 
@@ -1750,9 +1778,11 @@ class LifemapperAPI(APIQuery):
         except Exception:
             log_error('Failed on {}'.format(api.url), logger=logger)
         else:
-            # First query, report count
+            # Output is list of records?
             recs = api.output
-        return recs
+            output['records'] = recs
+            output['count'] = len(recs) 
+        return output
 
 
 """
