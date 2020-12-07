@@ -1656,6 +1656,8 @@ class LifemapperAPI(APIQuery):
         try:
             mapname = rec['map']['mapName']
             lyrname = rec['map']['layerName']
+            # Add blue marble background
+            lyrs = '{},bmng'.format(lyrname)
             url = rec['map']['endpoint']
         except Exception as e:
             msg = 'Failed to retrieve map data from {}, {}'.format(rec, e)
@@ -1664,7 +1666,7 @@ class LifemapperAPI(APIQuery):
             filters = {
                 'service': service, 'request': request, 'version': version,
                 'srs': srs, 'bbox': bbox, 'format': frmat, 'width': width,
-                'height': height, 'layers': lyrname}
+                'height': height, 'layers': lyrs}
             filter_str = None
             for (key, val) in filters.items():
                 pair = '{}={}'.format(key, val)
