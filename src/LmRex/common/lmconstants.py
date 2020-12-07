@@ -43,6 +43,7 @@ class TST_VALUES:
         'KU :KUIZ:2396']
     NAMES = [
         'Phlox longifolia Nutt.',
+        'Tulipa sylvestris L.',
         'Medinilla speciosa Blume',
         'Acer caesium Wall. ex Brandis', 'Acer heldreichii Orph. ex Boiss.', 
         'Acer pseudoplatanus L.', 'Acer velutinum Boiss.', 

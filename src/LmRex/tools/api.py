@@ -1652,12 +1652,13 @@ class LifemapperAPI(APIQuery):
         """
         service=wms&request=getmap&version=1.0&srs=epsg:4326&bbox=-180,-90,180,90&format=png&width=600&height=300&layers=prj_1848399
         """
+        blue_marble_background = 'bmng'
         map_url = None
         try:
             mapname = rec['map']['mapName']
             lyrname = rec['map']['layerName']
             # Add blue marble background
-            lyrs = '{},bmng'.format(lyrname)
+            lyrs = '{},{}'.format(blue_marble_background, lyrname)
             url = rec['map']['endpoint']
         except Exception as e:
             msg = 'Failed to retrieve map data from {}, {}'.format(rec, e)
