@@ -2,6 +2,7 @@
 import cherrypy
 import cherrypy_cors
 
+from LmRex.services.api.v1.lifemapper import LmMap
 from LmRex.services.api.v1.name import (
     GAcName, ITISName, ITISSolrName, NameSvc)
 from LmRex.services.api.v1.occ import (
@@ -41,7 +42,8 @@ def start_cherrypy_services():
     cherrypy.tree.mount(SPOcc(), APIMount.SPOccSvc, conf)
     # Occurrence by dataset
     cherrypy.tree.mount(GColl(), APIMount.GCollSvc, conf)
-    
+    # Map services
+    cherrypy.tree.mount(LmMap(), APIMount.LmMapSvc, conf)
     # Name services
     cherrypy.tree.mount(NameSvc(), APIMount.NameSvc, conf)
     cherrypy.tree.mount(GAcName(), APIMount.GAcNameSvc, conf)

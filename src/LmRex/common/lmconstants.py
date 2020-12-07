@@ -60,12 +60,14 @@ class S2NEndpoint:
     Occurrence = 'occ'
     Name = 'name'
     Dataset = 'dataset'
+    Map = 'map'
     Heartbeat = 'hb'
     # Service providers
     Gbif = 'gbif'
     Idigbio = 'idb'
     ITISSolrName = 'itis'
     ITISName = 'itis2'
+    Lifemapper = 'lm'
     MorphoSource = 'mopho'
     Specify = 'specify'
     SpecifyArk = 'sparks'
@@ -95,9 +97,11 @@ class APIMount:
         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISSolrName)
     ITISNameSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISName)
+    # map services
+    LmMapSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Map, S2NEndpoint.Lifemapper)
     # Service testing
-    HeartbeatSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Heartbeat, S2NEndpoint.Heartbeat)
+    HeartbeatSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Heartbeat)
     HeartbeatGbifSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Heartbeat, S2NEndpoint.Gbif)
 
