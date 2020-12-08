@@ -3,6 +3,7 @@ import cherrypy
 from LmRex.tools.api import (
     GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI)
 from LmRex.services.api.v1.sparks import SpecifyArk
+from LmRex.services.api.v1.s2nsvc import S2nService
 
 # .............................................................................
 def convert_to_bool(obj):
@@ -14,10 +15,10 @@ def convert_to_bool(obj):
         return False
     else:
         return True
-    
+        
 # .............................................................................
 @cherrypy.expose
-class GOcc:
+class GOcc(S2nService):
     # ...............................................
     def get_gbif_recs(self, occid, count_only):
         output = GbifAPI.get_specimen_records_by_occid(
@@ -26,7 +27,8 @@ class GOcc:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=False, **kwargs):
+    def GET(self, **kwargs):
+#     def GET(self, occid=None, count_only=False, **kwargs):
         """Get a one or more GBIF records for a Specify GUID or 
         info/error message.
         
@@ -36,13 +38,13 @@ class GOcc:
             a dictionary containing a message or a count and optional list of 
             GBIF records corresponding to the Specify GUID
         """
-        print('** Occid {}, count_only {}, kwargs {}'.format(
-            occid, count_only, kwargs))
-        count_only = convert_to_bool(count_only)
+        kwarg_defaults = {'occid': ('', None), 'count_only': False}
+        usr_params = self._process_params(kwarg_defaults, kwargs)
         if occid is None:
             return {'spcoco.message': 'S^n GBIF occurrence resolution is online'}
         else:
-            return self.get_gbif_recs(occid, count_only)
+            return self.get_gbif_recs(
+                occid=usr_params['occid'], count_only=usr_params['count_only'])
 
 # .............................................................................
 @cherrypy.expose
@@ -64,12 +66,16 @@ class GColl:
             a list of dictionaries containing DWC records from the chosen
             dataset.  
         """
+#         kwarg_defaults = {'dataset_key': ['', None], 'count_only': True}
+#         usr_params = self._process_params(kwarg_defaults, kwargs)
         print('** Dataset_key {}, count_only {}, kwargs {}'.format(
             dataset_key, count_only, kwargs))
         if dataset_key is None:
             return {'spcoco.message': 'S^n GBIF dataset query is online'}
         else:
             return self.get_dataset_recs(dataset_key, count_only)
+#             return self.get_dataset_recs(
+#                 usr_params['dataset_key'], usr_params['count_only'])
 
 # .............................................................................
 @cherrypy.expose
@@ -236,19 +242,21 @@ if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TST_VALUES
     
-    count_only = True
+    count_only = False
     dsid = TST_VALUES.FISH_DS_GUIDS[0]
     
-    s2napi = GColl()
-    gdoutput = s2napi.GET(dataset_key=dsid, count_only=count_only)
-    print(gdoutput)
-    print('')
+#     s2napi = GColl()
+#     gdoutput = s2napi.GET(dataset_key=dsid, count_only=count_only)
+#     print(gdoutput)
+#     print('')
     
     for occid in TST_VALUES.BIRD_OCC_GUIDS:
         print(occid)
         # Queries all services
-        s2napi = OccurrenceSvc()
+        s2napi = GOcc()
         output = s2napi.GET(occid=occid, count_only=count_only)
+#         s2napi = OccurrenceSvc()
+#         output = s2napi.GET(occid=occid, count_only=count_only)
         for k, v in output.items():
             print('  {}: {}'.format(k, v))
         print('')
