@@ -86,6 +86,13 @@ class SimpleCPTest(helper.CPWebCase):
                 for k, v in output.items():
                     print('  {}: {}'.format(k, v))
 
+# ......................................................
+    def test_url(self, url):
+        print(url)
+        output = self._query_by_url(url)
+        for k, v in output.items():
+            print('  {}: {}'.format(k, v))
+
 # .............................................................................
 if __name__ == '__main__':
     tst = SimpleCPTest()
@@ -93,6 +100,7 @@ if __name__ == '__main__':
     hname = socket.gethostname()
 
 #     tst.test_get_fish()
+    url = 'http://notyeti-192.lifemapper.org/api/v1/map/lm/Phlox%20longifolia%20Nutt.'
 
     guids = TST_VALUES.FISH_OCC_GUIDS[:1]
     tst.test_one(APIMount.GOccSvc, guids)

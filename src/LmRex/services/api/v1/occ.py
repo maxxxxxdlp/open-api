@@ -35,6 +35,8 @@ class GOcc:
             a dictionary containing a message or a count and optional list of 
             GBIF records corresponding to the Specify GUID
         """
+        print('** Occid {}, count_only {}, kwargs {}'.format(
+            occid, count_only, kwargs))
         count_only = convert_to_bool(count_only)
         if occid is None:
             return {'spcoco.message': 'S^n GBIF occurrence resolution is online'}
@@ -61,11 +63,11 @@ class GColl:
             a list of dictionaries containing DWC records from the chosen
             dataset.  
         """
+        print('** Dataset_key {}, count_only {}, kwargs {}'.format(
+            dataset_key, count_only, kwargs))
         if dataset_key is None:
             return {'spcoco.message': 'S^n GBIF dataset query is online'}
         else:
-            print('Dataset_key {}, count_only {}, kwargs {}'.format(
-                dataset_key, count_only, kwargs))
             return self.get_dataset_recs(dataset_key, count_only)
 
 # .............................................................................
@@ -88,12 +90,12 @@ class IDBOcc:
             a dictionary containing a message, or a list of dictionaries 
             containing iDigBio record corresponding to the occurrenceId
         """
+        print('** occid {}, count_only {}, kwargs {}'.format(
+            occid, count_only, kwargs))
         count_only = convert_to_bool(count_only)
         if occid is None:
             return {'message': 'S^n iDigBio occurrence resolution is online'}
         else:
-            print('occid {}, count_only {}, kwargs {}'.format(
-                occid, count_only, kwargs))
             return self.get_idb_recs(occid, count_only)
 
 
@@ -117,13 +119,13 @@ class MophOcc:
             one dictionary containing a message or a list of MorphoSource 
             records corresponding to the occurrenceId
         """
+        print('** occid {}, count_only {}, kwargs {}'.format(
+            occid, count_only, kwargs))
         count_only = convert_to_bool(count_only)
         if occid is None:
             return {'spcoco.message': 
                     'S^n MorphoSource occurrence resolution is online'}
         else:
-            print('occid {}, count_only {}, kwargs {}'.format(
-                occid, count_only, kwargs))
             return self.get_mopho_recs(occid, count_only)
 
 # .............................................................................
@@ -159,11 +161,10 @@ class SPOcc:
             one dictionary containing a message or Specify record corresponding 
             to the Specify GUID
         """
+        print('** occid {}, kwargs {}'.format(occid, kwargs))
         if occid is None:
             return {'spcoco.message': 'S^n Specify occurrence resolution is online'}
         else:
-            print('occid {}, kwargs {}'.format(
-                occid, kwargs))
             return self.get_specify_rec(occid)
 
 # .............................................................................
