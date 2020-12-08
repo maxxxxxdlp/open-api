@@ -18,7 +18,32 @@ def convert_to_bool(obj):
         
 # .............................................................................
 @cherrypy.expose
-class GOcc(S2nService):
+class OccurrenceSvc(S2nService):
+
+    # ...............................................
+    @cherrypy.tools.json_out()
+    def _get_params(self, **kwargs):
+#     def GET(self, occid=None, count_only=False, **kwargs):
+        """
+        Superclass to standardize the parameters for all Occurrence Services
+        Get a dictionary with a count, and list of one or more records for a 
+        Specify GUID and optional info/error message.
+        
+        Args:
+            kwargs: dictionary of:
+                occid: a Specify occurrence GUID, from the occurrenceId field
+                count_only: flag indicating whether to return records
+        Return:
+            a dictionary containing a count and optional list of records 
+                corresponding to the Specify GUID and an optional message
+        """
+        kwarg_defaults = {'occid': (None, ''), 'count_only': False}
+        usr_params = self._process_params(kwarg_defaults, kwargs)
+        return usr_params
+
+# .............................................................................
+@cherrypy.expose
+class GOcc(OccurrenceSvc):
     # ...............................................
     def get_gbif_recs(self, occid, count_only):
         output = GbifAPI.get_specimen_records_by_occid(
@@ -28,27 +53,16 @@ class GOcc(S2nService):
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, **kwargs):
-#     def GET(self, occid=None, count_only=False, **kwargs):
-        """Get a one or more GBIF records for a Specify GUID or 
-        info/error message.
-        
-        Args:
-            occid: a Specify occurrence GUID, from the occurrenceId field
-        Return:
-            a dictionary containing a message or a count and optional list of 
-            GBIF records corresponding to the Specify GUID
-        """
-        kwarg_defaults = {'occid': ('', None), 'count_only': False}
-        usr_params = self._process_params(kwarg_defaults, kwargs)
-        if occid is None:
+        usr_params = self._get_params(kwargs)
+        if usr_params['occid'] is None:
             return {'spcoco.message': 'S^n GBIF occurrence resolution is online'}
         else:
             return self.get_gbif_recs(
-                occid=usr_params['occid'], count_only=usr_params['count_only'])
+                usr_params['occid'], usr_params['count_only'])
 
 # .............................................................................
 @cherrypy.expose
-class GColl:
+class GColl(S2nService):
     # ...............................................
     def get_dataset_recs(self, dataset_key, count_only):
         output = GbifAPI.get_records_by_dataset(dataset_key, count_only)
@@ -56,7 +70,7 @@ class GColl:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, dataset_key=None, count_only=True, **kwargs):
+    def GET(self, **kwargs):
         """Get a one or more GBIF records for a Specify GUID or 
         info/error message.
         
@@ -66,20 +80,17 @@ class GColl:
             a list of dictionaries containing DWC records from the chosen
             dataset.  
         """
-#         kwarg_defaults = {'dataset_key': ['', None], 'count_only': True}
-#         usr_params = self._process_params(kwarg_defaults, kwargs)
-        print('** Dataset_key {}, count_only {}, kwargs {}'.format(
-            dataset_key, count_only, kwargs))
-        if dataset_key is None:
+        kwarg_defaults = {'dataset_key': (None, ''), 'count_only': True}
+        usr_params = self._process_params(kwarg_defaults, kwargs)
+        if usr_params['dataset_key'] is None:
             return {'spcoco.message': 'S^n GBIF dataset query is online'}
         else:
-            return self.get_dataset_recs(dataset_key, count_only)
-#             return self.get_dataset_recs(
-#                 usr_params['dataset_key'], usr_params['count_only'])
+            return self.get_dataset_recs(
+                usr_params['dataset_key'], usr_params['count_only'])
 
 # .............................................................................
 @cherrypy.expose
-class IDBOcc:
+class IDBOcc(OccurrenceSvc):
     # ...............................................
     def get_idb_recs(self, occid, count_only):
         output = IdigbioAPI.get_records_by_occid(occid, count_only=count_only)
@@ -97,18 +108,17 @@ class IDBOcc:
             a dictionary containing a message, or a list of dictionaries 
             containing iDigBio record corresponding to the occurrenceId
         """
-        print('** occid {}, count_only {}, kwargs {}'.format(
-            occid, count_only, kwargs))
-        count_only = convert_to_bool(count_only)
-        if occid is None:
+        usr_params = self._get_params(kwargs)
+        if usr_params['occid'] is None:
             return {'message': 'S^n iDigBio occurrence resolution is online'}
         else:
-            return self.get_idb_recs(occid, count_only)
+            return self.get_idb_recs(
+                usr_params['occid'], usr_params['count_only'])
 
 
 # .............................................................................
 @cherrypy.expose
-class MophOcc:
+class MophOcc(OccurrenceSvc):
     # ...............................................
     def get_mopho_recs(self, occid, count_only):
         output = MorphoSourceAPI.get_specimen_records_by_occid(
@@ -126,18 +136,17 @@ class MophOcc:
             one dictionary containing a message or a list of MorphoSource 
             records corresponding to the occurrenceId
         """
-        print('** occid {}, count_only {}, kwargs {}'.format(
-            occid, count_only, kwargs))
-        count_only = convert_to_bool(count_only)
-        if occid is None:
+        usr_params = self._get_params(kwargs)
+        if usr_params['occid'] is None:
             return {'spcoco.message': 
                     'S^n MorphoSource occurrence resolution is online'}
         else:
-            return self.get_mopho_recs(occid, count_only)
+            return self.get_mopho_recs(
+                usr_params['occid'], usr_params['count_only'])
 
 # .............................................................................
 @cherrypy.expose
-class SPOcc:
+class SPOcc(OccurrenceSvc):
     # ...............................................
     def get_specify_rec(self, occid):
         output = {}
@@ -158,7 +167,7 @@ class SPOcc:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, **kwargs):
+    def GET(self, **kwargs):
         """Get one Specify record for a Specify GUID or info/error message.
         
         Args:
@@ -168,15 +177,15 @@ class SPOcc:
             one dictionary containing a message or Specify record corresponding 
             to the Specify GUID
         """
-        print('** occid {}, kwargs {}'.format(occid, kwargs))
-        if occid is None:
+        usr_params = self._get_params(kwargs)
+        if usr_params['occid'] is None:
             return {'spcoco.message': 'S^n Specify occurrence resolution is online'}
         else:
-            return self.get_specify_rec(occid)
+            return self.get_specify_rec(usr_params['occid'])
 
 # .............................................................................
 @cherrypy.expose
-class OccurrenceSvc:
+class OccTentaclesSvc(OccurrenceSvc):
     # ...............................................
     def get_records(self, occid, count_only):
         all_output = {}
@@ -228,13 +237,11 @@ class OccurrenceSvc:
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=False, **kwargs):
-        count_only = convert_to_bool(count_only)
-        if occid is None:
+    def GET(self, **kwargs):
+        usr_params = self._get_params(kwargs)
+        if usr_params['occid'] is None:
             return {'message': 'S^n occurrence tentacles are online'}
         else:
-            print('occid {}, count_only {}, kwargs {}'.format(
-                occid, count_only, kwargs))
             return self.get_records(occid, count_only)
         
 # .............................................................................

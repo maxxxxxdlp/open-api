@@ -6,7 +6,7 @@ from LmRex.services.api.v1.lifemapper import LmMap
 from LmRex.services.api.v1.name import (
     GAcName, ITISName, ITISSolrName, NameSvc)
 from LmRex.services.api.v1.occ import (
-    GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccurrenceSvc)
+    GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccTentaclesSvc)
 from LmRex.services.api.v1.sparks import SpecifyArk
 
 from LmRex.common.lmconstants import (APIMount, CHERRYPY_CONFIG_FILE)
