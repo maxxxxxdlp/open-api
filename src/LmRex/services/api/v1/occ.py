@@ -4,15 +4,16 @@ from LmRex.tools.api import (
     GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI)
 from LmRex.services.api.v1.sparks import SpecifyArk
 
+# .............................................................................
 def convert_to_bool(obj):
     try:
         obj = obj.lower()
     except:
         pass
-    if obj in (1, 'yes', 'true'):
-        return True
-    else:
+    if obj in (0, '0', 'no', 'false'):
         return False
+    else:
+        return True
     
 # .............................................................................
 @cherrypy.expose

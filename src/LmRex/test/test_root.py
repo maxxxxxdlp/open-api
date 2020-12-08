@@ -83,8 +83,18 @@ class SimpleCPTest(helper.CPWebCase):
                 url = '{}/{}?count_only={}'.format(baseurl, x, count_flag)
                 print(url)
                 output = self._query_by_url(url)
-                for k, v in output.items():
-                    print('  {}: {}'.format(k, v))
+                try:
+                    print('  count: {}'.format(output['count']))
+                except:
+                    print('  No count in ouput!')
+                try:
+                    recs = output['records']
+                except:
+                    print('  No records in ouput')
+                else:
+                    for rec in recs:
+                        for k, v in rec.items():
+                            print('  {}: {}'.format(k, v))
 
 # ......................................................
     def test_url(self, url):
@@ -102,8 +112,9 @@ if __name__ == '__main__':
 #     tst.test_get_fish()
     url = 'http://notyeti-192.lifemapper.org/api/v1/map/lm/Phlox%20longifolia%20Nutt.'
 
-    guids = TST_VALUES.FISH_OCC_GUIDS[:1]
-    tst.test_one(APIMount.GOccSvc, guids)
-    tst.test_one(APIMount.IDBOccSvc, guids)
-    tst.test_one(APIMount.MophOccSvc, guids)
-    tst.test_one(APIMount.SPOccSvc, guids)
+    guid = TST_VALUES.FISH_OCC_GUIDS[:1]
+    for b in (0, 1):
+        tst.test_one(APIMount.GOccSvc, guid)
+#         tst.test_one(APIMount.IDBOccSvc, guid)
+#         tst.test_one(APIMount.MophOccSvc, guid)
+#         tst.test_one(APIMount.SPOccSvc, guid)
