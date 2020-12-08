@@ -282,6 +282,7 @@ class Lifemapper:
     OCC_RESOURCE = 'occurrence'
     OTHER_RESOURCES = ['taxonomy', 'scenario', 'envlayer']
     NAME_KEY = 'displayname'
+    ATOM_KEY = 'atom'
     SCENARIO_KEY = 'projectionscenariocode'
     COMMANDS = ['count']
 

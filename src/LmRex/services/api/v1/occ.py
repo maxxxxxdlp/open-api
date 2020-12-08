@@ -64,6 +64,8 @@ class GColl:
         if dataset_key is None:
             return {'spcoco.message': 'S^n GBIF dataset query is online'}
         else:
+            print('Dataset_key {}, count_only {}, kwargs {}'.format(
+                dataset_key, count_only, kwargs))
             return self.get_dataset_recs(dataset_key, count_only)
 
 # .............................................................................
@@ -90,6 +92,8 @@ class IDBOcc:
         if occid is None:
             return {'message': 'S^n iDigBio occurrence resolution is online'}
         else:
+            print('occid {}, count_only {}, kwargs {}'.format(
+                occid, count_only, kwargs))
             return self.get_idb_recs(occid, count_only)
 
 
@@ -118,6 +122,8 @@ class MophOcc:
             return {'spcoco.message': 
                     'S^n MorphoSource occurrence resolution is online'}
         else:
+            print('occid {}, count_only {}, kwargs {}'.format(
+                occid, count_only, kwargs))
             return self.get_mopho_recs(occid, count_only)
 
 # .............................................................................
@@ -156,6 +162,8 @@ class SPOcc:
         if occid is None:
             return {'spcoco.message': 'S^n Specify occurrence resolution is online'}
         else:
+            print('occid {}, kwargs {}'.format(
+                occid, kwargs))
             return self.get_specify_rec(occid)
 
 # .............................................................................
@@ -217,6 +225,8 @@ class OccurrenceSvc:
         if occid is None:
             return {'message': 'S^n occurrence tentacles are online'}
         else:
+            print('occid {}, count_only {}, kwargs {}'.format(
+                occid, count_only, kwargs))
             return self.get_records(occid, count_only)
         
 # .............................................................................

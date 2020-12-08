@@ -1625,6 +1625,7 @@ class LifemapperAPI(APIQuery):
         output = {}
         recs = []
         other_filters[Lifemapper.NAME_KEY] = name
+        other_filters[Lifemapper.ATOM_KEY] = 'False'
         if prjscenariocode is not None:
             other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
