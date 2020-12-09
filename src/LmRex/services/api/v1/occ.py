@@ -3,7 +3,7 @@ import cherrypy
 from LmRex.tools.api import (
     GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI)
 from LmRex.services.api.v1.sparks import SpecifyArk
-from LmRex.services.api.v1.s2nsvc import S2nService
+from LmRex.services.api.v1.base import S2nService
         
 # .............................................................................
 @cherrypy.expose
