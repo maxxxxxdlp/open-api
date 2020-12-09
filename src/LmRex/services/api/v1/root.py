@@ -35,7 +35,7 @@ def start_cherrypy_services():
     cherrypy.tree.mount(SpecifyArk(), APIMount.SpecifyArkSvc, conf)
 
     # Occurrence services
-    cherrypy.tree.mount(OccurrenceSvc(), APIMount.OccurrenceSvc, conf)
+    cherrypy.tree.mount(OccTentaclesSvc(), APIMount.OccurrenceSvc, conf)
     cherrypy.tree.mount(GOcc(), APIMount.GOccSvc, conf)
     cherrypy.tree.mount(IDBOcc(), APIMount.IDBOccSvc, conf)
     cherrypy.tree.mount(MophOcc(), APIMount.MophOccSvc, conf)

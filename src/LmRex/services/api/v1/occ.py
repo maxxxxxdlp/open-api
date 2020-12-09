@@ -265,7 +265,9 @@ if __name__ == '__main__':
 #         s2napi = GOcc()
 #         output = s2napi.GET(occid=occid, count_only=count_only)
         s2napi = OccTentaclesSvc()
-        output = s2napi.GET(occid=occid, count_only=count_only)
-        for k, v in output.items():
-            print('  {}: {}'.format(k, v))
+        all_output = s2napi.GET(occid=occid, count_only=count_only)
+        for svc, one_output in all_output.items():
+            print('  {}: {}'.format(svc, one_output))
+            for k, v in one_output.items():
+                print('  {}: {}'.format(k, v))
         print('')

@@ -115,6 +115,6 @@ if __name__ == '__main__':
     guid = TST_VALUES.FISH_OCC_GUIDS[:1]
     for b in (0, 1):
         tst.test_one(APIMount.GOccSvc, guid)
-#         tst.test_one(APIMount.IDBOccSvc, guid)
-#         tst.test_one(APIMount.MophOccSvc, guid)
-#         tst.test_one(APIMount.SPOccSvc, guid)
+        tst.test_one(APIMount.IDBOccSvc, guid)
+        tst.test_one(APIMount.MophOccSvc, guid)
+        tst.test_one(APIMount.SPOccSvc, guid)
