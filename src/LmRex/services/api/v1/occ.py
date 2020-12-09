@@ -4,17 +4,6 @@ from LmRex.tools.api import (
     GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI)
 from LmRex.services.api.v1.sparks import SpecifyArk
 from LmRex.services.api.v1.s2nsvc import S2nService
-
-# .............................................................................
-def convert_to_bool(obj):
-    try:
-        obj = obj.lower()
-    except:
-        pass
-    if obj in (0, '0', 'no', 'false'):
-        return False
-    else:
-        return True
         
 # .............................................................................
 @cherrypy.expose
@@ -33,19 +22,34 @@ class OccurrenceSvc(S2nService):
             kwargs: dictionary of:
                 occid: a Specify occurrence GUID, from the occurrenceId field
                 count_only: flag indicating whether to return records
+                url: direct URL to Specify occurrence, only used with SPOcc
         Return:
             a dictionary containing a count and optional list of records 
                 corresponding to the Specify GUID and an optional message
         """
-        kwarg_defaults = {'occid': (None, ''), 'count_only': False}
+        kwarg_defaults = {'occid': (None, ''), 
+                          'count_only': False, 
+                          'url': (None, '')}
         usr_params = self._process_params(kwarg_defaults, kwargs)
         return usr_params
+
+    # ...............................................
+    @cherrypy.tools.json_out()
+    def GET(self, usr_params):
+#         occid = usr_kwargs['occid']
+#         count_only = usr_kwargs['count_only']
+        occid = usr_params['occid']
+        count_only = usr_params['count_only']
+        if occid is not None:
+            return self.get_records(occid, count_only)
+        else:
+            return {'info': 'S^n service is online'}
 
 # .............................................................................
 @cherrypy.expose
 class GOcc(OccurrenceSvc):
     # ...............................................
-    def get_gbif_recs(self, occid, count_only):
+    def get_records(self, occid, count_only):
         output = GbifAPI.get_specimen_records_by_occid(
             occid, count_only=count_only)
         return output
@@ -53,12 +57,17 @@ class GOcc(OccurrenceSvc):
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, **kwargs):
-        usr_params = self._get_params(kwargs)
-        if usr_params['occid'] is None:
-            return {'spcoco.message': 'S^n GBIF occurrence resolution is online'}
-        else:
-            return self.get_gbif_recs(
-                usr_params['occid'], usr_params['count_only'])
+        usr_params = self._get_params(**kwargs)
+        return super().GET(usr_params)
+        
+#         usr_params = self._get_params(kwargs)
+#         occid = usr_params['occid']
+#         count_only = usr_params['count_only']
+#         if occid is not None:
+#             return self.get_records(occid, count_only)
+#         else:
+#             return {'info': 'S^n GBIF occurrence resolution is online'}
+
 
 # .............................................................................
 @cherrypy.expose
@@ -82,23 +91,24 @@ class GColl(S2nService):
         """
         kwarg_defaults = {'dataset_key': (None, ''), 'count_only': True}
         usr_params = self._process_params(kwarg_defaults, kwargs)
-        if usr_params['dataset_key'] is None:
+        dataset_key = usr_params['dataset_key']
+        count_only = usr_params['count_only']
+        if dataset_key is None:
             return {'spcoco.message': 'S^n GBIF dataset query is online'}
         else:
-            return self.get_dataset_recs(
-                usr_params['dataset_key'], usr_params['count_only'])
+            return self.get_dataset_recs(dataset_key, count_only)
 
 # .............................................................................
 @cherrypy.expose
 class IDBOcc(OccurrenceSvc):
     # ...............................................
-    def get_idb_recs(self, occid, count_only):
+    def get_records(self, occid, count_only):
         output = IdigbioAPI.get_records_by_occid(occid, count_only=count_only)
         return output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=False, **kwargs):
+    def GET(self, **kwargs):
         """Get a one or more iDigBio records for a Specify GUID or 
         info/error message.
         
@@ -108,26 +118,22 @@ class IDBOcc(OccurrenceSvc):
             a dictionary containing a message, or a list of dictionaries 
             containing iDigBio record corresponding to the occurrenceId
         """
-        usr_params = self._get_params(kwargs)
-        if usr_params['occid'] is None:
-            return {'message': 'S^n iDigBio occurrence resolution is online'}
-        else:
-            return self.get_idb_recs(
-                usr_params['occid'], usr_params['count_only'])
+        usr_params = self._get_params(**kwargs)
+        return super().GET(usr_params)
 
 
 # .............................................................................
 @cherrypy.expose
 class MophOcc(OccurrenceSvc):
     # ...............................................
-    def get_mopho_recs(self, occid, count_only):
+    def get_records(self, occid, count_only):
         output = MorphoSourceAPI.get_specimen_records_by_occid(
             occid, count_only=count_only)
         return output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=False, **kwargs):
+    def GET(self, **kwargs):
         """Get a one Specify record for a Specify GUID or info/error message.
         
         Args:
@@ -136,33 +142,30 @@ class MophOcc(OccurrenceSvc):
             one dictionary containing a message or a list of MorphoSource 
             records corresponding to the occurrenceId
         """
-        usr_params = self._get_params(kwargs)
-        if usr_params['occid'] is None:
-            return {'spcoco.message': 
-                    'S^n MorphoSource occurrence resolution is online'}
-        else:
-            return self.get_mopho_recs(
-                usr_params['occid'], usr_params['count_only'])
+        usr_params = self._get_params(**kwargs)
+        return super().GET(usr_params)
 
 # .............................................................................
 @cherrypy.expose
 class SPOcc(OccurrenceSvc):
     # ...............................................
-    def get_specify_rec(self, occid):
+    def get_records(self, url, occid):
         output = {}
-        spark = SpecifyArk()
-        solr_output = spark.get_specify_arc_rec(occid=occid)
-        try:
-            recs = solr_output['docs']
-        except Exception as e:
-            output['error'] = 'Failed to return ARK from Specify Resolver'
-        else:
+        if url is None:
+            url = None
+            spark = SpecifyArk()
+            solr_output = spark.get_specify_arc_rec(occid=occid)
             try:
-                url = recs[0]['url']
-            except:
-                output['error'] = 'Failed to return URL from Specify GUID ARK'
+                recs = solr_output['docs']
+            except Exception as e:
+                output['error'] = 'Failed to return ARK from Specify Resolver'
             else:
-                output = SpecifyPortalAPI.get_specify_record(url)
+                try:
+                    url = recs[0]['url']
+                except:
+                    output['error'] = 'Failed to return URL from Specify GUID ARK'
+        if url is not None:
+            output = SpecifyPortalAPI.get_specify_record(url)
         return output
 
     # ...............................................
@@ -177,59 +180,61 @@ class SPOcc(OccurrenceSvc):
             one dictionary containing a message or Specify record corresponding 
             to the Specify GUID
         """
-        usr_params = self._get_params(kwargs)
-        if usr_params['occid'] is None:
-            return {'spcoco.message': 'S^n Specify occurrence resolution is online'}
-        else:
-            return self.get_specify_rec(usr_params['occid'])
+        usr_params = self._get_params(**kwargs)
+        return super().GET(usr_params)
 
 # .............................................................................
 @cherrypy.expose
 class OccTentaclesSvc(OccurrenceSvc):
+    
+    def _get_url_from_spark(self, solr_output):
+        url = None
+        try:
+            solr_doc = solr_output['docs'][0]
+        except:
+            pass
+        else:
+            # Get url from ARK for Specify query
+            try:
+                url = solr_doc['url']
+            except Exception as e:
+                pass
+            else:
+                if not url.startswith('http'):
+                    msg = (
+                        'Invalid URL {} returned from ARK for Specify record access'
+                        .format(url))
+                    url = None
+        return (url, msg)
+    
     # ...............................................
     def get_records(self, occid, count_only):
         all_output = {}
         # Specify ARK Record
         spark = SpecifyArk()
-        solr_output = spark.GET(occid=occid)
+        solr_output = spark.get_specify_arc_rec(occid)
         all_output['Specify ARK'] = solr_output
-#         try:
-#             solr_doc = solr_output['docs'][0]
-#         except:
-#             solr_doc = {}
-#         else:
-#             if count_only:
-#                 solr_output.pop('docs')
-#             all_output['Specify ARK'] = solr_output
-#         # Get url from ARK for Specify query
-#         try:
-#             url = solr_doc['url']
-#         except Exception as e:
-#             pass
-#         else:
-#             if not url.startswith('http'):
-#                 sp_output = {
-#                     'warning': 'Invalid URL {} returned from ARK'.format(url)}
-#             else:
-#                 # Original Specify Record
-#                 spocc = SPOcc()
-#                 sp_output = SPOcc.GET(url)
-#                 if count_only:
-#                     sp_output.pop('records')
-#             all_output['Specify Record'] = sp_output
-
-        spocc = SPOcc()
-        sp_output = spocc.GET(occid=occid)
-        all_output['Specify Record'] = sp_output   
+        
+        # Specify Record from URL in ARK
+        (url, msg) = self._get_url_from_spark(solr_output)
+        if url is not None:
+            spocc = SPOcc()
+            sp_output = spocc.get_records(url, occid)
+        else:
+            sp_output = {'error': msg}
+        all_output['Specify Record'] = sp_output
+        
         # GBIF copy/s of Specify Record
         gocc = GOcc()
         gbif_output = gocc.GET(occid=occid, count_only=count_only)
         all_output['GBIF Records'] = gbif_output
+        
         # iDigBio copy/s of Specify Record
         idbocc = IDBOcc()
         idb_output = idbocc.GET(occid=occid, count_only=count_only)
         all_output['iDigBio Records'] = idb_output
         
+        # MorphoSource records connected to Specify Record
         mopho = MophOcc()
         mopho_output = mopho.GET(occid=occid, count_only=count_only)
         all_output['MorphoSource Records'] = mopho_output
@@ -238,11 +243,8 @@ class OccTentaclesSvc(OccurrenceSvc):
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, **kwargs):
-        usr_params = self._get_params(kwargs)
-        if usr_params['occid'] is None:
-            return {'message': 'S^n occurrence tentacles are online'}
-        else:
-            return self.get_records(occid, count_only)
+        usr_params = self._get_params(**kwargs)
+        return super().GET(usr_params)
         
 # .............................................................................
 if __name__ == '__main__':
@@ -252,18 +254,18 @@ if __name__ == '__main__':
     count_only = False
     dsid = TST_VALUES.FISH_DS_GUIDS[0]
     
-#     s2napi = GColl()
-#     gdoutput = s2napi.GET(dataset_key=dsid, count_only=count_only)
-#     print(gdoutput)
-#     print('')
+    s2napi = GColl()
+    gdoutput = s2napi.GET(dataset_key=dsid, count_only=True)
+    print(gdoutput)
+    print('')
     
-    for occid in TST_VALUES.BIRD_OCC_GUIDS:
+    for occid in TST_VALUES.BIRD_OCC_GUIDS[:1]:
         print(occid)
         # Queries all services
-        s2napi = GOcc()
-        output = s2napi.GET(occid=occid, count_only=count_only)
-#         s2napi = OccurrenceSvc()
+#         s2napi = GOcc()
 #         output = s2napi.GET(occid=occid, count_only=count_only)
+        s2napi = OccTentaclesSvc()
+        output = s2napi.GET(occid=occid, count_only=count_only)
         for k, v in output.items():
             print('  {}: {}'.format(k, v))
         print('')
