@@ -11,7 +11,7 @@ class OccurrenceSvc(S2nService):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def _get_params(self, **kwargs):
+    def _get_params(self, occid=None, count_only=None, url=None):
 #     def GET(self, occid=None, count_only=False, **kwargs):
         """
         Superclass to standardize the parameters for all Occurrence Services
@@ -27,17 +27,15 @@ class OccurrenceSvc(S2nService):
             a dictionary containing a count and optional list of records 
                 corresponding to the Specify GUID and an optional message
         """
-        kwarg_defaults = {'occid': (None, ''), 
-                          'count_only': False, 
-                          'url': (None, '')}
-        usr_params = self._process_params(kwarg_defaults, kwargs)
+        kwarg_defaults = {
+            'occid': (None, ''), 'count_only': False, 'url': (None, '')}
+        user_kwargs = {'occid': occid, 'count_only': count_only, 'url': url}
+        usr_params = self._process_params(kwarg_defaults, user_kwargs)
         return usr_params
 
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, usr_params):
-#         occid = usr_kwargs['occid']
-#         count_only = usr_kwargs['count_only']
         occid = usr_params['occid']
         count_only = usr_params['count_only']
         if occid is not None:
@@ -56,9 +54,12 @@ class GOcc(OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
+#     def GET(self, occid=None, count_only=None, **kwargs):
+#         usr_params = self._get_params(occid=occid, count_only=count_only)
+#         return super().GET(usr_params)
     def GET(self, **kwargs):
         usr_params = self._get_params(**kwargs)
-        return super().GET(usr_params)
+        return OccurrenceSvc.GET(self, usr_params)
         
 #         usr_params = self._get_params(kwargs)
 #         occid = usr_params['occid']
@@ -261,13 +262,14 @@ if __name__ == '__main__':
     
     for occid in TST_VALUES.BIRD_OCC_GUIDS[:1]:
         print(occid)
-        # Queries all services
-#         s2napi = GOcc()
-#         output = s2napi.GET(occid=occid, count_only=count_only)
-        s2napi = OccTentaclesSvc()
-        all_output = s2napi.GET(occid=occid, count_only=count_only)
-        for svc, one_output in all_output.items():
-            print('  {}: {}'.format(svc, one_output))
-            for k, v in one_output.items():
-                print('  {}: {}'.format(k, v))
-        print('')
+        # Queries GBIF
+        s2napi = GOcc()
+        output = s2napi.GET(occid=occid, count_only=count_only)
+#         # Queries all services
+#         s2napi = OccTentaclesSvc()
+#         all_output = s2napi.GET(occid=occid, count_only=count_only)
+#         for svc, one_output in all_output.items():
+#             print('  {}: {}'.format(svc, one_output))
+#             for k, v in one_output.items():
+#                 print('  {}: {}'.format(k, v))
+#         print('')
