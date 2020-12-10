@@ -54,12 +54,12 @@ class GOcc(OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-#     def GET(self, occid=None, count_only=None, **kwargs):
-#         usr_params = self._get_params(occid=occid, count_only=count_only)
-#         return super().GET(usr_params)
-    def GET(self, **kwargs):
-        usr_params = self._get_params(**kwargs)
+    def GET(self, occid=None, count_only=None):
+        usr_params = self._get_params(occid=occid, count_only=count_only)
         return self._get_records_from_params(usr_params)
+#     def GET(self, **kwargs):
+#         usr_params = self._get_params(**kwargs)
+#         return self._get_records_from_params(usr_params)
         
 #         usr_params = self._get_params(kwargs)
 #         occid = usr_params['occid']
