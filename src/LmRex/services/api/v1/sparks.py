@@ -9,6 +9,28 @@ solr_location = 'notyeti-192.lifemapper.org'
 @cherrypy.expose
 class SpecifyArk:
     """Query the Specify ARK resolver for a GUID"""
+
+    # ...............................................
+    @staticmethod
+    def get_url_from_spark(solr_output):
+        url = msg = None
+        try:
+            solr_doc = solr_output['docs'][0]
+        except:
+            pass
+        else:
+            # Get url from ARK for Specify query
+            try:
+                url = solr_doc['url']
+            except Exception as e:
+                pass
+            else:
+                if not url.startswith('http'):
+                    msg = (
+                        'Invalid URL {} returned from ARK for Specify record access'
+                        .format(url))
+                    url = None
+        return (url, msg)
     
     # ...............................................
     def get_specify_arc_rec(self, occid):

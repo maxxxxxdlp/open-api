@@ -122,53 +122,32 @@ class MophOcc(OccurrenceSvc):
 class SPOcc(OccurrenceSvc):
     # ...............................................
     def get_records(self, url, occid):
-        output = {}
+        msg = 'Spocc failed: url = {}, occid = {}'
         if url is None:
-            url = None
-            spark = SpecifyArk()
-            solr_output = spark.get_specify_arc_rec(occid=occid)
-            try:
-                recs = solr_output['docs']
-            except Exception as e:
-                output['error'] = 'Failed to return ARK from Specify Resolver'
+            if occid is None:
+                output = {'info': 'S^n service is online'}
             else:
-                try:
-                    url = recs[0]['url']
-                except:
-                    output['error'] = 'Failed to return URL from Specify GUID ARK'
+                # Specify ARK Record
+                spark = SpecifyArk()
+                solr_output = spark.get_specify_arc_rec(occid)
+                # Specify Record from URL in ARK
+                (url, msg) = spark.get_url_from_spark(solr_output)
+                
         if url is not None:
             output = SpecifyPortalAPI.get_specify_record(url)
-        return output
-
+        else:
+            output = {'info': msg}
+        return output 
+    
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None, url=None, **kwargs):
         usr_params = self._standardize_params(occid=occid, url=url)
-        return self._get_records_from_params(usr_params)
+        return self.get_records(usr_params['url'], usr_params['occid'])
 
 # .............................................................................
 @cherrypy.expose
 class OccTentaclesSvc(OccurrenceSvc):
-    
-    def _get_url_from_spark(self, solr_output):
-        url = None
-        try:
-            solr_doc = solr_output['docs'][0]
-        except:
-            pass
-        else:
-            # Get url from ARK for Specify query
-            try:
-                url = solr_doc['url']
-            except Exception as e:
-                pass
-            else:
-                if not url.startswith('http'):
-                    msg = (
-                        'Invalid URL {} returned from ARK for Specify record access'
-                        .format(url))
-                    url = None
-        return (url, msg)
     
     # ...............................................
     def get_records(self, occid, count_only):
@@ -179,10 +158,10 @@ class OccTentaclesSvc(OccurrenceSvc):
         all_output['Specify ARK'] = solr_output
         
         # Specify Record from URL in ARK
-        (url, msg) = self._get_url_from_spark(solr_output)
+        (url, msg) = spark.get_url_from_spark(solr_output)
         if url is not None:
             spocc = SPOcc()
-            sp_output = spocc.get_records(url, occid)
+            sp_output = spocc.GET(url=url, occid=occid)
         else:
             sp_output = {'error': msg}
         all_output['Specify Record'] = sp_output
@@ -223,6 +202,7 @@ if __name__ == '__main__':
     print(gdoutput)
     print('')
     
+
     for occid in TST_VALUES.BIRD_OCC_GUIDS[:1]:
         print(occid)
 #         # Queries GBIF
@@ -231,6 +211,12 @@ if __name__ == '__main__':
 #         output = s2napi.GET(occid=occid, count_only=0)
 #         for k, v in output.items():
 #             print('  {}: {}'.format(k, v))
+        # Queries Specify without ARK URL
+        spocc = SPOcc()
+        sp_output = spocc.GET(url=None, occid=occid)
+        for k, v in sp_output.items():
+            print('  {}: {}'.format(k, v))
+
         # Queries all services
         s2napi = OccTentaclesSvc()
         all_output = s2napi.GET(occid=occid, count_only=count_only)
