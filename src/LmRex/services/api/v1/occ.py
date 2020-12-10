@@ -11,7 +11,7 @@ class OccurrenceSvc(S2nService):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def _get_params(self, occid=None, count_only=None, url=None):
+    def _standardize_params(self, occid=None, count_only=None, url=None):
 #     def GET(self, occid=None, count_only=False, **kwargs):
         """
         Superclass to standardize the parameters for all Occurrence Services
@@ -54,20 +54,9 @@ class GOcc(OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=None):
-        usr_params = self._get_params(occid=occid, count_only=count_only)
+    def GET(self, occid=None, count_only=None, **kwargs):
+        usr_params = self._standardize_params(occid=occid, count_only=count_only)
         return self._get_records_from_params(usr_params)
-#     def GET(self, **kwargs):
-#         usr_params = self._get_params(**kwargs)
-#         return self._get_records_from_params(usr_params)
-        
-#         usr_params = self._get_params(kwargs)
-#         occid = usr_params['occid']
-#         count_only = usr_params['count_only']
-#         if occid is not None:
-#             return self.get_records(occid, count_only)
-#         else:
-#             return {'info': 'S^n GBIF occurrence resolution is online'}
 
 
 # .............................................................................
@@ -109,20 +98,10 @@ class IDBOcc(OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, **kwargs):
-        """Get a one or more iDigBio records for a Specify GUID or 
-        info/error message.
-        
-        Args:
-            occid: a occurrenceId for a specimen record(s)
-        Return:
-            a dictionary containing a message, or a list of dictionaries 
-            containing iDigBio record corresponding to the occurrenceId
-        """
-        usr_params = self._get_params(**kwargs)
-        return super().GET(usr_params)
-
-
+    def GET(self, occid=None, count_only=None, **kwargs):
+        usr_params = self._standardize_params(occid=occid, count_only=count_only)
+        return self._get_records_from_params(usr_params)
+          
 # .............................................................................
 @cherrypy.expose
 class MophOcc(OccurrenceSvc):
@@ -134,17 +113,9 @@ class MophOcc(OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, **kwargs):
-        """Get a one Specify record for a Specify GUID or info/error message.
-        
-        Args:
-            occid: an occurrenceId string
-        Return:
-            one dictionary containing a message or a list of MorphoSource 
-            records corresponding to the occurrenceId
-        """
-        usr_params = self._get_params(**kwargs)
-        return super().GET(usr_params)
+    def GET(self, occid=None, count_only=None, **kwargs):
+        usr_params = self._standardize_params(occid=occid, count_only=count_only)
+        return self._get_records_from_params(usr_params)
 
 # .............................................................................
 @cherrypy.expose
@@ -171,18 +142,9 @@ class SPOcc(OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, **kwargs):
-        """Get one Specify record for a Specify GUID or info/error message.
-        
-        Args:
-            occid: a Specify occurrence GUID, from the occurrenceId field
-            kwargs: ignore unsupported keyword args (i.e. count_only)
-        Return:
-            one dictionary containing a message or Specify record corresponding 
-            to the Specify GUID
-        """
-        usr_params = self._get_params(**kwargs)
-        return super().GET(usr_params)
+    def GET(self, occid=None, url=None, **kwargs):
+        usr_params = self._standardize_params(occid=occid, url=url)
+        return self._get_records_from_params(usr_params)
 
 # .............................................................................
 @cherrypy.expose
@@ -242,10 +204,11 @@ class OccTentaclesSvc(OccurrenceSvc):
         return all_output
 
     # ...............................................
+    # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, **kwargs):
-        usr_params = self._get_params(**kwargs)
-        return super().GET(usr_params)
+    def GET(self, occid=None, count_only=None, **kwargs):
+        usr_params = self._standardize_params(occid=occid, count_only=count_only)
+        return self._get_records_from_params(usr_params)
         
 # .............................................................................
 if __name__ == '__main__':
@@ -262,21 +225,17 @@ if __name__ == '__main__':
     
     for occid in TST_VALUES.BIRD_OCC_GUIDS[:1]:
         print(occid)
-        # Queries GBIF
-        s2napi = GOcc()
-        print('count_only=1')
-        output = s2napi.GET(occid=occid, count_only=1)
-        for k, v in output.items():
-            print('  {}: {}'.format(k, v))
-        print('count_only=0')
-        output = s2napi.GET(occid=occid, count_only=0)
-        for k, v in output.items():
-            print('  {}: {}'.format(k, v))
-#         # Queries all services
-#         s2napi = OccTentaclesSvc()
-#         all_output = s2napi.GET(occid=occid, count_only=count_only)
-#         for svc, one_output in all_output.items():
-#             print('  {}: {}'.format(svc, one_output))
-#             for k, v in one_output.items():
-#                 print('  {}: {}'.format(k, v))
-#         print('')
+#         # Queries GBIF
+#         s2napi = GOcc()
+#         print('count_only=0')
+#         output = s2napi.GET(occid=occid, count_only=0)
+#         for k, v in output.items():
+#             print('  {}: {}'.format(k, v))
+        # Queries all services
+        s2napi = OccTentaclesSvc()
+        all_output = s2napi.GET(occid=occid, count_only=count_only)
+        for svc, one_output in all_output.items():
+            print('  {}: {}'.format(svc, one_output))
+            for k, v in one_output.items():
+                print('  {}: {}'.format(k, v))
+        print('')

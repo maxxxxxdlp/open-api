@@ -76,7 +76,7 @@ class S2NEndpoint:
 # .............................................................................
 class APIMount:
     # occurrence services
-    OccurrenceSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Occurrence)
+    OccTentaclesSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Occurrence)
     SpecifyArkSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.SpecifyArk)
     GOccSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Gbif)
@@ -92,7 +92,7 @@ class APIMount:
     GCollSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Dataset, S2NEndpoint.Gbif)
     # name services
-    NameSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Name)
+    NameTentaclesSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Name)
     GAcNameSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.Gbif)
     ITISSolrNameSvc = '{}/{}/{}'.format(

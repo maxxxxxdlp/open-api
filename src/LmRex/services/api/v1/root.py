@@ -22,20 +22,32 @@ def start_cherrypy_services():
     cherrypy_cors.install()
 
 #     cherrypy.config.update(CHERRYPY_CONFIG_FILE)
-    cherrypy.config.update({'server.socket_port': 80,
-                            'server.socket_host': '129.237.201.192',
-                            '/static': {
-                                'tools.staticdir.on': True,
-                                'cors.expose.on': True
-                                }
-                            })
+    cherrypy.config.update(
+        {'server.socket_port': 80,
+         'server.socket_host': '129.237.201.192',
+         'log.error_file': '/state/partition1/lmscratch/log/cherrypyErrors.log',
+         'log.access_file': '/state/partition1/lmscratch/log/cherrypyAccess.log',
+         'response.timeout': 1000000,
+         'tools.CORS.on': True,
+         'tools.encode.encoding': 'utf-8',
+         'tools.encode.on': True,
+         'tools.etags.autotags': True,
+         'tools.sessions.on': True,
+         'tools.sessions.storage_class': cherrypy.lib.sessions.FileSession,
+         'tools.sessions.storage_path': '/state/partition1/lmscratch/sessions',
+         '/static': {
+             'tools.staticdir.on': True,
+             'cors.expose.on': True
+             }
+         })
+
     cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
     
     # ARK service
     cherrypy.tree.mount(SpecifyArk(), APIMount.SpecifyArkSvc, conf)
 
     # Occurrence services
-    cherrypy.tree.mount(OccTentaclesSvc(), APIMount.OccurrenceSvc, conf)
+    cherrypy.tree.mount(OccTentaclesSvc(), APIMount.OccTentaclesSvc, conf)
     cherrypy.tree.mount(GOcc(), APIMount.GOccSvc, conf)
     cherrypy.tree.mount(IDBOcc(), APIMount.IDBOccSvc, conf)
     cherrypy.tree.mount(MophOcc(), APIMount.MophOccSvc, conf)
@@ -45,7 +57,7 @@ def start_cherrypy_services():
     # Map services
     cherrypy.tree.mount(LmMap(), APIMount.LmMapSvc, conf)
     # Name services
-    cherrypy.tree.mount(NameSvc(), APIMount.NameSvc, conf)
+    cherrypy.tree.mount(NameSvc(), APIMount.NameTentaclesSvc, conf)
     cherrypy.tree.mount(GAcName(), APIMount.GAcNameSvc, conf)
     cherrypy.tree.mount(ITISSolrName(), APIMount.ITISSolrNameSvc, conf)   
 
