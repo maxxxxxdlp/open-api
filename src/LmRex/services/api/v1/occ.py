@@ -122,7 +122,7 @@ class MophOcc(OccurrenceSvc):
 class SPOcc(OccurrenceSvc):
     # ...............................................
     def get_records(self, url, occid):
-        msg = 'Spocc failed: url = {}, occid = {}'
+        msg = 'Spocc failed: url = {}, occid = {}'.format(url, occid)
         if url is None:
             if occid is None:
                 output = {'info': 'S^n service is online'}
@@ -213,7 +213,7 @@ if __name__ == '__main__':
 #             print('  {}: {}'.format(k, v))
         # Queries Specify without ARK URL
         spocc = SPOcc()
-        sp_output = spocc.GET(url=None, occid=occid)
+        sp_output = spocc.GET(url=None, occid=occid, count_only=False)
         for k, v in sp_output.items():
             print('  {}: {}'.format(k, v))
 
