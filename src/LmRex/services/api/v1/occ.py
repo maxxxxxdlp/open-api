@@ -35,7 +35,7 @@ class OccurrenceSvc(S2nService):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def _get_records_with_params(self, usr_params):
+    def _get_records_from_params(self, usr_params):
         occid = usr_params['occid']
         count_only = usr_params['count_only']
         if occid is not None:
@@ -59,7 +59,7 @@ class GOcc(OccurrenceSvc):
 #         return super().GET(usr_params)
     def GET(self, **kwargs):
         usr_params = self._get_params(**kwargs)
-        return self._get_records_with_params(usr_params)
+        return self._get_records_from_params(usr_params)
         
 #         usr_params = self._get_params(kwargs)
 #         occid = usr_params['occid']
@@ -264,7 +264,14 @@ if __name__ == '__main__':
         print(occid)
         # Queries GBIF
         s2napi = GOcc()
-        output = s2napi.GET(occid=occid, count_only=count_only)
+        print('count_only=1')
+        output = s2napi.GET(occid=occid, count_only=1)
+        for k, v in output.items():
+            print('  {}: {}'.format(k, v))
+        print('count_only=0')
+        output = s2napi.GET(occid=occid, count_only=0)
+        for k, v in output.items():
+            print('  {}: {}'.format(k, v))
 #         # Queries all services
 #         s2napi = OccTentaclesSvc()
 #         all_output = s2napi.GET(occid=occid, count_only=count_only)
