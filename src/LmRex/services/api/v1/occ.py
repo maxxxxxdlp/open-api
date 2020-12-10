@@ -35,7 +35,7 @@ class OccurrenceSvc(S2nService):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, usr_params):
+    def _get_records_with_params(self, usr_params):
         occid = usr_params['occid']
         count_only = usr_params['count_only']
         if occid is not None:
@@ -59,7 +59,7 @@ class GOcc(OccurrenceSvc):
 #         return super().GET(usr_params)
     def GET(self, **kwargs):
         usr_params = self._get_params(**kwargs)
-        return OccurrenceSvc.GET(self, usr_params)
+        return self._get_records_with_params(usr_params)
         
 #         usr_params = self._get_params(kwargs)
 #         occid = usr_params['occid']
