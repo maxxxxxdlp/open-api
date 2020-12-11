@@ -1600,8 +1600,64 @@ class LifemapperAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def find_sdmprojections_by_name(
-            cls, name, prjscenariocode=None, other_filters={}, logger=None):
+    def _construct_map_url(
+            cls, rec, bbox, color, exceptions, height, layers, frmat, request, 
+            srs, transparent, width):
+        """
+        service=wms&request=getmap&version=1.0&srs=epsg:4326&bbox=-180,-90,180,90&format=png&width=600&height=300&layers=prj_1848399
+        """
+        try:
+            mapname = rec['map']['mapName']
+            lyrname = rec['map']['layerName']
+            url = rec['map']['endpoint']
+        except Exception as e:
+            msg = 'Failed to retrieve map data from {}, {}'.format(rec, e)
+            rec = {'spcoco.error': msg}
+        else:
+            tmp = layers.split(',')
+            lyrcodes = [t.strip() for t in tmp]
+            lyrnames = []
+            # construct layers for display from bottom layer up to top: 
+            #     bmng (background image), prj (projection), occ (points)
+            if 'bmng' in lyrcodes:
+                lyrnames.append('bmng')
+            if 'prj' in lyrcodes:
+                lyrnames.append(lyrname)
+            if 'occ' in lyrcodes:
+                try:
+                    occid = rec['occurrenceSet']['id']
+                except:
+                    msg = 'Failed to retrieve occurrence layername'
+                else:
+                    occlyrname = 'occ_{}'.format(occid)
+                    lyrnames.append(occlyrname)
+            lyrstr = ','.join(lyrnames)
+            
+            filters = {
+                'bbox': bbox, 'height': height, 'layers': lyrstr, 
+                'format': frmat, 'request': request, 'srs': srs, 'width': width}
+            # Optional, LM-specific, filters
+            # TODO: fix color parameter in Lifemapper maps
+#             if color is not None:
+#                 filters['color'] = color 
+            if exceptions is not None:
+                filters['exceptions'] = exceptions
+            if transparent is not None:
+                filters['transparent'] = transparent
+                
+            filter_str = 'service=wms&version=1.0'
+            for (key, val) in filters.items():
+                filter_str = '{}&{}={}'.format(filter_str, key, val) 
+            map_url = '{}/{}?{}'.format(url, mapname, filter_str)
+        return map_url
+
+    # ...............................................
+    @classmethod
+    def find_projections_by_name(
+            cls, name, prjscenariocode=None, bbox='-180,-90,180,90', 
+            color=None, exceptions=None, height=300, layers='prj', frmat='png', 
+            request='getmap', srs='epsg:4326',  transparent=None, width=600, 
+            other_filters={}, logger=None):
         """
         List projections for a given scientific name.  
         
@@ -1611,7 +1667,8 @@ class LifemapperAPI(APIQuery):
             prjscenariocode: a Lifemapper code indicating whether the 
                 environmental data used for creating the projection is 
                 observed, or modeled past or future.  Codes are in 
-                LmREx.common.lmconstants Lifemapper.*_SCENARIO_CODE*
+                LmREx.common.lmconstants Lifemapper.*_SCENARIO_CODE*. If the 
+                code is None, return a map with only occurrence points
             logger: optional logger for info and error messages.  If None, 
                 prints to stdout    
 
@@ -1642,85 +1699,23 @@ class LifemapperAPI(APIQuery):
             if len(recs) == 0:
                 output['warning'] = 'Failed to find projections for {}'.format(
                     name)
+            for rec in recs:
+                url = LifemapperAPI._construct_map_url(
+                    rec, bbox, color, exceptions, height, layers, frmat, 
+                    request, srs, transparent, width)
+                if url is not None:
+                    rec['map_url'] = url
         output['count'] = len(recs)
         output['records'] = recs
         return output
 
-    # ...............................................
-    @classmethod
-    def _construct_map_url(
-            cls, rec, service, request, version, srs, bbox, width, height, frmat):
-        """
-        service=wms&request=getmap&version=1.0&srs=epsg:4326&bbox=-180,-90,180,90&format=png&width=600&height=300&layers=prj_1848399
-        """
-        blue_marble_background = 'bmng'
-        map_url = None
-        try:
-            mapname = rec['map']['mapName']
-            lyrname = rec['map']['layerName']
-            # Add blue marble background
-            lyrs = '{},{}'.format(blue_marble_background, lyrname)
-            url = rec['map']['endpoint']
-        except Exception as e:
-            msg = 'Failed to retrieve map data from {}, {}'.format(rec, e)
-            rec = {'spcoco.error': msg}
-        else:
-            filters = {
-                'service': service, 'request': request, 'version': version,
-                'srs': srs, 'bbox': bbox, 'format': frmat, 'width': width,
-                'height': height, 'layers': lyrs}
-            filter_str = None
-            for (key, val) in filters.items():
-                pair = '{}={}'.format(key, val)
-                if filter_str is None:
-                    filter_str = pair
-                else:
-                    filter_str = '{}&{}'.format(filter_str, pair) 
-            map_url = '{}/{}?{}'.format(url, mapname, filter_str)
-        return map_url
-        
-    # ...............................................
-    @classmethod
-    def find_sdmprojection(cls, proj_id, logger=None):
-        """
-        Get a projection for a given projection id.  
-        
-        Args:
-            name: a Lifemapper unique identifier for an SDM projection
-            logger: optional logger for info and error messages.  If None, 
-                prints to stdout    
 
-        Note: 
-            Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
-            Taxonomy and this method requires them for success.
-        """
-        output = {}
-        recs = []
-        api = LifemapperAPI(resource=Lifemapper.PROJ_RESOURCE, ident=proj_id)
-        try:
-            api.query_by_get()
-        except Exception:
-            msg = 'Failed on {}'.format(api.url)
-            log_error(msg, logger=logger)
-            output['error'] = msg
-        else:
-            # Output is a dictionary of one record
-            if len(api.output) > 0:
-                recs = [api.output]
-            output['records'] = recs
-            output['count'] = len(recs)
-            if output['count'] == 0:
-                msg = 'Failed to find projections for {}'.format(api.url)
-                log_error(msg, logger=logger)
-                output['error'] = msg
-        return output
-    
     # ...............................................
     @classmethod
     def get_sdmprojections_with_map(
-            cls, proj_id, service='wms', request='getmap', version='1.0', 
-            srs='epsg:4326', bbox='-180,-90,180,90', width=600, height=300, 
-            frmat='png', logger=None):
+            cls, proj_id, bbox='-180,-90,180,90', color=None, exceptions=None, 
+            height=300, layers='prj', frmat='png', request='getmap', 
+            srs='epsg:4326',  transparent=None, width=600, logger=None):
         """
         Get a url for a projection map for a given projection id.  
         
@@ -1746,8 +1741,8 @@ class LifemapperAPI(APIQuery):
             else:
                 for rec in records:
                     url = LifemapperAPI._construct_map_url(
-                        rec, service, request, version, srs, bbox, width, 
-                        height, frmat)
+                        rec, bbox, color, exceptions, height, layers, frmat, 
+                        request, srs, transparent, width)
                     if url is not None:
                         rec['map_url'] = url
                         full_recs.append(rec)

@@ -30,16 +30,15 @@ class NameSvc(S2nService):
         user values or defaults. 
         
         Args:
-            kwargs: dictionary of:
-                namestr: a scientific name
-                gbif_accepted: flag to indicate whether to limit to "Accepted" 
-                    taxa in the GBIF Backbone Taxonomy
-                gbif_parse: flag to indicate whether to first use the GBIF parser 
-                    to parse a scientific name into canonical name
-                gbif_count: flag to indicate whether to count occurrences in 
-                    service provider for this taxon
-                status: filter for ITIS records with this status
-                kingdom: filter for ITIS records from this kingdom
+            namestr: a scientific name
+            gbif_accepted: flag to indicate whether to limit to "Accepted" 
+                taxa in the GBIF Backbone Taxonomy
+            gbif_parse: flag to indicate whether to first use the GBIF parser 
+                to parse a scientific name into canonical name
+            gbif_count: flag to indicate whether to count occurrences in 
+                service provider for this taxon
+            status: filter for ITIS records with this status
+            kingdom: filter for ITIS records from this kingdom
         Return:
             a dictionary containing keys and properly formated values for the
                 user specified parameters.

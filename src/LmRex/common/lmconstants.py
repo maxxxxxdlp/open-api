@@ -98,8 +98,8 @@ class APIMount:
         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.Gbif)
     ITISSolrNameSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISSolrName)
-    ITISNameSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISName)
+#     ITISNameSvc = '{}/{}/{}'.format(
+#         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISName)
     
     # map services
     LmMapSvc = '{}/{}/{}'.format(

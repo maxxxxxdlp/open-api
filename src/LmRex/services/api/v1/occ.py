@@ -2,15 +2,14 @@ import cherrypy
 
 from LmRex.tools.api import (
     GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI)
-from LmRex.services.api.v1.sparks import SpecifyArk
 from LmRex.services.api.v1.base import S2nService
+from LmRex.services.api.v1.sparks import SpecifyArk
         
 # .............................................................................
 @cherrypy.expose
 class OccurrenceSvc(S2nService):
 
     # ...............................................
-    @cherrypy.tools.json_out()
     def _standardize_params(
             self, occid=None, dataset_key=None, count_only=None, url=None):
         """
@@ -19,12 +18,11 @@ class OccurrenceSvc(S2nService):
         correctly-typed user values or defaults. 
         
         Args:
-            kwargs: dictionary of:
-                occid: a Specify occurrence GUID, mapped to the 
-                    dwc:occurrenceId field
-                dataset_key: a GBIF dataset GUID
-                count_only: flag indicating whether to return records
-                url: direct URL to Specify occurrence, only used with SPOcc
+            occid: a Specify occurrence GUID, mapped to the 
+                dwc:occurrenceId field
+            dataset_key: a GBIF dataset GUID
+            count_only: flag indicating whether to return records
+            url: direct URL to Specify occurrence, only used with SPOcc
         Return:
             a dictionary containing keys and properly formated values for the
                 user specified parameters.

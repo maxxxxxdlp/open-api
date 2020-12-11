@@ -1,14 +1,89 @@
 import cherrypy
 
 from LmRex.common.lmconstants import Lifemapper
+from LmRex.services.api.v1.base import S2nService
 from LmRex.services.api.v1.name import GAcName
 from LmRex.tools.api import LifemapperAPI
 
 # .............................................................................
 @cherrypy.expose
-class LmMap:
+class WMSSvc(S2nService):
+
     # ...............................................
-    def get_sdmproject_with_urls(self, namestr, scenariocode, height, width):
+    def _standardize_params(
+            self, bbox=None, color=None, exceptions=None, height=None, 
+            layers=None, request=None, frmat=None, srs=None, transparent=None, 
+            width=None):
+        """
+        Standardize the parameters for all Map Services into a dictionary with 
+        all keys as standardized parameter names and values as correctly-typed 
+        user values or defaults. 
+        
+        Args:
+            bbox: A (min x, min y, max x, max y) tuple of bounding parameters
+            bgcolor: A background color to use for a map
+            color: The color (or color ramp) to use for the map
+            crs: The spatial reference system for the map output
+            exceptions: The format to report exceptions in
+            height: The height (in pixels) of the returned map
+            layers: A list of layer names
+            request: The request operation name to perform
+            frmat: The desired response format, query parameter is
+                'format'
+            service: The OGC service to use (W*S)
+            sld: (todo) A URL referencing a StyledLayerDescriptor XML file which
+                controls or enhances map layers and styling
+            sld_body: (todo) A URL-encoded StyledLayerDescriptor XML document which
+                controls or enhances map layers and styling
+            srs: The spatial reference system for the map output.  'crs' for
+                version 1.3.0.
+            styles: A list of styles for the response
+            time: A time or time range for map requests
+            transparent: Boolean indicating if the background of the map should
+                be transparent
+            version: The version of the service to use
+            width: The width (in pixels) of the returned map
+        Return:
+            a dictionary containing keys and properly formated values for the
+                user specified parameters.
+        """
+        kwarg_defaults = {
+            'bbox': '-180,-90,180,90', 
+            'color': [
+                'red', 'gray', 'green', 'blue', 'safe', 'pretty', 'yellow', 
+                'fuschia', 'aqua', 'bluered', 'bluegreen', 'greenred'],
+#             'crs': (None, ''), 
+            'exceptions': (None, ''), 
+            'height': 300, 
+            'layers': 'prj',
+            'request': ['getmap', 'getlegendgraphic'], 
+            'format': None, 
+#             'service': 'wms',
+#             'sld': None, 
+#             'sld_body': None, 
+            'srs': 'epsg:4326', 
+#             'styles': None, 
+            'transparent': None, 
+#             'version': '1.0', 
+            'width': 600}
+        user_kwargs = {
+            'bbox': bbox, 'color': color, 'exceptions': exceptions, 
+            'height': height, 'layers': layers, 'request': request, 
+            'format': frmat, 'srs': srs, 'transparent': transparent, 
+            'width': width}
+        usr_params = self._process_params(kwarg_defaults, user_kwargs)
+        return usr_params
+
+
+# .............................................................................
+@cherrypy.expose
+class LmMap(WMSSvc):
+
+    # ...............................................
+    def get_sdmproject_with_urls(
+            self, namestr, scenariocode, bbox, color, exceptions, height, 
+            layers, frmat, request, srs, transparent, width):
+        """ """
         output = {'count': 0, 'records': []}
         # Lifemapper only uses GBIF Backbone Taxonomy accepted names
         gan = GAcName()
@@ -32,22 +107,19 @@ class LmMap:
         msgs = []
         for sname in scinames:
             # Step 1, get projection atoms
-            atom_output = LifemapperAPI.find_sdmprojections_by_name(
-                sname, prjscenariocode=scenariocode)
+            prj_output = LifemapperAPI.find_projections_by_name(
+                sname, prjscenariocode=scenariocode, bbox=bbox, color=color, 
+                exceptions=exceptions, height=height, layers=layers, 
+                frmat=frmat, request=request, srs=srs,  transparent=transparent, 
+                width=width)
+            # Add to output
+            # TODO: make sure these include projection displayName
+            records.extend(prj_output['records'])
             for key in ['warning', 'error']:
                 try:
-                    msgs.append(atom_output[key])
+                    msgs.append(prj_output[key])
                 except:
                     pass
-            atoms = atom_output['records']
-            for atom in atoms:
-                prjid = atom['id']
-                # Step 2, use full projection records with constructed map url
-                lmoutput = LifemapperAPI.get_sdmprojections_with_map(
-                    prjid, height=height, width=width)
-                # Add to output
-                # TODO: make sure these include projection displayName
-                records.extend(lmoutput['records'])
         if len(msgs) > 0:
             output['errors'] = msgs
         output['records'] = records
@@ -57,26 +129,48 @@ class LmMap:
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, namestr=None, scenariocode=Lifemapper.OBSERVED_SCENARIO_CODE, 
-            height=300, width=600):
+            bbox='-180,-90,180,90', color='red', exceptions=None, height=400, 
+            layers='prj', frmat='png', request='getmap', srs='epsg:4326', 
+            transparent=None, width=800):
         """Get the number of occurrence records for all names "matching" the
         given scientific name string.
         
         Args:
             namestr: a scientific name
-            do_parse: flag to indicate whether to first use the GBIF parser 
-                to parse a scientific name into canonical name 
+            scenariocode: a Lifemapper projection scenario code, defaults to 
+                projection based on observed (not predicted) environmental data
+            bbox: bbox as a comma-delimited string, minX, minY, maxX, maxY
+            color: one of a defined set of color choices for projection display 
+            exceptions: format for exceptions
+            height: height of the image
+            layers: a comma-delimted string of layers, with codes for 
+                projection ('prj'), occurrence points ('occ'), background 
+                blue marble satellite image ('bmng')
+            frmat: output format
+            request: WMS request
+            srs: Spatial reference system, defaults to epsg:4326 (geographic)
+            transparent: transparency
+            width: width of the image
         Return:
             a list of dictionaries containing a matching name 
             (synonym, invalid, etc), record count, and query URL for retrieving 
             the records.
             
-        TODO: extend keyword parameters with other WMS options
+        TODO: fix color parameter in Lifemapper WMS service
         """
+        usr_params = self._standardize_params(
+            bbox=bbox, color=color, exceptions=exceptions, height=height, 
+            layers=layers, frmat=frmat, request=request, srs=srs, 
+            transparent=transparent, width=width)
         if namestr is None:
             return {'spcoco.message': 'S^n Lifemapper mapper is online'}
         else:
             return self.get_sdmproject_with_urls(
-                namestr, scenariocode, height, width)
+                namestr, scenariocode, usr_params['bbox'], usr_params['color'], 
+                usr_params['exceptions'], usr_params['height'], 
+                usr_params['layers'], usr_params['format'], 
+                usr_params['request'], usr_params['srs'], 
+                usr_params['transparent'],  usr_params['width'])
 
 # .............................................................................
 if __name__ == '__main__':
@@ -89,6 +183,11 @@ if __name__ == '__main__':
         print('Name = {}'.format(namestr))
         
         lmapi = LmMap()
-        output = lmapi.GET(namestr)
-        for k, v in output.items():
-            print('  {}: {}'.format(k, v))
+        output = lmapi.GET(namestr=namestr, layers='bmng,prj,occ')
+        print('  count: {}'.format(output['count']))
+        try:
+            rec = output['records'][0]
+        except:
+            pass
+        else:
+            print('  map_url: {}'.format(rec['map_url']))

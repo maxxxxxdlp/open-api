@@ -75,26 +75,29 @@ class SimpleCPTest(helper.CPWebCase):
                 print(guid, output)
                 
 # ......................................................
-    def test_one(self, svc, ident):
-        baseurl = 'http://{}{}'.format(TST_SERVER, svc)
-        for x in ident:
-            print(x)
-            for count_flag in (0, 1):
-                url = '{}/{}?count_only={}'.format(baseurl, x, count_flag)
-                print(url)
-                output = self._query_by_url(url)
-                try:
-                    print('  count: {}'.format(output['count']))
-                except:
-                    print('  No count in ouput!')
-                try:
-                    recs = output['records']
-                except:
-                    print('  No records in ouput')
-                else:
-                    for rec in recs:
-                        for k, v in rec.items():
-                            print('  {}: {}'.format(k, v))
+    def test_one(self, svc, ident, options):
+        url = 'http://{}{}/{}'.format(TST_SERVER, svc, ident)
+        
+        url_params = ''
+        for k, v in options.items():
+            url_params += '{}={}'.format(k, v)
+        
+        if url_params:
+            url = '{}?{}'.format(url, url_params)
+        print(url)
+        
+        output = self._query_by_url(url)
+        try:
+            print('  count: {}'.format(output['count']))
+        except:
+            print('  No count in ouput!')
+        try:
+            recs = output['records']
+        except:
+            pass
+        else:
+            for rec in recs:
+                print('  {}'.format(rec))
 
 # ......................................................
     def test_url(self, url):
@@ -111,10 +114,20 @@ if __name__ == '__main__':
 
 #     tst.test_get_fish()
     url = 'http://notyeti-192.lifemapper.org/api/v1/map/lm/Phlox%20longifolia%20Nutt.'
-
-    guid = TST_VALUES.FISH_OCC_GUIDS[:1]
-    for b in (0, 1):
-        tst.test_one(APIMount.GOccSvc, guid)
-#         tst.test_one(APIMount.IDBOccSvc, guid)
-#         tst.test_one(APIMount.MophOccSvc, guid)
-#         tst.test_one(APIMount.SPOccSvc, guid)
+    
+    guid = TST_VALUES.FISH_OCC_GUIDS[0]
+    for flag in (0,1):
+        options = {'count_only': flag}
+        tst.test_one(APIMount.GOccSvc, guid, options)
+        tst.test_one(APIMount.IDBOccSvc, guid, options)
+        tst.test_one(APIMount.MophOccSvc, guid, options)
+        tst.test_one(APIMount.SPOccSvc, guid, options)
+    
+    namestr = TST_VALUES.NAMES[0]
+    map_options = {'layers': 'bmng,prj,occ'}
+    for flag in (0,1):
+        options = {'do_parse': flag}
+        tst.test_one(APIMount.GAcNameSvc, namestr, options)
+        tst.test_one(APIMount.ITISSolrNameSvc, namestr, options)
+        
+        tst.test_one(APIMount.LmMapSvc, namestr, map_options)
