@@ -11,25 +11,30 @@ class OccurrenceSvc(S2nService):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def _standardize_params(self, occid=None, count_only=None, url=None):
-#     def GET(self, occid=None, count_only=False, **kwargs):
+    def _standardize_params(
+            self, occid=None, dataset_key=None, count_only=None, url=None):
         """
-        Superclass to standardize the parameters for all Occurrence Services
-        Get a dictionary with a count, and list of one or more records for a 
-        Specify GUID and optional info/error message.
+        Standardize the parameters for all Occurrence Services into a dictionary 
+        with all keys as standardized parameter names and values as 
+        correctly-typed user values or defaults. 
         
         Args:
             kwargs: dictionary of:
-                occid: a Specify occurrence GUID, from the occurrenceId field
+                occid: a Specify occurrence GUID, mapped to the 
+                    dwc:occurrenceId field
+                dataset_key: a GBIF dataset GUID
                 count_only: flag indicating whether to return records
                 url: direct URL to Specify occurrence, only used with SPOcc
         Return:
-            a dictionary containing a count and optional list of records 
-                corresponding to the Specify GUID and an optional message
+            a dictionary containing keys and properly formated values for the
+                user specified parameters.
         """
         kwarg_defaults = {
-            'occid': (None, ''), 'count_only': False, 'url': (None, '')}
-        user_kwargs = {'occid': occid, 'count_only': count_only, 'url': url}
+            'occid': (None, ''), 'dataset_key': (None, ''), 'count_only': False, 
+            'url': (None, '')}
+        user_kwargs = {
+            'occid': occid, 'dataset_key': dataset_key, 
+            'count_only': count_only, 'url': url}
         usr_params = self._process_params(kwarg_defaults, user_kwargs)
         return usr_params
 
@@ -61,7 +66,7 @@ class GOcc(OccurrenceSvc):
 
 # .............................................................................
 @cherrypy.expose
-class GColl(S2nService):
+class GColl(OccurrenceSvc):
     # ...............................................
     def get_dataset_recs(self, dataset_key, count_only):
         output = GbifAPI.get_records_by_dataset(dataset_key, count_only)
@@ -69,24 +74,24 @@ class GColl(S2nService):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, **kwargs):
+    def GET(self, dataset_key=None, **kwargs):
         """Get a one or more GBIF records for a Specify GUID or 
         info/error message.
         
         Args:
             dataset_key: a GBIF dataset GUID, from the DWCA metadata
+            kwargs: additional keyword arguments - to be ignored
         Return:
             a list of dictionaries containing DWC records from the chosen
             dataset.  
         """
-        kwarg_defaults = {'dataset_key': (None, ''), 'count_only': True}
-        usr_params = self._process_params(kwarg_defaults, kwargs)
+        usr_params = self._standardize_params(
+            dataset_key=dataset_key, count_only=count_only)
         dataset_key = usr_params['dataset_key']
-        count_only = usr_params['count_only']
-        if dataset_key is None:
+        if not dataset_key:
             return {'spcoco.message': 'S^n GBIF dataset query is online'}
         else:
-            return self.get_dataset_recs(dataset_key, count_only)
+            return self.get_dataset_recs(dataset_key, usr_params['count_only'])
 
 # .............................................................................
 @cherrypy.expose
@@ -220,8 +225,9 @@ if __name__ == '__main__':
         # Queries all services
         s2napi = OccTentaclesSvc()
         all_output = s2napi.GET(occid=occid, count_only=count_only)
+        
         for svc, one_output in all_output.items():
-            print('  {}: {}'.format(svc, one_output))
+            print('  {}'.format(svc))
             for k, v in one_output.items():
                 print('  {}: {}'.format(k, v))
-        print('')
+            print('')

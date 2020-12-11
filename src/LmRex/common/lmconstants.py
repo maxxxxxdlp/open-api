@@ -75,9 +75,11 @@ class S2NEndpoint:
     SpecifyArk = 'sparks'
 # .............................................................................
 class APIMount:
+    # Specify ARK resolver service
+    SpecifyArkSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.SpecifyArk)
+    
     # occurrence services
     OccTentaclesSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Occurrence)
-    SpecifyArkSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.SpecifyArk)
     GOccSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Gbif)
     IDBOccSvc = '{}/{}/{}'.format(
@@ -86,11 +88,10 @@ class APIMount:
         S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.MorphoSource)
     SPOccSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Specify)
-    # dataset services
-    DatasetSvc = '{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Dataset)
+    # occurrence GBIF-dataset service
     GCollSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Dataset, S2NEndpoint.Gbif)
+        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Dataset)
+    
     # name services
     NameTentaclesSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Name)
     GAcNameSvc = '{}/{}/{}'.format(
@@ -99,9 +100,11 @@ class APIMount:
         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISSolrName)
     ITISNameSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISName)
+    
     # map services
     LmMapSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Map, S2NEndpoint.Lifemapper)
+    
     # Service testing
     HeartbeatSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Heartbeat)
     HeartbeatGbifSvc = '{}/{}/{}'.format(
