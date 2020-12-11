@@ -72,7 +72,7 @@ class GColl(OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, dataset_key=None, **kwargs):
+    def GET(self, dataset_key=None, count_only=None, **kwargs):
         """Get a one or more GBIF records for a Specify GUID or 
         info/error message.
         
