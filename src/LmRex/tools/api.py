@@ -299,48 +299,82 @@ class APIQuery:
 # .............................................................................
 class BisonAPI(APIQuery):
     """Class to query BISON APIs and return results
+    
+    https://bison.usgs.gov/api/search.json?species=Bison%20bison&type=scientific_name&start=0&count=1000
+    
     """
-
+    
     # ...............................................
-    def __init__(self, q_filters=None, other_filters=None, filter_string=None,
-                 headers=None, logger=None):
+    def __init__(
+            self, url=BISON.SOLR_URL, q_filters=None, other_filters=None, 
+            extended_params=None, filter_string=None, headers=None, logger=None):
         """Constructor for BisonAPI class"""
         if headers is None:
             headers = {'Content-Type': 'application/json'}
-        all_q_filters = copy(BisonQuery.QFILTERS)
-        if q_filters:
-            all_q_filters.update(q_filters)
+        if url == BISON.JSON_URL:
+            pairs = []
+            for k, v in extended_params.items():
+                if isinstance(v, list) or isinstance(v, tuple):
+                    val = ''
+                    for opt in v:
+                        val = '{} "{}"'.format(val, v)
+                    pairs.append('{}=({})'.format(k, val))
+                else:
+                    pairs.append('{}=({})'.format(k, v))
+        elif url == BISON.SOLR_URL:
+            all_q_filters = copy(BisonQuery.QFILTERS)
+            if q_filters:
+                all_q_filters.update(q_filters)
+     
+            # Add/replace other filters to defaults for this instance
+            all_other_filters = copy(BisonQuery.FILTERS)
+            if other_filters:
+                all_other_filters.update(other_filters)
+     
+            APIQuery.__init__(
+                self, BISON.SOLR_URL, q_key='q', q_filters=all_q_filters,
+                other_filters=all_other_filters, filter_string=filter_string,
+                headers=headers, logger=logger)
 
-        # Add/replace other filters to defaults for this instance
-        all_other_filters = copy(BisonQuery.FILTERS)
-        if other_filters:
-            all_other_filters.update(other_filters)
-
-        APIQuery.__init__(
-            self, BISON.OCCURRENCE_URL, q_key='q', q_filters=all_q_filters,
-            other_filters=all_other_filters, filter_string=filter_string,
-            headers=headers, logger=logger)
-
-    # ...............................................
-    @classmethod
-    def init_from_url(cls, url, headers=None, logger=None):
-        """Instiate from url
-        """
-        if headers is None:
-            headers = {'Content-Type': 'application/json'}
-        base, filters = url.split('?')
-        if base.strip().startswith(BISON.OCCURRENCE_URL):
-            qry = BisonAPI(filter_string=filters, logger=logger)
-        else:
-            raise Exception(
-                'Bison occurrence API must start with {}'.format(
-                    BISON.OCCURRENCE_URL))
-        return qry
+ 
+#     # ...............................................
+#     def __init__(self, q_filters=None, other_filters=None, filter_string=None,
+#                  headers=None, logger=None):
+#         """Constructor for BisonAPI class"""
+#         if headers is None:
+#             headers = {'Content-Type': 'application/json'}
+#         all_q_filters = copy(BisonQuery.QFILTERS)
+#         if q_filters:
+#             all_q_filters.update(q_filters)
+#  
+#         # Add/replace other filters to defaults for this instance
+#         all_other_filters = copy(BisonQuery.FILTERS)
+#         if other_filters:
+#             all_other_filters.update(other_filters)
+#  
+#         APIQuery.__init__(
+#             self, BISON.SOLR_URL, q_key='q', q_filters=all_q_filters,
+#             other_filters=all_other_filters, filter_string=filter_string,
+#             headers=headers, logger=logger)
+# 
+#     # ...............................................
+#     @classmethod
+#     def init_from_url(cls, url, headers=None, logger=None):
+#         """Instantiate from url"""
+#         if headers is None:
+#             headers = {'Content-Type': 'application/json'}
+#         base, filters = url.split('?')
+#         if base.strip().startswith(BISON.SOLR_URL):
+#             qry = BisonAPI(filter_string=filters, logger=logger)
+#         else:
+#             raise Exception(
+#                 'Bison occurrence API must start with {}'.format(
+#                     BISON.SOLR_URL))
+#         return qry
 
     # ...............................................
     def query(self):
-        """Queries the API and sets 'output' attribute to a JSON object
-        """
+        """Queries the API and sets 'output' attribute to a JSON object"""
         APIQuery.query_by_get(self, output_type='json')
 
     # ...............................................
@@ -358,72 +392,79 @@ class BisonAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def get_tsn_list_for_binomials(cls, logger=None):
-        """Returns a list of sequences containing tsn and tsnCount
-        """
+    def get_occurrence_by_id(self, occ_id, logger=None):
+        """Returns a list of sequences containing tsn and tsnCount"""
         bison_qry = BisonAPI(
+            url=BISON.JSON_URL,
             q_filters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX},
             other_filters=BisonQuery.TSN_FILTERS, logger=logger)
         tsn_list = bison_qry._get_binomial_tsns()
         return tsn_list
-
-    # ...............................................
-    def _get_binomial_tsns(self):
-        data_list = None
-        self.query()
-        if self.output is not None:
-            data_count = self._burrow(BisonQuery.COUNT_KEYS)
-            data_list = self._burrow(BisonQuery.TSN_LIST_KEYS)
-            log_info(
-                'Reported count = {}, actual count = {}'.format(
-                    data_count, len(data_list)), 
-                logger=self.logger)
-        return data_list
-
-    # ...............................................
-    @classmethod
-    def get_itis_tsn_values(cls, itis_tsn, logger=None):
-        """Return ItisScientificName, kingdom, and TSN info for occ record
-        """
-        itis_name = king = tsn_hier = None
-        try:
-            occ_api = BisonAPI(
-                q_filters={BISON.HIERARCHY_KEY: '*-{}-'.format(itis_tsn)},
-                other_filters={'rows': 1}, logger=logger)
-            tsn_hier = occ_api.get_first_value_for(BISON.HIERARCHY_KEY)
-            itis_name = occ_api.get_first_value_for(BISON.NAME_KEY)
-            king = occ_api.get_first_value_for(BISON.KINGDOM_KEY)
-        except Exception as e:
-            log_error(str(e))
-            raise
-        return (itis_name, king, tsn_hier)
-
-    # ...............................................
-    def get_tsn_occurrences(self):
-        """Returns a list of occurrence record dictionaries
-        """
-        data_list = []
-        if self.output is None:
-            self.query()
-        if self.output is not None:
-            data_list = self._burrow(BisonQuery.RECORD_KEYS)
-        return data_list
-
-    # ...............................................
-    def get_first_value_for(self, field_name):
-        """Returns first value for given field name
-        """
-        val = None
-        records = self.get_tsn_occurrences()
-        for rec in records:
-            try:
-                val = rec[field_name]
-                break
-            except KeyError:
-                log_error(
-                    'Missing {} for {}'.format(field_name, self.url), 
-                    logger=self.logger)
-        return val
+        
+#     # ...............................................
+#     @classmethod
+#     def get_tsn_list_for_binomials(cls, logger=None):
+#         """Returns a list of sequences containing tsn and tsnCount"""
+#         bison_qry = BisonAPI(
+#             q_filters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX},
+#             other_filters=BisonQuery.TSN_FILTERS, logger=logger)
+#         tsn_list = bison_qry._get_binomial_tsns()
+#         return tsn_list
+# 
+#     # ...............................................
+#     def _get_binomial_tsns(self):
+#         data_list = None
+#         self.query()
+#         if self.output is not None:
+#             data_count = self._burrow(BisonQuery.COUNT_KEYS)
+#             data_list = self._burrow(BisonQuery.TSN_LIST_KEYS)
+#             log_info(
+#                 'Reported count = {}, actual count = {}'.format(
+#                     data_count, len(data_list)), 
+#                 logger=self.logger)
+#         return data_list
+# 
+#     # ...............................................
+#     @classmethod
+#     def get_itis_tsn_values(cls, itis_tsn, logger=None):
+#         """Return ItisScientificName, kingdom, and TSN info for occ record"""
+#         itis_name = king = tsn_hier = None
+#         try:
+#             occ_api = BisonAPI(
+#                 q_filters={BISON.HIERARCHY_KEY: '*-{}-'.format(itis_tsn)},
+#                 other_filters={'rows': 1}, logger=logger)
+#             tsn_hier = occ_api.get_first_value_for(BISON.HIERARCHY_KEY)
+#             itis_name = occ_api.get_first_value_for(BISON.NAME_KEY)
+#             king = occ_api.get_first_value_for(BISON.KINGDOM_KEY)
+#         except Exception as e:
+#             log_error(str(e))
+#             raise
+#         return (itis_name, king, tsn_hier)
+# 
+#     # ...............................................
+#     def get_tsn_occurrences(self):
+#         """Returns a list of occurrence record dictionaries"""
+#         data_list = []
+#         if self.output is None:
+#             self.query()
+#         if self.output is not None:
+#             data_list = self._burrow(BisonQuery.RECORD_KEYS)
+#         return data_list
+# 
+#     # ...............................................
+#     def get_first_value_for(self, field_name):
+#         """Returns first value for given field name"""
+#         val = None
+#         records = self.get_tsn_occurrences()
+#         for rec in records:
+#             try:
+#                 val = rec[field_name]
+#                 break
+#             except KeyError:
+#                 log_error(
+#                     'Missing {} for {}'.format(field_name, self.url), 
+#                     logger=self.logger)
+#         return val
 
 
 # .............................................................................

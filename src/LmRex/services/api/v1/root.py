@@ -4,7 +4,7 @@ import cherrypy_cors
 
 from LmRex.services.api.v1.lifemapper import LmMap
 from LmRex.services.api.v1.name import (
-    GAcName, ITISName, ITISSolrName, NameSvc)
+    GAcName, ITISName, ITISSolrName, NameSvc, NameTentaclesSvc)
 from LmRex.services.api.v1.occ import (
     GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccTentaclesSvc)
 from LmRex.services.api.v1.sparks import SpecifyArk
@@ -57,7 +57,7 @@ def start_cherrypy_services():
     # Map services
     cherrypy.tree.mount(LmMap(), APIMount.LmMapSvc, conf)
     # Name services
-    cherrypy.tree.mount(NameSvc(), APIMount.NameTentaclesSvc, conf)
+    cherrypy.tree.mount(NameTentaclesSvc(), APIMount.NameTentaclesSvc, conf)
     cherrypy.tree.mount(GAcName(), APIMount.GAcNameSvc, conf)
     cherrypy.tree.mount(ITISSolrName(), APIMount.ITISSolrNameSvc, conf)   
 

@@ -8,7 +8,7 @@ from LmRex.tools.api import (GbifAPI, ItisAPI)
 
 # .............................................................................
 @cherrypy.expose
-class NameSvc(S2nService):
+class _NameSvc(S2nService):
     # ...............................................
     def parse_name_with_gbif(self, namestr):
         goutput = GbifAPI.parse_name(namestr)
@@ -68,7 +68,7 @@ class NameSvc(S2nService):
 
 # .............................................................................
 @cherrypy.expose
-class GAcName(NameSvc):
+class GAcName(_NameSvc):
     # ...............................................
     def get_gbif_matching_taxon(self, namestr, gbif_status, gbif_count):
         output = {}
@@ -123,7 +123,7 @@ class GAcName(NameSvc):
 
 # .............................................................................
 @cherrypy.expose
-class ITISName(NameSvc):
+class ITISName(_NameSvc):
     """
     Note:
         Not currently used, this is too slow.
@@ -157,7 +157,7 @@ class ITISName(NameSvc):
 
 # .............................................................................
 @cherrypy.expose
-class ITISSolrName(NameSvc):
+class ITISSolrName(_NameSvc):
     
     # ...............................................
     def get_itis_accepted_taxon(self, namestr, status, kingdom):
@@ -196,7 +196,7 @@ class ITISSolrName(NameSvc):
 
 # .............................................................................
 @cherrypy.expose
-class NameTentaclesSvc(NameSvc):
+class NameTentaclesSvc(_NameSvc):
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
         all_output = {}

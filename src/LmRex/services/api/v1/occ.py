@@ -7,7 +7,7 @@ from LmRex.services.api.v1.sparks import SpecifyArk
         
 # .............................................................................
 @cherrypy.expose
-class OccurrenceSvc(S2nService):
+class _OccurrenceSvc(S2nService):
 
     # ...............................................
     def _standardize_params(
@@ -48,7 +48,7 @@ class OccurrenceSvc(S2nService):
 
 # .............................................................................
 @cherrypy.expose
-class GOcc(OccurrenceSvc):
+class GOcc(_OccurrenceSvc):
     # ...............................................
     def get_records(self, occid, count_only):
         output = GbifAPI.get_specimen_records_by_occid(
@@ -64,7 +64,7 @@ class GOcc(OccurrenceSvc):
 
 # .............................................................................
 @cherrypy.expose
-class GColl(OccurrenceSvc):
+class GColl(_OccurrenceSvc):
     # ...............................................
     def get_dataset_recs(self, dataset_key, count_only):
         output = GbifAPI.get_records_by_dataset(dataset_key, count_only)
@@ -93,7 +93,7 @@ class GColl(OccurrenceSvc):
 
 # .............................................................................
 @cherrypy.expose
-class IDBOcc(OccurrenceSvc):
+class IDBOcc(_OccurrenceSvc):
     # ...............................................
     def get_records(self, occid, count_only):
         output = IdigbioAPI.get_records_by_occid(occid, count_only=count_only)
@@ -107,7 +107,7 @@ class IDBOcc(OccurrenceSvc):
           
 # .............................................................................
 @cherrypy.expose
-class MophOcc(OccurrenceSvc):
+class MophOcc(_OccurrenceSvc):
     # ...............................................
     def get_records(self, occid, count_only):
         output = MorphoSourceAPI.get_specimen_records_by_occid(
@@ -122,7 +122,7 @@ class MophOcc(OccurrenceSvc):
 
 # .............................................................................
 @cherrypy.expose
-class SPOcc(OccurrenceSvc):
+class SPOcc(_OccurrenceSvc):
     # ...............................................
     def get_records(self, url, occid):
         msg = 'Spocc failed: url = {}, occid = {}'.format(url, occid)
@@ -150,7 +150,7 @@ class SPOcc(OccurrenceSvc):
 
 # .............................................................................
 @cherrypy.expose
-class OccTentaclesSvc(OccurrenceSvc):
+class OccTentaclesSvc(_OccurrenceSvc):
     
     # ...............................................
     def get_records(self, occid, count_only):

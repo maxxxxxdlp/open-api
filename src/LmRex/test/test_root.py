@@ -118,6 +118,7 @@ if __name__ == '__main__':
     guid = TST_VALUES.FISH_OCC_GUIDS[0]
     for flag in (0,1):
         options = {'count_only': flag}
+        tst.test_one(APIMount.OccTentaclesSvc, guid, options)
         tst.test_one(APIMount.GOccSvc, guid, options)
         tst.test_one(APIMount.IDBOccSvc, guid, options)
         tst.test_one(APIMount.MophOccSvc, guid, options)
@@ -127,6 +128,7 @@ if __name__ == '__main__':
     map_options = {'layers': 'bmng,prj,occ'}
     for flag in (0,1):
         options = {'do_parse': flag}
+        tst.test_one(APIMount.NameTentaclesSvc, namestr, options)
         tst.test_one(APIMount.GAcNameSvc, namestr, options)
         tst.test_one(APIMount.ITISSolrNameSvc, namestr, options)
         

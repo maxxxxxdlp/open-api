@@ -186,9 +186,14 @@ SPCOCO_FIELDS = [
 
 # For parsing BISON Solr API response, updated Feb 2015
 class BISON:
-    """Bison constant enumeration
-    """
-    OCCURRENCE_URL = 'https://bison.usgs.gov/solr/occurrences/select'
+    """Bison constant enumeration"""
+#     'https://bison.usgs.gov/api/search.json?params=resourceID%3A(%22865cd00a-f762-11e1-a439-00145eb45e9a%22+)'
+    
+    SOLR_URL = 'https://bison.usgs.gov/solr/occurrences/select'
+    JSON_URL = 'https://bison.usgs.gov/api/search.json'
+    EXTENDED_PARAMS_KEY = 'params'
+    DATASET_ID_KEY = 'resourceID'
+    OCCURRENCE_ID_KEY = 'occurrenceID'    
     # Ends in : to allow appending unique id
     LINK_PREFIX = ('https://bison.usgs.gov/solr/occurrences/select/' +
                    '?q=occurrenceID:')

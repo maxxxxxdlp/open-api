@@ -13,7 +13,7 @@ class WMSSvc(S2nService):
     def _standardize_params(
             self, bbox=None, color=None, exceptions=None, height=None, 
             layers=None, request=None, frmat=None, srs=None, transparent=None, 
-            width=None):
+            width=None, do_match=True):
         """
         Standardize the parameters for all Map Services into a dictionary with 
         all keys as standardized parameter names and values as correctly-typed 
@@ -21,28 +21,24 @@ class WMSSvc(S2nService):
         
         Args:
             bbox: A (min x, min y, max x, max y) tuple of bounding parameters
-            bgcolor: A background color to use for a map
             color: The color (or color ramp) to use for the map
-            crs: The spatial reference system for the map output
             exceptions: The format to report exceptions in
             height: The height (in pixels) of the returned map
-            layers: A list of layer names
+            layers: A comma-delimited list of layer names
             request: The request operation name to perform
             frmat: The desired response format, query parameter is
                 'format'
-            service: The OGC service to use (W*S)
             sld: (todo) A URL referencing a StyledLayerDescriptor XML file which
                 controls or enhances map layers and styling
             sld_body: (todo) A URL-encoded StyledLayerDescriptor XML document which
                 controls or enhances map layers and styling
             srs: The spatial reference system for the map output.  'crs' for
                 version 1.3.0.
-            styles: A list of styles for the response
-            time: A time or time range for map requests
             transparent: Boolean indicating if the background of the map should
                 be transparent
-            version: The version of the service to use
             width: The width (in pixels) of the returned map
+            do_match: Flag indicating whether to query GBIF for the 'accepted' 
+                scientific name
         Return:
             a dictionary containing keys and properly formated values for the
                 user specified parameters.
@@ -65,7 +61,8 @@ class WMSSvc(S2nService):
 #             'styles': None, 
             'transparent': None, 
 #             'version': '1.0', 
-            'width': 600}
+            'width': 600,
+            'do_match': True}
         user_kwargs = {
             'bbox': bbox, 'color': color, 'exceptions': exceptions, 
             'height': height, 'layers': layers, 'request': request, 
@@ -82,26 +79,51 @@ class LmMap(WMSSvc):
     # ...............................................
     def get_sdmproject_with_urls(
             self, namestr, scenariocode, bbox, color, exceptions, height, 
-            layers, frmat, request, srs, transparent, width):
-        """ """
+            layers, frmat, request, srs, transparent, width, do_match):
+        """
+        Return metadata, including a map_url, for a Lifemapper SDM projection.
+         
+        Args:
+            namestr: Scientific name for desired projection
+            scenariocode: Lifemapper code for environmental layerset used 
+                in projection.  Defaults to the code for observed data.
+            bbox: A (min x, min y, max x, max y) tuple of bounding parameters
+            color: The color (or color ramp) to use for the map
+            exceptions: The format to report exceptions in
+            height: The height (in pixels) of the returned map
+            layers: A comma-delimited list of layer names
+            request: The request operation name to perform
+            frmat: The desired response format, query parameter is
+                'format'
+            srs: The spatial reference system for the map output.  'crs' for
+                version 1.3.0.
+            transparent: Boolean indicating if the background of the map should
+                be transparent
+            width: The width (in pixels) of the returned map
+            do_match: Flag indicating whether to query GBIF for the 'accepted' 
+                scientific name
+        """
         output = {'count': 0, 'records': []}
         # Lifemapper only uses GBIF Backbone Taxonomy accepted names
-        gan = GAcName()
-        goutput = gan.GET(
-            namestr=namestr, gbif_accepted=True, do_count=False, do_parse=True)
-        good_names = goutput['records']
-        # Lifemapper uses GBIF Backbone Taxonomy accepted names
-        # If none, try provided namestr
-        scinames = []        
-        if len(good_names) == 0:
-            scinames.append(namestr)
+        if do_match is False:
+            scinames = [namestr] 
         else:
-            for namerec in good_names:
-                try:
-                    scinames.append(namerec['scientificName'])
-                except Exception as e:
-                    print('No scientificName element in GBIF record {} for {}'
-                          .format(namerec, namestr))
+            gan = GAcName()
+            goutput = gan.GET(
+                namestr=namestr, gbif_accepted=True, do_count=False, do_parse=True)
+            good_names = goutput['records']
+            # Lifemapper uses GBIF Backbone Taxonomy accepted names
+            # If none, try provided namestr
+            scinames = []        
+            if len(good_names) == 0:
+                scinames.append(namestr)
+            else:
+                for namerec in good_names:
+                    try:
+                        scinames.append(namerec['scientificName'])
+                    except Exception as e:
+                        print('No scientificName element in GBIF record {} for {}'
+                              .format(namerec, namestr))
         # 2-step until LM returns full objects
         records = []
         msgs = []
@@ -131,7 +153,7 @@ class LmMap(WMSSvc):
     def GET(self, namestr=None, scenariocode=Lifemapper.OBSERVED_SCENARIO_CODE, 
             bbox='-180,-90,180,90', color='red', exceptions=None, height=400, 
             layers='prj', frmat='png', request='getmap', srs='epsg:4326', 
-            transparent=None, width=800):
+            transparent=None, width=800, do_match=True):
         """Get the number of occurrence records for all names "matching" the
         given scientific name string.
         
@@ -161,7 +183,7 @@ class LmMap(WMSSvc):
         usr_params = self._standardize_params(
             bbox=bbox, color=color, exceptions=exceptions, height=height, 
             layers=layers, frmat=frmat, request=request, srs=srs, 
-            transparent=transparent, width=width)
+            transparent=transparent, width=width, do_match=do_match)
         if namestr is None:
             return {'spcoco.message': 'S^n Lifemapper mapper is online'}
         else:
@@ -170,7 +192,8 @@ class LmMap(WMSSvc):
                 usr_params['exceptions'], usr_params['height'], 
                 usr_params['layers'], usr_params['format'], 
                 usr_params['request'], usr_params['srs'], 
-                usr_params['transparent'],  usr_params['width'])
+                usr_params['transparent'],  usr_params['width'], 
+                usr_params['do_match'])
 
 # .............................................................................
 if __name__ == '__main__':
