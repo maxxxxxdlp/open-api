@@ -242,7 +242,7 @@ class NameTentaclesSvc(_NameSvc):
 # .............................................................................
 if __name__ == '__main__':
     # test    
-    for namestr in TST_VALUES.NAMES[:4]:        
+    for namestr in TST_VALUES.NAMES[:2]:        
         print('Name = {}'.format(namestr))
         
         s2napi = NameTentaclesSvc()

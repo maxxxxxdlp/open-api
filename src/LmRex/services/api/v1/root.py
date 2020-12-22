@@ -1,16 +1,33 @@
 """This module provides REST services for service objects"""
 import cherrypy
-import cherrypy_cors
+# import cherrypy_cors
 
 from LmRex.services.api.v1.lifemapper import LmMap
 from LmRex.services.api.v1.name import (
-    GAcName, ITISName, ITISSolrName, NameSvc, NameTentaclesSvc)
+    GAcName, ITISName, ITISSolrName, NameTentaclesSvc)
 from LmRex.services.api.v1.occ import (
     GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccTentaclesSvc)
 from LmRex.services.api.v1.sparks import SpecifyArk
 
 from LmRex.common.lmconstants import (APIMount, CHERRYPY_CONFIG_FILE)
 
+# .............................................................................
+def CORS():
+    """This function enables Cross-Origin Resource Sharing (CORS)
+    for a web request.
+
+    Function to be called before processing a request.  This will add response
+    headers required for CORS (Cross-Origin Resource Sharing) requests.  This
+    is needed for browsers running JavaScript code from a different domain.
+    """
+    cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
+    cherrypy.response.headers[
+        'Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
+    cherrypy.response.headers['Access-Control-Allow-Headers'] = '*'
+    cherrypy.response.headers['Access-Control-Allow-Credentials'] = 'true'
+    if cherrypy.request.method.lower() == 'options':
+        cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return 'OK'
 
 # .............................................................................
 def start_cherrypy_services():
@@ -19,8 +36,8 @@ def start_cherrypy_services():
         }
     # .............................................................................
     # Tell CherryPy to add headers needed for CORS
-    cherrypy_cors.install()
-
+#     cherrypy_cors.install()
+    cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 #     cherrypy.config.update(CHERRYPY_CONFIG_FILE)
     cherrypy.config.update(
         {'server.socket_port': 80,
