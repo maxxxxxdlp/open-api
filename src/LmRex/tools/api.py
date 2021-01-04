@@ -110,6 +110,20 @@ class APIQuery:
         self.clear_all(other_filters=False, q_filters=True)
 
     # ...............................................
+    def _burrow(self, key_list):
+        this_dict = self.output
+        if isinstance(this_dict, dict):
+            for key in key_list:
+                try:
+                    this_dict = this_dict[key]
+                except KeyError:
+                    raise Exception('Missing key {} in output'.format(key))
+        else:
+            raise Exception('Invalid output type ({})'.format(type(this_dict)))
+        return this_dict
+
+
+    # ...............................................
     def _assemble_filter_string(self, filter_string=None):
         # Assemble key/value pairs
         if filter_string is None:
@@ -299,9 +313,10 @@ class APIQuery:
 # .............................................................................
 class BisonAPI(APIQuery):
     """Class to query BISON APIs and return results
-    
+    OPEN_SEARCH occ
     https://bison.usgs.gov/api/search.json?species=Bison%20bison&type=scientific_name&start=0&count=1000
-    
+    WMS map
+    https://bison.usgs.gov/api/wms?LAYERS=species&species=Bison%20bison&type=scientific_name&TRANSPARENT=true&FORMAT=image%2Fpng&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=&SRS=EPSG%3A3857&BBOX=-20037508.34,-1.862645149231e-9,-5009377.085,15028131.255&WIDTH=512&HEIGHT=512    
     """
     
     # ...............................................
@@ -311,14 +326,14 @@ class BisonAPI(APIQuery):
         """Constructor for BisonAPI class"""
         if headers is None:
             headers = {'Content-Type': 'application/json'}
-        if url == BISON.JSON_URL:
+        if url == BISON.OPEN_SEARCH_URL:
             pairs = []
             for k, v in extended_params.items():
                 if isinstance(v, list) or isinstance(v, tuple):
                     val = ''
                     for opt in v:
-                        val = '{} "{}"'.format(val, v)
-                    pairs.append('{}=({})'.format(k, val))
+                        val = '{} "{}"'.format(val, opt)
+                        pairs.append('{}=({})'.format(k, val))
                 else:
                     pairs.append('{}=({})'.format(k, v))
         elif url == BISON.SOLR_URL:
@@ -337,25 +352,6 @@ class BisonAPI(APIQuery):
                 headers=headers, logger=logger)
 
  
-#     # ...............................................
-#     def __init__(self, q_filters=None, other_filters=None, filter_string=None,
-#                  headers=None, logger=None):
-#         """Constructor for BisonAPI class"""
-#         if headers is None:
-#             headers = {'Content-Type': 'application/json'}
-#         all_q_filters = copy(BisonQuery.QFILTERS)
-#         if q_filters:
-#             all_q_filters.update(q_filters)
-#  
-#         # Add/replace other filters to defaults for this instance
-#         all_other_filters = copy(BisonQuery.FILTERS)
-#         if other_filters:
-#             all_other_filters.update(other_filters)
-#  
-#         APIQuery.__init__(
-#             self, BISON.SOLR_URL, q_key='q', q_filters=all_q_filters,
-#             other_filters=all_other_filters, filter_string=filter_string,
-#             headers=headers, logger=logger)
 # 
 #     # ...............................................
 #     @classmethod
@@ -378,28 +374,55 @@ class BisonAPI(APIQuery):
         APIQuery.query_by_get(self, output_type='json')
 
     # ...............................................
-    def _burrow(self, key_list):
-        this_dict = self.output
-        if isinstance(this_dict, dict):
-            for key in key_list:
-                try:
-                    this_dict = this_dict[key]
-                except KeyError:
-                    raise Exception('Missing key {} in output'.format(key))
-        else:
-            raise Exception('Invalid output type ({})'.format(type(this_dict)))
-        return this_dict
-
+    @classmethod
+    def _page_occurrences_by_name(self, namestr, start, limit, logger=None):
+        """Returns a list of sequences containing tsn and tsnCount"""
+        ofilters = {
+            'species': namestr, 'type': 'scientific_name', 'start': start, 
+            'count': limit}
+        bapi = BisonAPI(
+            url=BISON.OPEN_SEARCH_URL, other_filters=ofilters, logger=logger)
+        bapi.query_by_get()
+        return bapi.output
+        
     # ...............................................
     @classmethod
-    def get_occurrence_by_id(self, occ_id, logger=None):
+    def get_occurrences_by_name(self, namestr, count_only, logger=None):
         """Returns a list of sequences containing tsn and tsnCount"""
-        bison_qry = BisonAPI(
-            url=BISON.JSON_URL,
-            q_filters={BISON.NAME_KEY: BISON.BINOMIAL_REGEX},
-            other_filters=BisonQuery.TSN_FILTERS, logger=logger)
-        tsn_list = bison_qry._get_binomial_tsns()
-        return tsn_list
+        start = 0
+        output = {}
+        all_recs = []
+        is_end = False
+        if count_only is True:
+            limit = 1
+        else:
+            limit = BISON.LIMIT
+
+        while not is_end:
+            curr_output = BisonAPI._page_occurrences_by_name(
+                namestr, start, limit, logger=logger)
+            # Total found
+            output['count'] = curr_output['total']
+            # Check for api failure
+            try:
+                curr_output['error']
+            except:
+                pass
+            else:
+                is_end = True
+                output['error'] = curr_output['error']
+            # Loop only once for count
+            if count_only is True:
+                is_end = True
+            else:
+                all_recs.extend(curr_output['data'])
+                if len(all_recs) >= output['count']:
+                    is_end = True
+                    
+                start += BISON.LIMIT
+        if count_only is False:
+            output['records'] = all_recs
+        return output
         
 #     # ...............................................
 #     @classmethod
@@ -623,25 +646,6 @@ class ItisAPI(APIQuery):
                 output['error'] = 'Failed to return docs element ({})'.format(
                     cls.__class__.__name__)
         return output
-    
-# # ...............................................
-#     @classmethod
-#     def map_record(cls, rec, mapping):
-#         """
-#         Map old record to new, pulling values from returned record which may be 
-#         nested several levels.
-#         
-#         Args:
-#             rec: json/dictionary returned from a web service
-#             mapping: dictionary mapping new records to returned records with 
-#                 keys = new fieldnames and values = a sequence of filed
-#         """
-#         newrec = {}
-#         for new_fld, orig_fields in mapping.items():
-#             val = rec
-#             for ofld in orig_fields:
-#                 val = val[ofld]
-#             newrec[new_fld] = val
             
             
 # ...............................................

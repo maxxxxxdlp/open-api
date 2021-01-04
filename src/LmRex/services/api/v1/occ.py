@@ -1,7 +1,7 @@
 import cherrypy
 
 from LmRex.tools.api import (
-    GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI)
+    GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI, BisonAPI)
 from LmRex.services.api.v1.base import S2nService
 from LmRex.services.api.v1.sparks import SpecifyArk
         
@@ -9,42 +9,41 @@ from LmRex.services.api.v1.sparks import SpecifyArk
 @cherrypy.expose
 class _OccurrenceSvc(S2nService):
 
-    # ...............................................
-    def _standardize_params(
-            self, occid=None, dataset_key=None, count_only=None, url=None):
-        """
-        Standardize the parameters for all Occurrence Services into a dictionary 
-        with all keys as standardized parameter names and values as 
-        correctly-typed user values or defaults. 
-        
-        Args:
-            occid: a Specify occurrence GUID, mapped to the 
-                dwc:occurrenceId field
-            dataset_key: a GBIF dataset GUID
-            count_only: flag indicating whether to return records
-            url: direct URL to Specify occurrence, only used with SPOcc
-        Return:
-            a dictionary containing keys and properly formated values for the
-                user specified parameters.
-        """
-        kwarg_defaults = {
-            'occid': (None, ''), 'dataset_key': (None, ''), 'count_only': False, 
-            'url': (None, '')}
-        user_kwargs = {
-            'occid': occid, 'dataset_key': dataset_key, 
-            'count_only': count_only, 'url': url}
-        usr_params = self._process_params(kwarg_defaults, user_kwargs)
-        return usr_params
+#     # ...............................................
+#     def _standardize_params(
+#             self, occid=None, namestr=None, itis_match=True, dataset_key=None, count_only=None, 
+#             url=None):
+#         """
+#         Standardize the parameters for all Occurrence Services into a dictionary 
+#         with all keys as standardized parameter names and values as 
+#         correctly-typed user values or defaults. 
+#         
+#         Args:
+#             occid: a Specify occurrence GUID, mapped to the 
+#                 dwc:occurrenceId field
+#             use_itis: flag indicating whether to match using ITIS first, 
+#                 used with BISON
+#             dataset_key: a GBIF dataset GUID for returning a set of points, 
+#                 used with GBIF
+#             count_only: flag indicating whether to return records
+#             url: direct URL to Specify occurrence, only used with SPOcc
+#         Return:
+#             a dictionary containing keys and properly formated values for the
+#                 user specified parameters.
+#         """
+#         kwarg_defaults = {
+#             'occid': (None, ''), 'dataset_key': (None, ''), 'count_only': False, 
+#             'url': (None, '')}
+#         user_kwargs = {
+#             'occid': occid, 'dataset_key': dataset_key, 
+#             'count_only': count_only, 'url': url}
+#         usr_params = self._process_params(kwarg_defaults, user_kwargs)
+#         return usr_params
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def _get_records_from_params(self, usr_params):
-        occid = usr_params['occid']
-        count_only = usr_params['count_only']
-        if occid is not None:
-            return self.get_records(occid, count_only)
-        else:
-            return {'info': 'S^n service is online'}
+    def _show_online(self, msg):
+        return {'info': msg}
 
 # .............................................................................
 @cherrypy.expose
@@ -91,6 +90,36 @@ class GColl(_OccurrenceSvc):
         else:
             return self.get_dataset_recs(dataset_key, usr_params['count_only'])
 
+
+# .............................................................................
+@cherrypy.expose
+class BColl(_OccurrenceSvc):
+    # ...............................................
+    def get_recs_for_name(self, namestr, count_only):
+        output = BisonAPI.get_occurrences_by_name(namestr, count_only)
+        return output
+
+    # ...............................................
+    @cherrypy.tools.json_out()
+    def GET(self, namestr=None, match_itis=True, count_only=None, **kwargs):
+        """Get a one or more GBIF records for a Specify GUID or 
+        info/error message.
+        
+        Args:
+            dataset_key: a GBIF dataset GUID, from the DWCA metadata
+            kwargs: additional keyword arguments - to be ignored
+        Return:
+            a list of dictionaries containing DWC records from the chosen
+            dataset.  
+        """
+        usr_params = self._standardize_params(
+            namestr=namestr, match_itis=match_itis, count_only=count_only)
+        namestr = usr_params['namestr']
+        if namestr is None:
+            return self._show_online('S^n Bison occurrences by name is online')
+        else:
+            return self._get_records(namestr, count_only)
+    
 # .............................................................................
 @cherrypy.expose
 class IDBOcc(_OccurrenceSvc):

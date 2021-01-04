@@ -65,6 +65,7 @@ class S2NEndpoint:
     Map = 'map'
     Heartbeat = 'hb'
     # Service providers
+    BISON = 'bison'
     Gbif = 'gbif'
     Idigbio = 'idb'
     ITISSolrName = 'itis'
@@ -91,6 +92,8 @@ class APIMount:
     # occurrence GBIF-dataset service
     GCollSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Dataset)
+    BCollSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.BISON)
     
     # name services
     NameTentaclesSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Name)
@@ -104,6 +107,8 @@ class APIMount:
     # map services
     LmMapSvc = '{}/{}/{}'.format(
         S2NEndpoint.Root, S2NEndpoint.Map, S2NEndpoint.Lifemapper)
+    BisonMapSvc = '{}/{}/{}'.format(
+        S2NEndpoint.Root, S2NEndpoint.Map, S2NEndpoint.BISON)
     
     # Service testing
     HeartbeatSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Heartbeat)
@@ -190,10 +195,13 @@ class BISON:
 #     'https://bison.usgs.gov/api/search.json?params=resourceID%3A(%22865cd00a-f762-11e1-a439-00145eb45e9a%22+)'
     
     SOLR_URL = 'https://bison.usgs.gov/solr/occurrences/select'
-    JSON_URL = 'https://bison.usgs.gov/api/search.json'
+    OPEN_SEARCH_URL = 'https://bison.usgs.gov/api/search.json'
+    REST_URL = 'https://bison.usgs.gov/index.jsp'
+    BISON_URL = 'https://bison.usgs.gov/api'
     EXTENDED_PARAMS_KEY = 'params'
     DATASET_ID_KEY = 'resourceID'
-    OCCURRENCE_ID_KEY = 'occurrenceID'    
+    OCCURRENCE_ID_KEY = 'occurrenceID'
+    LIMIT = 1000
     # Ends in : to allow appending unique id
     LINK_PREFIX = ('https://bison.usgs.gov/solr/occurrences/select/' +
                    '?q=occurrenceID:')
