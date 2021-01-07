@@ -22,6 +22,8 @@ DWC_RECORD_TITLE = 'digital specimen object'
 JSON_HEADERS = {'Content-Type': 'application/json'}
 CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, CONFIG_DIR, 'cherrypy.conf')
 
+VALID_MAP_REQUESTS = ['getmap', 'getlegendgraphic']
+
 # .............................................................................
 class TST_VALUES:
     FISH_DS_GUIDS = ['56caf05f-1364-4f24-85f6-0c82520c2792', 
@@ -45,18 +47,25 @@ class TST_VALUES:
         'Phlox longifolia Nutt.',
         'Tulipa sylvestris L.',
         'Medinilla speciosa Blume',
-        'Acer caesium Wall. ex Brandis', 'Acer heldreichii Orph. ex Boiss.', 
-        'Acer pseudoplatanus L.', 'Acer velutinum Boiss.', 
-        'Acer hyrcanum Fisch. & Meyer', 'Acer monspessulanum L.', 
-        'Acer obtusifolium Sibthorp & Smith', 'Acer opalus Miller', 
-        'Acer sempervirens L.', 'Acer floridanum (Chapm.) Pax', 
-        'Acer grandidentatum Torr. & Gray', 'Acer leucoderme Small', 
-        'Acer nigrum Michx.f.', 'Acer skutchii Rehder', 'Acer saccharum Marshall']
-    
+        'Acer caesium Wall. ex Brandis', 
+        'Acer heldreichii Orph. ex Boiss.', 
+        'Acer pseudoplatanus L.', 
+        'Acer velutinum Boiss.', 
+        'Acer hyrcanum Fisch. & Meyer', 
+        'Acer monspessulanum L.', 
+        'Acer obtusifolium Sibthorp & Smith', 
+        'Acer opalus Miller', 
+        'Acer sempervirens L.', 
+        'Acer floridanum (Chapm.) Pax', 
+        'Acer grandidentatum Torr. & Gray', 
+        'Acer leucoderme Small', 
+        'Acer nigrum Michx.f.', 
+        'Acer skutchii Rehder', 
+        'Acer saccharum Marshall']
     ITIS_TSNS = [526853, 183671, 182662, 566578]
 
 # .............................................................................
-class S2NEndpoint:
+class APIService:
     Root = '/api/v1'
     # Service types
     Occurrence = 'occ'
@@ -64,70 +73,98 @@ class S2NEndpoint:
     Dataset = 'dataset'
     Map = 'map'
     Heartbeat = 'hb'
-    # Service providers
-    BISON = 'bison'
-    Gbif = 'gbif'
-    Idigbio = 'idb'
-    ITISSolrName = 'itis'
-    ITISName = 'itis2'
-    Lifemapper = 'lm'
-    MorphoSource = 'mopho'
-    Specify = 'specify'
-    SpecifyArk = 'sparks'
-# .............................................................................
-class APIMount:
-    # Specify ARK resolver service
-    SpecifyArkSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.SpecifyArk)
-    
-    # occurrence services
-    OccTentaclesSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Occurrence)
-    GOccSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Gbif)
-    IDBOccSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Idigbio)
-    MophOccSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.MorphoSource)
-    SPOccSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Specify)
-    # occurrence GBIF-dataset service
-    GCollSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.Dataset)
-    BCollSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Occurrence, S2NEndpoint.BISON)
-    
-    # name services
-    NameTentaclesSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Name)
-    GAcNameSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.Gbif)
-    ITISSolrNameSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISSolrName)
-#     ITISNameSvc = '{}/{}/{}'.format(
-#         S2NEndpoint.Root, S2NEndpoint.Name, S2NEndpoint.ITISName)
-    
-    # map services
-    LmMapSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Map, S2NEndpoint.Lifemapper)
-    BisonMapSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Map, S2NEndpoint.BISON)
-    
-    # Service testing
-    HeartbeatSvc = '{}/{}'.format(S2NEndpoint.Root, S2NEndpoint.Heartbeat)
-    HeartbeatGbifSvc = '{}/{}/{}'.format(
-        S2NEndpoint.Root, S2NEndpoint.Heartbeat, S2NEndpoint.Gbif)
+    Resolver = 'resolve'
 
-    @staticmethod
-    def occurrence_services():
-        return [
-            APIMount.SpecifyArkSvc, APIMount.OccurrenceSvc, APIMount.GOccSvc, 
-            APIMount.IDBOccSvc, APIMount.SPOccSvc]
-    @staticmethod
-    def name_services():
-        return [
-            APIMount.NameSvc, APIMount.GAcNameSvc, APIMount.ITISNameSvc, 
-            APIMount.ITISSolrNameSvc]
-    @staticmethod
-    def dataset_services():
-        return [APIMount.GCollSvc]
+# .............................................................................
+class ServiceProvider:
+    BISON = {
+        'name': 'BISON', 'endpoint': 'bison', 'services': [APIService.Dataset]}
+    GBIF = {
+        'name': 'GBIF', 'endpoint': 'gbif', 'service': [
+            APIService.Occurrence, APIService.Name, APIService.Dataset]}
+    iDigBio = {
+        'name': 'iDigBio', 'endpoint': 'idb', 'services': [
+            APIService.Occurrence]}
+    ITISSolr = {
+        'name': 'ITIS Solr Web Services', 'endpoint': 'itis', 'services': [
+            APIService.Name]}
+    ITISWebService = {
+        'name': 'ITIS Web Services', 'endpoint': 'itis2', 'services': [
+            APIService.Name]}
+    Lifemapper = {
+        'name': 'Lifemapper', 'endpoint': 'lm', 'services': [
+            APIService.Map]}
+    MorphoSource = {
+        'name': 'MorphoSource', 'endpoint': 'mopho', 'services': [
+            APIService.Occurrence]}
+    Specify = {
+        'name': 'Specify', 'endpoint': 'specify', 'services': [
+            APIService.Occurrence, APIService.Resolver]}
+#     SpecifyArk = {
+#         'name': 'Specify Resolver', 'endpoint': 'sparks', 'services': [
+#             APIService.Resolver]}
+
+
+# # .............................................................................
+# class APIMount:
+#     # root, APIService, ServiceProvider['endpoint']
+#     # Specify ARK resolver service
+#     SpecifyArk = '{}/{}'.format(APIService.Root, APIService.SpecifyArk)
+#     
+#     # occurrence services
+#     Occurrence = '{}/{}'.format(APIService.Root, APIService.Occurrence)
+#     GBIF_Occurrence = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Occurrence, 
+#         ServiceProvider.GBIF['endpoint'])
+#     IDB_Occurrence = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Occurrence, 
+#         ServiceProvider.iDigBio['endpoint'])
+#     MorphoSource_Occurrence = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Occurrence, 
+#         ServiceProvider.MorphoSource['endpoint'])
+#     Specify_Occurrence = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Occurrence, 
+#         ServiceProvider.Specify['endpoint'])
+#     
+#     # occurrence dataset service
+#     GCollSvc = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Dataset)
+#     BCollSvc = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Dataset, ServiceProvider.BISON['endpoint'])
+#     
+#     # name services
+#     NameTentaclesSvc = '{}/{}'.format(APIService.Root, APIService.Name)
+#     GAcNameSvc = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Name, ServiceProvider.GBIF['endpoint'])
+#     ITISSolrNameSvc = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Name, ServiceProvider.ITISSolr['endpoint'])
+# #     ITISNameSvc = '{}/{}/{}'.format(
+# #         APIService.Root, APIService.Name, S2NEndpoint.ITISName)
+#     
+#     # map services
+#     LmMapSvc = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Map, ServiceProvider.Lifemapper['endpoint'])
+#     BisonMapSvc = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Map, ServiceProvider.BISON['endpoint'])
+#     
+#     # Service testing
+#     HeartbeatSvc = '{}/{}'.format(APIService.Root, APIService.Heartbeat)
+#     HeartbeatGbifSvc = '{}/{}/{}'.format(
+#         APIService.Root, APIService.Heartbeat, ServiceProvider.Gbif['endpoint'])
+# 
+#     @staticmethod
+#     def occurrence_services():
+#         return [
+#             APIMount.SpecifyArkSvc, APIMount.OccurrenceSvc, APIMount.GOccSvc, 
+#             APIMount.IDBOccSvc, APIMount.SPOccSvc]
+#     @staticmethod
+#     def name_services():
+#         return [
+#             APIMount.NameSvc, APIMount.GAcNameSvc, APIMount.ITISNameSvc, 
+#             APIMount.ITISSolrNameSvc]
+#     @staticmethod
+#     def dataset_services():
+#         return [APIMount.GCollSvc]
 
 # .............................................................................
 class DWCA:
@@ -301,6 +338,16 @@ class Lifemapper:
     ATOM_KEY = 'atom'
     SCENARIO_KEY = 'projectionscenariocode'
     COMMANDS = ['count']
+    VALID_COLORS = [
+        'red', 'gray', 'green', 'blue', 'safe', 'pretty', 'yellow', 
+        'fuschia', 'aqua', 'bluered', 'bluegreen', 'greenred']
+    
+    @staticmethod
+    def valid_scenario_codes():
+        valid_scenario_codes = [Lifemapper.OBSERVED_SCENARIO_CODE]
+        valid_scenario_codes.extend(Lifemapper.PAST_SCENARIO_CODES)
+        valid_scenario_codes.extend(Lifemapper.FUTURE_SCENARIO_CODES)
+        return valid_scenario_codes
 
 # ......................................................
 class MorphoSource:

@@ -1744,12 +1744,33 @@ class LifemapperAPI(APIQuery):
             if len(recs) == 0:
                 output['warning'] = 'Failed to find projections for {}'.format(
                     name)
+            background_layer_name = 'bmng'
             for rec in recs:
-                url = LifemapperAPI._construct_map_url(
-                    rec, bbox, color, exceptions, height, layers, frmat, 
-                    request, srs, transparent, width)
-                if url is not None:
-                    rec['map_url'] = url
+                # Add base WMS map url with LM-specific parameters into 
+                #     map section of metadata
+                try:
+                    rec['map']['lmMapEndpoint'] = '{}/{}?layers={}'.format(
+                        rec['map']['endpoint'], rec['map']['mapName'],
+                        rec['map']['layerName'])
+                except Exception as err:
+                    msg = 'Failed getting map url components {}'.format(err)
+                    log_error(msg, logger=logger)
+                    output['error'] = msg
+                else:
+                    # Add background layername into map section of metadata
+                    rec['map']['backgroundLayerName']  = background_layer_name
+                    # Add point layername into map section of metadata
+                    try:
+                        occ_layer_name = 'occ_{}'.format(rec['occurrenceSet']['id'])
+                    except:
+                        occ_layer_name = ''
+                    rec['map']['pointLayerName']  = occ_layer_name
+                    # Add full WMS map url with all required parameters into metadata
+                    url = LifemapperAPI._construct_map_url(
+                        rec, bbox, color, exceptions, height, layers, frmat, 
+                        request, srs, transparent, width)
+                    if url is not None:
+                        rec['map_url'] = url
         output['count'] = len(recs)
         output['records'] = recs
         return output

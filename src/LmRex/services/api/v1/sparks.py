@@ -1,14 +1,22 @@
 import cherrypy
 
+from LmRex.common.lmconstants import (ServiceProvider, APIService)
 import LmRex.tools.solr as SpSolr
+from LmRex.services.api.v1.base import _S2nService
 
 collection = 'spcoco'
 solr_location = 'notyeti-192.lifemapper.org'
 
 # .............................................................................
 @cherrypy.expose
-class SpecifyArk:
+class _ResolveSvc(_S2nService):
+    SERVICE_TYPE = APIService.Resolver
+
+# .............................................................................
+@cherrypy.expose
+class SpecifyResolve(_ResolveSvc):
     """Query the Specify ARK resolver for a GUID"""
+    PROVIDER = ServiceProvider.Specify
 
     # ...............................................
     @staticmethod
@@ -59,5 +67,13 @@ class SpecifyArk:
         else:
             return self.get_specify_arc_rec(occid)
 
-
-
+# .............................................................................
+if __name__ == '__main__':
+    # test
+    from LmRex.common.lmconstants import TST_VALUES
+    
+    for occid in TST_VALUES.BIRD_OCC_GUIDS[:1]:
+        print(occid)
+        # Specify ARK Record
+        spark = SpecifyResolve()
+        solr_output = spark.GET(occid)

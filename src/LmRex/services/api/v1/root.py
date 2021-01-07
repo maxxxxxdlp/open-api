@@ -2,14 +2,13 @@
 import cherrypy
 # import cherrypy_cors
 
-from LmRex.services.api.v1.lifemapper import LmMap
-from LmRex.services.api.v1.name import (
-    GAcName, ITISName, ITISSolrName, NameTentaclesSvc)
+from LmRex.services.api.v1.map import MapLM
+from LmRex.services.api.v1.name import (NameGBIF, NameITISSolr, NameTentacles)
 from LmRex.services.api.v1.occ import (
-    GOcc, GColl, IDBOcc, MophOcc, SPOcc, OccTentaclesSvc)
-from LmRex.services.api.v1.sparks import SpecifyArk
+    OccGBIF, DatasetGBIF, OccIDB, OccMopho, OccSpecify, OccTentacles)
+from LmRex.services.api.v1.sparks import SpecifyResolve
 
-from LmRex.common.lmconstants import (APIMount, CHERRYPY_CONFIG_FILE)
+from LmRex.common.lmconstants import (CHERRYPY_CONFIG_FILE)
 
 # .............................................................................
 def CORS():
@@ -28,7 +27,7 @@ def CORS():
     if cherrypy.request.method.lower() == 'options':
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         return 'OK'
-
+    
 # .............................................................................
 def start_cherrypy_services():
     conf = {
@@ -61,22 +60,22 @@ def start_cherrypy_services():
     cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
     
     # ARK service
-    cherrypy.tree.mount(SpecifyArk(), APIMount.SpecifyArkSvc, conf)
+    cherrypy.tree.mount(SpecifyResolve(), SpecifyResolve.endpoint(), conf)
 
     # Occurrence services
-    cherrypy.tree.mount(OccTentaclesSvc(), APIMount.OccTentaclesSvc, conf)
-    cherrypy.tree.mount(GOcc(), APIMount.GOccSvc, conf)
-    cherrypy.tree.mount(IDBOcc(), APIMount.IDBOccSvc, conf)
-    cherrypy.tree.mount(MophOcc(), APIMount.MophOccSvc, conf)
-    cherrypy.tree.mount(SPOcc(), APIMount.SPOccSvc, conf)
+    cherrypy.tree.mount(OccTentacles(), OccTentacles.endpoint(), conf)
+    cherrypy.tree.mount(OccGBIF(), OccGBIF.endpoint(), conf)
+    cherrypy.tree.mount(OccIDB(), OccIDB.endpoint(), conf)
+    cherrypy.tree.mount(OccMopho(), OccMopho.endpoint(), conf)
+    cherrypy.tree.mount(OccSpecify(), OccSpecify.endpoint(), conf)
     # Occurrence by dataset
-    cherrypy.tree.mount(GColl(), APIMount.GCollSvc, conf)
+    cherrypy.tree.mount(DatasetGBIF(), DatasetGBIF.endpoint(), conf)
     # Map services
-    cherrypy.tree.mount(LmMap(), APIMount.LmMapSvc, conf)
+    cherrypy.tree.mount(MapLM(), MapLM.endpoint(), conf)
     # Name services
-    cherrypy.tree.mount(NameTentaclesSvc(), APIMount.NameTentaclesSvc, conf)
-    cherrypy.tree.mount(GAcName(), APIMount.GAcNameSvc, conf)
-    cherrypy.tree.mount(ITISSolrName(), APIMount.ITISSolrNameSvc, conf)   
+    cherrypy.tree.mount(NameTentacles(), NameTentacles.endpoint(), conf)
+    cherrypy.tree.mount(NameGBIF(), NameGBIF.endpoint(), conf)
+    cherrypy.tree.mount(NameITISSolr(), NameITISSolr.endpoint(), conf)   
 
     cherrypy.engine.start()
     cherrypy.engine.block()

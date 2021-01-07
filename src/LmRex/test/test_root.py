@@ -3,7 +3,10 @@ from cherrypy.test import helper
 import requests
 
 # import LmRex.api.root import start_cherrypy_services 
-from LmRex.common.lmconstants import (HTTPStatus, APIMount, TST_VALUES)
+from LmRex.common.lmconstants import (HTTPStatus, ServiceProvider, TST_VALUES)
+from LmRex.services.api.v1.map import *
+from LmRex.services.api.v1.name import *
+from LmRex.services.api.v1.occ import *
 from LmRex.tools.lm_xml import fromstring, deserialize
 from cherrypy.test.test_config import setup_server
 
@@ -58,13 +61,13 @@ class SimpleCPTest(helper.CPWebCase):
 #         for namestr in TST_VALUES.NAMES:
 #             do_parse = True
 #             url = 'http://{}{}/{}'.format(
-#                 TST_SERVER, APIMount.GAcNameSvc, namestr)
+#                 TST_SERVER, ServiceProvider.GAcNameSvc, namestr)
 #             output = self._query_by_url(url)
 #             print(namestr, output)
 
 # ......................................................
     def test_get_fish(self):
-        for svc in APIMount.occurrence_services():
+        for svc in ServiceProvider.occurrence_services():
             url = 'http://{}{}'.format(TST_SERVER, svc)
             output = self._query_by_url(url)
             print('Returned status {}, output {} from {}'.format(
@@ -117,19 +120,20 @@ if __name__ == '__main__':
     
     guid = TST_VALUES.FISH_OCC_GUIDS[0]
     for flag in (0,1):
-        options = {'count_only': flag}
-        tst.test_one(APIMount.OccTentaclesSvc, guid, options)
-        tst.test_one(APIMount.GOccSvc, guid, options)
-        tst.test_one(APIMount.IDBOccSvc, guid, options)
-        tst.test_one(APIMount.MophOccSvc, guid, options)
-        tst.test_one(APIMount.SPOccSvc, guid, options)
+        options = {'count_only': flag}        
+        tst.test_one(OccGBIF.endpoint(), guid, options)
+        tst.test_one(OccIDB.endpoint(), guid, options)
+        tst.test_one(OccMopho.endpoint(), guid, options)
+        tst.test_one(OccSpecify.endpoint(), guid, options)
+        tst.test_one(OccTentacles.endpoint(), guid, options)
+        
     
     namestr = TST_VALUES.NAMES[0]
     map_options = {'layers': 'bmng,prj,occ'}
     for flag in (0,1):
         options = {'do_parse': flag}
-        tst.test_one(APIMount.NameTentaclesSvc, namestr, options)
-        tst.test_one(APIMount.GAcNameSvc, namestr, options)
-        tst.test_one(APIMount.ITISSolrNameSvc, namestr, options)
+        tst.test_one(NameGBIF.endpoint(), namestr, options)
+        tst.test_one(NameITISSolr.endpoint(), namestr, options)
+        tst.test_one(NameTentacles.endpoint(), namestr, options)
         
-        tst.test_one(APIMount.LmMapSvc, namestr, map_options)
+        tst.test_one(MapLM.endpoint(), namestr, map_options)
