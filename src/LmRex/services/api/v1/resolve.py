@@ -10,7 +10,7 @@ solr_location = 'notyeti-192.lifemapper.org'
 # .............................................................................
 @cherrypy.expose
 class _ResolveSvc(_S2nService):
-    SERVICE_TYPE = APIService.Resolver
+    SERVICE_TYPE = APIService.Resolve
 
 # .............................................................................
 @cherrypy.expose
@@ -43,6 +43,10 @@ class SpecifyResolve(_ResolveSvc):
     # ...............................................
     def get_specify_arc_rec(self, occid):
         output = SpSolr.query_guid(collection, occid, solr_location=solr_location)
+        try:
+            output['count']
+        except:
+            output['error'] = 'Failed to return count from Specify Resolve'
         return output
 
     # ...............................................

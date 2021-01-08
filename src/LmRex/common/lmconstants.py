@@ -72,8 +72,8 @@ class APIService:
     Name = 'name'
     Dataset = 'dataset'
     Map = 'map'
-    Heartbeat = 'hb'
-    Resolver = 'resolve'
+    Heartbeat = 'heartbeat'
+    Resolve = 'resolve'
 
 # .............................................................................
 class ServiceProvider:
@@ -99,7 +99,7 @@ class ServiceProvider:
             APIService.Occurrence]}
     Specify = {
         'name': 'Specify', 'endpoint': 'specify', 'services': [
-            APIService.Occurrence, APIService.Resolver]}
+            APIService.Occurrence, APIService.Resolve]}
 #     SpecifyArk = {
 #         'name': 'Specify Resolver', 'endpoint': 'sparks', 'services': [
 #             APIService.Resolver]}

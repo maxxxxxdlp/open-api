@@ -18,7 +18,7 @@ class MapLM(_MapSvc):
     PROVIDER = ServiceProvider.Lifemapper
     # ...............................................
     def get_map_info(
-            self, namestr, scenariocode, bbox, color, exceptions, height, 
+            self, namestr, scenariocode, bbox, color, height, 
             layers, frmat, request, srs, transparent, width, do_match):
 
         output = {'count': 0, 'records': []}
@@ -49,7 +49,7 @@ class MapLM(_MapSvc):
             # Step 1, get projection atoms
             prj_output = LifemapperAPI.find_projections_by_name(
                 sname, prjscenariocode=scenariocode, bbox=bbox, color=color, 
-                exceptions=exceptions, height=height, layers=layers, 
+                height=height, layers=layers, 
                 frmat=frmat, request=request, srs=srs,  transparent=transparent, 
                 width=width)
             # Add to output
@@ -69,7 +69,7 @@ class MapLM(_MapSvc):
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, namestr=None, scenariocode=None, 
-            bbox=None, color=None, exceptions=None, height=None, 
+            bbox=None, color=None, height=None, 
             layers=None, frmat=None, request=None, srs=None, 
             transparent=None, width=None, do_match=True, **kwargs):
         """Get GBIF taxon records for a scientific name string
@@ -101,7 +101,7 @@ class MapLM(_MapSvc):
         """
         usr_params = self._standardize_params(
             namestr=namestr, scenariocode=scenariocode, bbox=bbox, color=color, 
-            exceptions=exceptions, height=height, layers=layers, frmat=frmat, 
+            height=height, layers=layers, frmat=frmat, 
             request=request, srs=srs, transparent=transparent, width=width, 
             do_match=do_match)
         namestr = usr_params['namestr']
@@ -139,7 +139,7 @@ class MapBISON(_MapSvc):
                 to parse a scientific name into canonical name 
             kwargs: additional keyword arguments - to be ignored
         Return:
-            a dictionary containing a count and list of dictionaries of 
+            a dictionary containing asrc/LmRex/services/api/v1/ count and list of dictionaries of 
                 ITIS records corresponding to names in the ITIS taxonomy
         """
         usr_params = self._standardize_params(

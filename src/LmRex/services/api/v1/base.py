@@ -17,6 +17,25 @@ class _S2nService:
         return endpoint
 
     # ...............................................
+    def _set_default(self, param, default):
+        if param is None:
+            param = default
+        return param
+
+    
+#     # ...............................................
+#     def _combine_messages(self, error_level, msg, messages={}):
+#         try:
+#             all_count += solr_output['count']
+#         except:
+#             msg = 'Failed to return count from Specify Resolve'
+#             try:
+#                 msgs['error'].append(msg)
+#             except:
+#                 msgs['error'] = msg
+
+
+    # ...............................................
     def _show_online(self):
         msg = 'S^n {} {} service is online'.format(
             self.SER, self.provider)
@@ -148,6 +167,11 @@ class _S2nService:
         all keys as standardized parameter names and values as correctly-typed 
         user values or defaults. 
         
+        Note: 
+            This function sets default values, but defaults may be changed for 
+            a few subclasses that share parameters but have different defaults.  
+            Change default with _set_default, prior to calling this method.
+        
         Args:
             namestr: a scientific name
             gbif_accepted: flag to indicate whether to limit to "Accepted" 
@@ -216,7 +240,7 @@ class _S2nService:
 #             'crs': (None, ''), 
             'exceptions': (None, empty_str), 
             'height': 300, 
-            'layers': 'prj',
+            'layers': (None, 'prj', 'occ', 'bmng'),
             'request': VALID_MAP_REQUESTS, 
             'format': None, 
 #             'service': 'wms',

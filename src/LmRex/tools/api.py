@@ -3,10 +3,9 @@ from copy import copy
 import csv
 import os
 import requests
-import urllib
-import xml.etree.ElementTree as ET
-
 # import idigbio
+import urllib
+
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, Lifemapper, MorphoSource, 
     URL_ESCAPES, ENCODING, JSON_HEADERS, TST_VALUES)
@@ -42,6 +41,16 @@ class APIQuery:
         self.output = None
         self.debug = False
 
+    # .....................................
+    @classmethod
+    def _get_error_message(cls, msg=None, err=None):
+        text = 'Failed to return data from {}'.format(cls.__class__.__name__)
+        if msg is not None:
+            text = '{}; {}'.format(text, msg)
+        if err is not None:
+            text = '{}; (exception: {})'.format(text, err)
+        return text
+    
     # .....................................
     @classmethod
     def init_from_url(cls, url, headers=None, logger=None):
@@ -372,6 +381,7 @@ class BisonAPI(APIQuery):
     def query(self):
         """Queries the API and sets 'output' attribute to a JSON object"""
         APIQuery.query_by_get(self, output_type='json')
+        # TODO: Test for expected content
 
     # ...............................................
     @classmethod
@@ -388,38 +398,48 @@ class BisonAPI(APIQuery):
     # ...............................................
     @classmethod
     def get_occurrences_by_name(self, namestr, count_only, logger=None):
-        """Returns a list of sequences containing tsn and tsnCount"""
+        """
+        Get or count records for the given namestr.
+        
+        Args:
+            dataset_key: unique identifier for the dataset, assigned by GBIF
+                and retained by Specify
+            count_only: boolean flag signaling to return records or only count
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Return: 
+            a dictionary containing one or more keys: 
+                count, records, error, warning, info
+        
+        Todo: 
+            handle large queries asynchronously
+        """
+        
         start = 0
         output = {}
         all_recs = []
-        is_end = False
         if count_only is True:
             limit = 1
         else:
             limit = BISON.LIMIT
 
-        while not is_end:
-            curr_output = BisonAPI._page_occurrences_by_name(
-                namestr, start, limit, logger=logger)
-            # Total found
-            output['count'] = curr_output['total']
-            # Check for api failure
-            try:
-                curr_output['error']
-            except:
-                pass
-            else:
+        curr_output = BisonAPI._page_occurrences_by_name(
+            namestr, start, limit, logger=logger)
+        # Total found
+        output['count'] = curr_output['total']
+        # Check for api failure
+        try:
+            curr_output['error']
+        except:
+            pass
+        else:
+            output['error'] = curr_output['error']
+            all_recs.extend(curr_output['data'])
+            if len(all_recs) >= output['count']:
                 is_end = True
-                output['error'] = curr_output['error']
-            # Loop only once for count
-            if count_only is True:
-                is_end = True
-            else:
-                all_recs.extend(curr_output['data'])
-                if len(all_recs) >= output['count']:
-                    is_end = True
-                    
-                start += BISON.LIMIT
+                
+            start += BISON.LIMIT
         if count_only is False:
             output['records'] = all_recs
         return output
@@ -926,6 +946,8 @@ class GbifAPI(APIQuery):
     def get_occurrences(cls, taxon_key, canonical_name, out_f_name,
                         other_filters=None, max_points=None, logger=None):
         """Return GBIF occurrences for this GBIF Taxon ID
+        
+        Todo: Implement for namestr, standardizing records. Not yet used.
         """
         gbif_api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
@@ -999,7 +1021,7 @@ class GbifAPI(APIQuery):
                 
         Todo: enable paging
         """
-        output = {}
+        occ_output = {'provider': 'GBIF', 'occurrenceid': occid, 'count': 0}
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'occurrenceID': occid}, logger=logger)
@@ -1007,13 +1029,15 @@ class GbifAPI(APIQuery):
         try:
             api.query()
         except Exception:
-            log_error('Failed on {}'.format(occid), logger=logger)
+            msg = cls._get_error_message(msg=api.url, err=e)
+            occ_output['error'] = msg
+            log_error(msg, logger=logger)
         else:
-            # First query, report count
-            output['count'] = api.output['count']
-            if count_only is False:
-                output['records'] = api.output['results']
-        return output
+            std_output = cls._standardize_occurrence_output(
+                cls, api.output)
+            for key, val in std_output:
+                occ_output[key] = val
+        return occ_output
 
     # ...............................................
     @classmethod
@@ -1028,9 +1052,42 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def get_records_by_dataset(cls, dataset_key, count_only, logger=None):
+    def _standardize_occurrence_record(cls, rec):
+        # todo: standardize gbif output to DWC, DSO, etc
+        return rec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_occurrence_output(cls, output, count_only):
+        std_output = {'count': 0, 'records': [], 'error': []}
+        # Count
+        try:
+            total = output['count']
+        except:
+            std_output['error'].append(
+                cls._get_error_message('\"count\" element missing'))
+        else:
+            std_output['count'] = total
+        # Records
+        if count_only is False:
+            try:
+                recs = output['results']
+            except:
+                std_output['error'].append(
+                    cls._get_error_message('\"results\" element missing'))
+            else:
+                for r in recs:
+                    std_output['records'].append(
+                        cls._standardize_occurrence_record(r))
+        return std_output
+    
+    # ...............................................
+    @classmethod
+    def get_records_by_dataset(
+            cls, dataset_key, count_only, logger=None):
         """
-        Get or count records with the given dataset_key.
+        Count and optionally return (a limited number of) records with the given 
+        dataset_key.
         
         Args:
             dataset_key: unique identifier for the dataset, assigned by GBIF
@@ -1042,41 +1099,33 @@ class GbifAPI(APIQuery):
         Return: 
             a dictionary containing one or more keys: 
                 count, records, error, warning
+        
+        Todo: 
+            handle large queries asynchronously
         """
-        output = {'provider': 'GBIF', 'dataset_key': dataset_key, 'count': 0}
-        all_recs = []
-        offset = 0
-        is_end = False        
-        while not is_end:
-            api = GbifAPI(
-                service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
-                other_filters={
-                    'dataset_key': dataset_key, 'offset': offset, 
-                    'limit': GBIF.LIMIT}, logger=logger)
-            try:
-                api.query()
-            except Exception as e:
-                msg = 'Failed on {} in {} ({})'.format(
-                    api.url, cls.__class__.__name__, e)
-                output['error'] = msg
-                log_error(msg, logger=logger)
-            else:
-                output['count'] = api.output['count']
-                if count_only is True:
-                    is_end = True
-                else:
-                    is_end = bool(api.output['endOfRecords'])
-                    recs = api.output['results']
-                    if recs:
-                        all_recs.extend(recs)
-                        offset += len(recs)
-                    # TODO: handle large queries asynchronously
-                    # Throttle during testing
-                    if offset >= (GBIF.LIMIT):
-                        is_end = True
-        if count_only is False:
-            output['records'] = all_recs
-        return output
+        dataset_output = {'provider': 'GBIF', 'dataset_key': dataset_key, 'count': 0}
+        if count_only is True:
+            limit = 1
+        else:
+            limit = GBIF.LIMIT   
+        api = GbifAPI(
+            service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
+            other_filters={
+                'dataset_key': dataset_key, 'offset': 0, 
+                'limit': limit}, logger=logger)
+        try:
+            api.query()
+        except Exception as e:
+            msg = cls._get_error_message(msg=api.url, err=e)
+            dataset_output['error'] = msg
+            log_error(msg, logger=logger)
+        else:
+            is_end = bool(api.output['endOfRecords'])
+            std_output = cls._standardize_occurrence_output(
+                cls, api.output)
+            for key, val in std_output:
+                dataset_output[key] = val
+        return dataset_output
 
 
     # ...............................................
@@ -1457,6 +1506,10 @@ class IdigbioAPI(APIQuery):
                 output['count'] = api.output['itemCount']
                 if count_only is False:
                     output['records'] = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
+            else:
+                msg = 'Failed on {}'.format(occid)
+                output['error'] = msg
+                
         return output
 
     # ...............................................
@@ -1955,8 +2008,8 @@ class SpecifyPortalAPI(APIQuery):
     
             try:
                 api.query_by_get()
-            except Exception:
-                msg = 'Failed on {}, ({})'.format(url, cls.__class__.__name__)
+            except Exception as err:
+                msg = cls._get_error_message(msg='Url: {}'.format(url), err=err)
                 output['error'] = msg
                 log_error(msg, logger=logger)
             else:
