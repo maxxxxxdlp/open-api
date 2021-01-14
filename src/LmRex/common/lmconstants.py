@@ -336,6 +336,9 @@ class Lifemapper:
     OTHER_RESOURCES = ['taxonomy', 'scenario', 'envlayer']
     NAME_KEY = 'displayname'
     ATOM_KEY = 'atom'
+    MIN_STAT_KEY ='after_status'
+    MAX_STAT_KEY = 'before_status'
+    COMPLETE_STAT_VAL = 300
     SCENARIO_KEY = 'projectionscenariocode'
     COMMANDS = ['count']
     VALID_COLORS = [

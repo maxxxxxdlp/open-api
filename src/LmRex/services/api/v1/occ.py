@@ -119,7 +119,8 @@ class OccTentacles(_OccurrenceSvc):
             all_count += solr_output['count']
         except:
             pass
-        all_output['Specify ARK'] = solr_output
+        # Do not add GUID service record to occurrence records
+        # all_output[ServiceProvider.Specify['name']] = solr_output
         
         # Specify Record from URL in ARK
         (url, msg) = spark.get_url_from_spark(solr_output)
@@ -132,7 +133,7 @@ class OccTentacles(_OccurrenceSvc):
                 pass
         else:
             sp_output = {'error': msg}
-        all_output['Specify Record'] = sp_output
+        all_output[ServiceProvider.Specify['name']] = sp_output
         
         # GBIF copy/s of Specify Record
         gocc = OccGBIF()

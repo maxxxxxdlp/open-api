@@ -145,17 +145,17 @@ class NameITISSolr(_NameSvc):
 class NameTentacles(_NameSvc):
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
-        all_output = {}
             
         # GBIF Taxon Record
         gacc = NameGBIF()
         goutput = gacc.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
-        all_output['GBIF Records'] = goutput
+        all_output[ServiceProvider.GBIF['name']] = goutput
         
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(namestr, status, kingdom)
-        all_output['ITIS Solr Taxon Records'] = isoutput
+        all_output[ServiceProvider.ITISSolr['name'] = isoutput
+        
         return all_output
 
     # ...............................................

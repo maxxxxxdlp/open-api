@@ -35,7 +35,7 @@ class SpecifyResolve(_ResolveSvc):
             else:
                 if not url.startswith('http'):
                     msg = (
-                        'Invalid URL {} returned from ARK for Specify record access'
+                        'Invalid URL {} returned from Specify Resolver for record access'
                         .format(url))
                     url = None
         return (url, msg)

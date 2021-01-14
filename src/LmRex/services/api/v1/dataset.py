@@ -17,8 +17,8 @@ class DatasetGBIF(_DatasetSvc):
     # ...............................................
     def _get_records(self, dataset_key, count_only):
         # 'do_limit' limits the number of records returned to the GBIF limit
-        output = GbifAPI.get_records_by_dataset(
-            dataset_key, count_only, do_limit=True)
+        output = GbifAPI.get_occurrences_by_dataset(
+            dataset_key, count_only)
         return output
 
     # ...............................................

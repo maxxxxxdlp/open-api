@@ -8,7 +8,7 @@ import urllib
 
 from LmRex.common.lmconstants import (
     BISON, BisonQuery, GBIF, HTTPStatus, Idigbio, Itis, Lifemapper, MorphoSource, 
-    URL_ESCAPES, ENCODING, JSON_HEADERS, TST_VALUES)
+    ServiceProvider, URL_ESCAPES, ENCODING, JSON_HEADERS, TST_VALUES)
 from LmRex.fileop.ready_file import ready_filename
 from LmRex.fileop.logtools import (log_info, log_warn, log_error)
 from LmRex.tools.lm_xml import fromstring, deserialize
@@ -39,7 +39,30 @@ class APIQuery:
         self.filter_string = self._assemble_filter_string(
             filter_string=filter_string)
         self.output = None
+        self.error = None
         self.debug = False
+
+    # ...............................................
+    @classmethod
+    def _standardize_record(cls, rec):
+        """
+        Standardize record to common schema. 
+        
+        Note: 
+            implemented in subclasses
+        """
+        raise Exception('Not implemented in base class')
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(cls, output, count_only, err=None):
+        """
+        Standardize output to common schema. 
+        
+        Note: 
+            implemented in subclasses
+        """
+        raise Exception('Not implemented in base class')
 
     # .....................................
     @classmethod
@@ -209,16 +232,21 @@ class APIQuery:
 
     # ...............................................
     def query_by_get(self, output_type='json'):
-        """Queries the API and sets 'output' attribute to a JSON or 
-        ElementTree object.
+        """
+        Queries the API and sets 'output' attribute to a JSON or ElementTree 
+        object and 'error' attribute to a string if appropriate.
+        
+        Note:
+            Sets a single error message, not a list, to error attribute
         """
         self.output = None
+        self.error = None
         try:
             response = requests.get(self.url, headers=self.headers)
         except Exception as e:
-            log_error(
-                'Failed on URL {}, ({})'.format(self.url, str(e)), 
-                logger=self.logger)
+            msg = 'Failed on URL {}, ({})'.format(self.url, str(e))
+            self.error = msg
+            log_error(msg, logger=self.logger)
         else:
             if response.status_code == HTTPStatus.OK:
                 if output_type == 'json':
@@ -234,19 +262,21 @@ class APIQuery:
                     except Exception as e:
                         self.output = response.text
                 else:
-                    log_error(
-                        'Unrecognized output type {}'.format(output_type), 
-                        logger=self.logger)
+                    msg = self._get_error_message(
+                        msg='Unrecognized output type {}'.format(output_type))
+                    log_error(msg, logger=self.logger)
             else:
-                log_error(
-                    'Failed on URL {}, code = {}, reason = {}'.format(
-                        self.url, response.status_code, response.reason), 
-                    logger=self.logger)
+                msg = self._get_error_message(
+                        msg='URL {}, code = {}, reason = {}'.format(
+                            self.url, response.status_code, response.reason))
+                self.error = msg
+                log_error(msg, logger=self.logger)
 
     # ...........    ....................................
     def query_by_post(self, output_type='json', file=None):
         """Perform a POST request."""
         self.output = None
+        self.error = None
         # Post a file
         if file is not None:
             # TODO: send as bytes here?
@@ -260,11 +290,12 @@ class APIQuery:
                 except Exception:
                     ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
-                log_error(
-                    """Failed on URL {}, posting uploaded file {}, code = {},
-                        reason = {} ({})""".format(
-                            self.url, file, ret_code, reason, str(e)), 
-                        logger=self.logger)
+                msg = self._get_error_message(
+                    msg='URL {}, file {}, code = {}, reason = {}'.format(
+                        self.url, file, ret_code, reason),
+                    err=e)
+                self.error = msg
+                log_error(msg, logger=self.logger)
         # Post parameters
         else:
             all_params = self._other_filters.copy()
@@ -281,10 +312,12 @@ class APIQuery:
                 except Exception:
                     ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
-                log_error(
-                    'Failed on URL {}, code = {}, reason = {} ({})'.format(
-                        self.url, ret_code, reason, str(e)), 
-                    logger=self.logger)
+                msg = self._get_error_message(
+                    msg='URL {}, code = {}, reason = {}'.format(
+                            self.url, ret_code, reason),
+                        err=e)
+                self.error = msg
+                log_error(msg, logger=self.logger)
 
         if response.ok:
             try:
@@ -298,14 +331,16 @@ class APIQuery:
                     output = response.text
                     self.output = deserialize(fromstring(output))
                 else:
-                    log_error(
-                        'Unrecognized output type {}'.format(output_type),
-                        logger=self.logger)
+                    msg = 'Unrecognized output type {}'.format(output_type)
+                    self.error = msg
+                    log_error(msg, logger=self.logger)
             except Exception as e:
-                log_error(
-                    'Failed to interpret output of URL {}, content={}, ({})'
-                    .format(self.base_url, response.content, str(e)),
-                    logger=self.logger)
+                self._get_error_message(
+                    msg='Unrecognized output, URL {}, content={}'.format(
+                        self.base_url, response.content),
+                    err=e)
+                self.error = msg
+                log_error(msg, logger=self.logger)
         else:
             try:
                 ret_code = response.status_code
@@ -313,10 +348,11 @@ class APIQuery:
             except Exception:
                 ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                 reason = 'Unknown Error'
-            log_error(
-                'Failed ({}: {}) for baseurl {}'.format(
-                    ret_code, reason, self.base_url), 
-                logger=self.logger)
+            msg = self._get_error_message(
+                msg='URL {}, code = {}, reason = {}'.format(
+                    self.base_url, ret_code, reason))
+            self.error = msg
+            log_error(msg, logger=self.logger)
 
 
 # .............................................................................
@@ -385,6 +421,58 @@ class BisonAPI(APIQuery):
 
     # ...............................................
     @classmethod
+    def _standardize_record(cls, rec):
+        # todo: standardize gbif output to DWC, DSO, etc
+        return rec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(cls, output, count_only, err=None):
+        std_output = {'count': 0, 'records': [], 'error': []}
+        ckey = 'total'
+        rkey = 'results'
+        if err is not None:
+            std_output['error'].append(err)
+        # Count
+        try:
+            total = output[ckey]
+        except:
+            msg = cls._get_error_message('\"{}\" element missing'.format(ckey))
+            std_output['error'].append(msg)
+        else:
+            std_output['count'] = total
+        # Records
+        if count_only is False:
+            try:
+                recs = output[rkey]
+            except:
+                msg = cls._get_error_message(
+                    '\"{}\" element missing'.format(rkey))
+                std_output['error'].append(msg)
+            else:
+                for r in recs:
+                    std_output['records'].append(
+                        cls._standardize_record(r))
+        return std_output
+        # Check for api failure
+#         if curr_error is not None:
+#             err_msgs.append(curr_error)
+#         # Find records
+#         recs = None
+#         try:
+#             recs = curr_output['data']
+#         except:
+#             err_msgs.append('Failed to access \"data\" element')
+#         else:
+#             if count_only is False:
+#                 recs = output['records']
+#         # Find total
+#         try:
+#             total = curr_output['total']
+#         except:
+#             err_msgs.append('Failed to access \"total\" element')
+    # ...............................................
+    @classmethod
     def _page_occurrences_by_name(self, namestr, start, limit, logger=None):
         """Returns a list of sequences containing tsn and tsnCount"""
         ofilters = {
@@ -393,11 +481,11 @@ class BisonAPI(APIQuery):
         bapi = BisonAPI(
             url=BISON.OPEN_SEARCH_URL, other_filters=ofilters, logger=logger)
         bapi.query_by_get()
-        return bapi.output
+        return bapi.output, bapi.error
         
     # ...............................................
     @classmethod
-    def get_occurrences_by_name(self, namestr, count_only, logger=None):
+    def get_occurrences_by_name_old(cls, namestr, count_only, logger=None):
         """
         Get or count records for the given namestr.
         
@@ -415,7 +503,6 @@ class BisonAPI(APIQuery):
         Todo: 
             handle large queries asynchronously
         """
-        
         start = 0
         output = {}
         all_recs = []
@@ -424,7 +511,7 @@ class BisonAPI(APIQuery):
         else:
             limit = BISON.LIMIT
 
-        curr_output = BisonAPI._page_occurrences_by_name(
+        curr_output, curr_err = BisonAPI._page_occurrences_by_name(
             namestr, start, limit, logger=logger)
         # Total found
         output['count'] = curr_output['total']
@@ -443,6 +530,45 @@ class BisonAPI(APIQuery):
         if count_only is False:
             output['records'] = all_recs
         return output
+        
+    # ...............................................
+    @classmethod
+    def get_occurrences_by_name(cls, namestr, count_only, logger=None):
+        """
+        Get or count records for the given namestr.
+        
+        Args:
+            dataset_key: unique identifier for the dataset, assigned by GBIF
+                and retained by Specify
+            count_only: boolean flag signaling to return records or only count
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Return: 
+            a dictionary containing one or more keys: 
+                count, records, error, warning, info
+        
+        Todo: 
+            handle large queries asynchronously
+        """
+        qry_meta = {
+            'provider': ServiceProvider.BISON['name'], 'name': namestr}
+        start = 0
+        if count_only is True:
+            limit = 1
+        else:
+            limit = BISON.LIMIT
+
+        curr_output, curr_error = BisonAPI._page_occurrences_by_name(
+            namestr, start, limit, logger=logger)
+        # Standardize output from provider response
+        std_output = cls._standardize_output(
+            curr_output, count_only, err=curr_error)
+        # Add query parameters to output
+        for k, v in qry_meta.items():
+            std_output[k] = v
+            
+        return std_output                
         
 #     # ...............................................
 #     @classmethod
@@ -1021,23 +1147,26 @@ class GbifAPI(APIQuery):
                 
         Todo: enable paging
         """
-        occ_output = {'provider': 'GBIF', 'occurrenceid': occid, 'count': 0}
+        qry_meta = {
+            'provider': ServiceProvider.GBIF['name'], 'occurrenceid': occid}
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'occurrenceID': occid}, logger=logger)
 
         try:
             api.query()
-        except Exception:
+        except Exception as e:
             msg = cls._get_error_message(msg=api.url, err=e)
-            occ_output['error'] = msg
+            std_output = {'error': msg}
             log_error(msg, logger=logger)
         else:
-            std_output = cls._standardize_occurrence_output(
-                cls, api.output)
-            for key, val in std_output:
-                occ_output[key] = val
-        return occ_output
+            # Standardize output from provider response
+            std_output = cls._standardize_output(
+                api.output, count_only, err=api.error)
+        # Add query parameters to output
+        for k, v in qry_meta.items():
+            std_output[k] = v
+        return std_output
 
     # ...............................................
     @classmethod
@@ -1052,38 +1181,43 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def _standardize_occurrence_record(cls, rec):
+    def _standardize_record(cls, rec):
         # todo: standardize gbif output to DWC, DSO, etc
         return rec
     
     # ...............................................
     @classmethod
-    def _standardize_occurrence_output(cls, output, count_only):
+    def _standardize_output(cls, output, count_only, err=None):
         std_output = {'count': 0, 'records': [], 'error': []}
+        ckey = 'count'
+        rkey = 'results'
+        if err is not None:
+            std_output['error'].append(err)
         # Count
         try:
-            total = output['count']
+            total = output[ckey]
         except:
-            std_output['error'].append(
-                cls._get_error_message('\"count\" element missing'))
+            msg = cls._get_error_message('\"{}\" element missing'.format(ckey))
+            std_output['error'].append(msg)
         else:
             std_output['count'] = total
         # Records
         if count_only is False:
             try:
-                recs = output['results']
+                recs = output[rkey]
             except:
-                std_output['error'].append(
-                    cls._get_error_message('\"results\" element missing'))
+                msg = cls._get_error_message(
+                    '\"{}\" element missing'.format(rkey))
+                std_output['error'].append(msg)
             else:
                 for r in recs:
                     std_output['records'].append(
-                        cls._standardize_occurrence_record(r))
+                        cls._standardize_record(r))
         return std_output
     
     # ...............................................
     @classmethod
-    def get_records_by_dataset(
+    def get_occurrences_by_dataset(
             cls, dataset_key, count_only, logger=None):
         """
         Count and optionally return (a limited number of) records with the given 
@@ -1103,7 +1237,8 @@ class GbifAPI(APIQuery):
         Todo: 
             handle large queries asynchronously
         """
-        dataset_output = {'provider': 'GBIF', 'dataset_key': dataset_key, 'count': 0}
+        qry_meta = {
+            'provider': ServiceProvider.GBIF['name'], 'dataset_key': dataset_key}
         if count_only is True:
             limit = 1
         else:
@@ -1117,15 +1252,18 @@ class GbifAPI(APIQuery):
             api.query()
         except Exception as e:
             msg = cls._get_error_message(msg=api.url, err=e)
-            dataset_output['error'] = msg
+            std_output = {'error': msg}
             log_error(msg, logger=logger)
         else:
-            is_end = bool(api.output['endOfRecords'])
-            std_output = cls._standardize_occurrence_output(
-                cls, api.output)
-            for key, val in std_output:
-                dataset_output[key] = val
-        return dataset_output
+#             is_end = bool(api.output['endOfRecords'])
+            # Standardize output from provider response
+            std_output = cls._standardize_output(
+                api.output, count_only, err=api.error)
+            
+        # Add query parameters to output
+        for k, v in qry_meta.items():
+            std_output[k] = v
+        return std_output
 
 
     # ...............................................
@@ -1462,6 +1600,41 @@ class IdigbioAPI(APIQuery):
         APIQuery.query_by_post(self, output_type='json')
 
     # ...............................................
+    @classmethod
+    def _standardize_record(cls, rec):
+        # todo: standardize gbif output to DWC, DSO, etc
+        return rec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(cls, output, count_only, err=None):
+        std_output = {'count': 0, 'records': [], 'error': []}
+        ckey = 'itemCount'
+        rkey = Idigbio.OCCURRENCE_ITEMS_KEY
+        if err is not None:
+            std_output['error'].append(err)
+        # Count
+        try:
+            total = output[ckey]
+        except:
+            msg = cls._get_error_message('\"{}\" element missing'.format(ckey))
+            std_output['error'].append(msg)
+        else:
+            std_output['count'] = total
+        # Records
+        if count_only is False:
+            try:
+                recs = output[rkey]
+            except:
+                msg = cls._get_error_message('\"{}\" element missing'.format(rkey))
+                std_output['error'].append(msg)
+            else:
+                for r in recs:
+                    std_output['records'].append(
+                        cls._standardize_record(r))
+        return std_output
+    
+    # ...............................................
     def query_by_gbif_taxon_id(self, taxon_key):
         """Return a list of occurrence record dictionaries.
         """
@@ -1490,7 +1663,8 @@ class IdigbioAPI(APIQuery):
         
         Todo: enable paging
         """
-        output = {}
+        qry_meta = {
+            'provider': ServiceProvider.iDigBio['name'], 'occurrenceid': occid}
         qf = {Idigbio.QKEY: 
               '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + occid + '"}'}
         api = IdigbioAPI(other_filters=qf, logger=logger)
@@ -1498,19 +1672,15 @@ class IdigbioAPI(APIQuery):
         try:
             api.query()
         except Exception:
-            msg = 'Failed on {}'.format(api.url)
-            output['error'] = msg
+            msg = cls._get_error_message(msg=api.url, err=e)
+            std_output = {'error': msg}
             log_error(msg, logger=logger)
         else:
-            if api.output is not None:
-                output['count'] = api.output['itemCount']
-                if count_only is False:
-                    output['records'] = api.output[Idigbio.OCCURRENCE_ITEMS_KEY]
-            else:
-                msg = 'Failed on {}'.format(occid)
-                output['error'] = msg
-                
-        return output
+            std_output = cls._standardize_output(api.output, count_only)
+        # Add query metadata to output
+        for key, val in qry_meta.items():
+            std_output[key] = val                
+        return std_output
 
     # ...............................................
     @classmethod
@@ -1781,6 +1951,8 @@ class LifemapperAPI(APIQuery):
         recs = []
         other_filters[Lifemapper.NAME_KEY] = name
         other_filters[Lifemapper.ATOM_KEY] = 0
+        other_filters[Lifemapper.MIN_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
+        other_filters[Lifemapper.MAX_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
         if prjscenariocode is not None:
             other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
@@ -1948,6 +2120,9 @@ class MorphoSourceAPI(APIQuery):
     # ...............................................
     @classmethod
     def get_specimen_records_by_occid(cls, occid, count_only=False, logger=None):
+        qry_meta = {
+            'provider': ServiceProvider.MorphoSource['name'], 
+            'occurrenceid': occid}
         start = 0
         output = {}
         all_recs = []
@@ -2116,15 +2291,17 @@ if __name__ == '__main__':
     
     log_info('Mopho records:')
     for guid in TST_VALUES.BIRD_OCC_GUIDS:
-        recs = MorphoSourceAPI.get_specimen_records_by_occid(guid)
-        for r in recs:
+        moutput = MorphoSourceAPI.get_specimen_records_by_occid(guid)
+        for r in moutput['records']:
+            occid = notes = None
             try:
+                occid = r['specimen.occurrence_id']
                 notes = r['specimen.notes']
-            except:
-                notes = 'no notes'
-            log_info('{}: {}'.format(
-                r['specimen.occurrence_id'], notes))
-        log_info ('')
+            except Exception as e:
+                msg = 'Morpho source record exception {}'.format(e)
+            else:
+                msg = '{}: {}'.format(occid, notes)
+            log_info(msg)
     
     namestr = TST_VALUES.NAMES[0]
     clean_names = GbifAPI.parse_names(names=TST_VALUES.NAMES)
@@ -2148,7 +2325,7 @@ if __name__ == '__main__':
 #         log_info ('')
         
 #         names = ['ursidae', 'Poa annua']
-#         recs = GbifAPI.get_records_by_dataset(TST_VALUES.DATASET_GUIDS[0])
+#         recs = GbifAPI.get_occurrences_by_dataset(TST_VALUES.DATASET_GUIDS[0])
 #         log_info('Returned {} records for dataset:'.format(len(recs)))
         names = ['Poa annua']
         for name in names:
