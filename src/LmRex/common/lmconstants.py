@@ -363,6 +363,8 @@ class MorphoSource:
     OTHER_RESOURCES = ['taxonomy', 'projects', 'facilities']
     COMMAND = 'find'
     OCCURRENCEID_KEY = 'occurrence_id'
+    TOTAL_KEY = 'totalResults'
+    RECORDS_KEY = 'results'
     LIMIT = 1000
     
 # ......................................................

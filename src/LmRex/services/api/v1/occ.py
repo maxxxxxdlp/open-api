@@ -5,6 +5,7 @@ from LmRex.tools.api import (
     GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI, BisonAPI)
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.resolve import SpecifyResolve
+from LmRex.services.api.v1.dataset import DatasetGBIF
         
 # .............................................................................
 @cherrypy.expose
@@ -57,7 +58,7 @@ class OccMopho(_OccurrenceSvc):
     PROVIDER = ServiceProvider.MorphoSource
     # ...............................................
     def _get_records(self, occid, count_only):
-        output = MorphoSourceAPI.get_occurrences_by_occid(
+        output = MorphoSourceAPI.get_occurrences_page1_by_occid(
             occid, count_only=count_only)
         return output
 
@@ -114,7 +115,7 @@ class OccTentacles(_OccurrenceSvc):
         msgs = {'error': [], 'warning': []}
         # Specify ARK Record
         spark = SpecifyResolve()
-        solr_output = spark.get_specify_cor_meta(occid)
+        solr_output = spark.get_specify_guid_meta(occid)
         try:
             all_count += solr_output['count']
         except:
@@ -173,7 +174,11 @@ class OccTentacles(_OccurrenceSvc):
 # .............................................................................
 if __name__ == '__main__':
     # test
-    from LmRex.common.lmconstants import TST_VALUES    
+    from LmRex.common.lmconstants import TST_VALUES   
+    
+    gocc = DatasetGBIF()
+    gout = gocc.GET(TST_VALUES.FISH_DS_GUIDS[0], count_only=True)
+    print(gout) 
 
     for occid in TST_VALUES.BIRD_OCC_GUIDS[:1]:
         print(occid)

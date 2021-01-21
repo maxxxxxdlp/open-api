@@ -428,17 +428,19 @@ class BisonAPI(APIQuery):
     # ...............................................
     @classmethod
     def _standardize_output(cls, output, count_only, err=None):
-        std_output = {'count': 0, 'records': [], 'error': []}
+        std_output = {'count': 0}
+        stdrecs = []
+        errmsgs = []
         ckey = 'total'
         rkey = 'results'
         if err is not None:
-            std_output['error'].append(err)
+            errmsgs.append(err)
         # Count
         try:
             total = output[ckey]
         except:
             msg = cls._get_error_message('\"{}\" element missing'.format(ckey))
-            std_output['error'].append(msg)
+            errmsgs.append(msg)
         else:
             std_output['count'] = total
         # Records
@@ -448,13 +450,19 @@ class BisonAPI(APIQuery):
             except:
                 msg = cls._get_error_message(
                     '\"{}\" element missing'.format(rkey))
-                std_output['error'].append(msg)
+                errmsgs.append(msg)
             else:
                 for r in recs:
                     try:
-                        std_output['records'].append(cls._standardize_record(r))
-                    except:
-                        pass
+                        stdrecs.append(cls._standardize_record(r))
+                    except Exception as e:
+                        msg = cls._get_error_message(err=e)
+                        errmsgs.append(msg)
+        # Only include records, errors if they exist
+        if stdrecs:
+            std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['error'] = errmsgs
         return std_output
         # Check for api failure
 #         if curr_error is not None:
@@ -475,15 +483,43 @@ class BisonAPI(APIQuery):
 #             err_msgs.append('Failed to access \"total\" element')
     # ...............................................
     @classmethod
-    def _page_occurrences_by_name(self, namestr, start, limit, logger=None):
-        """Returns a list of sequences containing tsn and tsnCount"""
+    def get_occurrences_page1_by_occid(
+            cls, namestr, limit, count_only=False, logger=None):
+        """Returns a list of occurrence records for this name
+        
+        Args:
+            namestr: A scientific namestring possibly including author, year, 
+                rank marker or other name information.
+            limit: Limit imposed by provider on number or records to return 
+                in a single query
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Return: 
+            a dictionary containing one or more keys: 
+                count, records, error, warning, info
+        """
         ofilters = {
-            'species': namestr, 'type': 'scientific_name', 'start': start, 
+            'species': namestr, 'type': 'scientific_name', 'start': 0, 
             'count': limit}
-        bapi = BisonAPI(
+        api = BisonAPI(
             url=BISON.OPEN_SEARCH_URL, other_filters=ofilters, logger=logger)
-        bapi.query_by_get()
-        return bapi.output, bapi.error
+        qry_meta = {
+            'provider': ServiceProvider.iDigBio['name'], 'occurrenceid': occid,
+            'query': api.url}
+
+        try:
+            api.query_by_get()
+        except Exception as e:
+            msg = cls._get_error_message(msg=api.url, err=e)
+            std_output = {'error': msg}
+            log_error(msg, logger=logger)
+        else:
+            std_output = cls._standardize_output(api.output, count_only)
+        # Add query metadata to output
+        for key, val in qry_meta.items():
+            std_output[key] = val                
+
         
     # ...............................................
     @classmethod
@@ -553,8 +589,6 @@ class BisonAPI(APIQuery):
         Todo: 
             handle large queries asynchronously
         """
-        qry_meta = {
-            'provider': ServiceProvider.BISON['name'], 'name': namestr}
         start = 0
         if count_only is True:
             limit = 1
@@ -563,6 +597,8 @@ class BisonAPI(APIQuery):
 
         curr_output, curr_error = BisonAPI._page_occurrences_by_name(
             namestr, start, limit, logger=logger)
+        qry_meta = {
+            'provider': ServiceProvider.BISON['name'], 'name': namestr}
         # Standardize output from provider response
         std_output = cls._standardize_output(
             curr_output, count_only, err=curr_error)
@@ -1149,11 +1185,12 @@ class GbifAPI(APIQuery):
                 
         Todo: enable paging
         """
-        qry_meta = {
-            'provider': ServiceProvider.GBIF['name'], 'occurrenceid': occid}
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'occurrenceID': occid}, logger=logger)
+        qry_meta = {
+            'provider': ServiceProvider.GBIF['name'], 'occurrenceid': occid,
+            'query': api.url}
 
         try:
             api.query()
@@ -1190,7 +1227,9 @@ class GbifAPI(APIQuery):
     # ...............................................
     @classmethod
     def _standardize_output(cls, output, count_only, err=None):
-        std_output = {'count': 0, 'records': [], 'error': []}
+        std_output = {'count': 0}
+        stdrecs = []
+        errmsgs = []
         ckey = 'count'
         rkey = 'results'
         if err is not None:
@@ -1200,7 +1239,7 @@ class GbifAPI(APIQuery):
             total = output[ckey]
         except:
             msg = cls._get_error_message('\"{}\" element missing'.format(ckey))
-            std_output['error'].append(msg)
+            errmsgs.append(msg)
         else:
             std_output['count'] = total
         # Records
@@ -1210,13 +1249,20 @@ class GbifAPI(APIQuery):
             except:
                 msg = cls._get_error_message(
                     '\"{}\" element missing'.format(rkey))
-                std_output['error'].append(msg)
+                errmsgs.append(msg)
             else:
+                stdrecs = []
                 for r in recs:
                     try:
-                        std_output['records'].append(cls._standardize_record(r))
-                    except:
-                        pass
+                        stdrecs.append(cls._standardize_record(r))
+                    except Exception as e:
+                        msg = cls._get_error_message(err=e)
+                        errmsgs.append(msg)
+        # Only include records, errors if they exist
+        if stdrecs:
+            std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['error'] = errmsgs
         return std_output
     
     # ...............................................
@@ -1241,8 +1287,6 @@ class GbifAPI(APIQuery):
         Todo: 
             handle large queries asynchronously
         """
-        qry_meta = {
-            'provider': ServiceProvider.GBIF['name'], 'dataset_key': dataset_key}
         if count_only is True:
             limit = 1
         else:
@@ -1252,6 +1296,10 @@ class GbifAPI(APIQuery):
             other_filters={
                 'dataset_key': dataset_key, 'offset': 0, 
                 'limit': limit}, logger=logger)
+        qry_meta = {
+            'provider': ServiceProvider.GBIF['name'], 
+            'dataset_key': dataset_key, 
+            'query': api.url}
         try:
             api.query()
         except Exception as e:
@@ -1606,13 +1654,15 @@ class IdigbioAPI(APIQuery):
     # ...............................................
     @classmethod
     def _standardize_record(cls, rec):
-        # todo: standardize gbif output to DWC, DSO, etc
+        # todo: standardize idigbio output to DWC, DSO, etc
         return rec
     
     # ...............................................
     @classmethod
     def _standardize_output(cls, output, count_only, err=None):
-        std_output = {'count': 0, 'records': [], 'error': []}
+        std_output = {'count': 0}
+        errmsgs = []
+        stdrecs = []
         ckey = 'itemCount'
         rkey = Idigbio.OCCURRENCE_ITEMS_KEY
         if err is not None:
@@ -1622,7 +1672,7 @@ class IdigbioAPI(APIQuery):
             total = output[ckey]
         except:
             msg = cls._get_error_message('\"{}\" element missing'.format(ckey))
-            std_output['error'].append(msg)
+            errmsgs.append(msg)
         else:
             std_output['count'] = total
         # Records
@@ -1631,13 +1681,19 @@ class IdigbioAPI(APIQuery):
                 recs = output[rkey]
             except:
                 msg = cls._get_error_message('\"{}\" element missing'.format(rkey))
-                std_output['error'].append(msg)
+                errmsgs.append(msg)
             else:
                 for r in recs:
                     try:
-                        std_output['records'].append(cls._standardize_record(r))
-                    except:
-                        pass
+                        stdrecs.append(cls._standardize_record(r))
+                    except Exception as e:
+                        msg = cls._get_error_message(err=e)
+                        errmsgs.append(msg)
+        # Only include records, errors if they exist
+        if stdrecs:
+            std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['error'] = errmsgs
         return std_output
     
     # ...............................................
@@ -1669,11 +1725,12 @@ class IdigbioAPI(APIQuery):
         
         Todo: enable paging
         """
-        qry_meta = {
-            'provider': ServiceProvider.iDigBio['name'], 'occurrenceid': occid}
         qf = {Idigbio.QKEY: 
               '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + occid + '"}'}
         api = IdigbioAPI(other_filters=qf, logger=logger)
+        qry_meta = {
+            'provider': ServiceProvider.iDigBio['name'], 'occurrenceid': occid,
+            'query': api.url}
 
         try:
             api.query()
@@ -1947,9 +2004,11 @@ class LifemapperAPI(APIQuery):
     # ...............................................
     @classmethod
     def _standardize_output(cls, output, color=None, count_only=False, err=None):
-        std_output = {'count': 0, 'records': [], 'error': []}
+        std_output = {'count': 0}
+        stdrecs = []
+        errmsgs = []
         if err is not None:
-            std_output['error'].append(err)
+            errmsgs.append(err)
         # Count
         total = len(output)
         std_output['count'] = total
@@ -1957,11 +2016,15 @@ class LifemapperAPI(APIQuery):
         if count_only is False:
             for r in output:
                 try:
-                    std_output['records'].append(
-                        cls._standardize_record(r, color=color))
+                    stdrecs.append(cls._standardize_record(r, color=color))
                 except Exception as e:
                     msg = cls._get_error_message(err=e)
-                    std_output['error'].append(msg)
+                    errmsgs.append(msg)
+        # Only include records, errors if they exist
+        if stdrecs:
+            std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['error'] = errmsgs
         return std_output
     
 #     # ...............................................
@@ -2016,87 +2079,87 @@ class LifemapperAPI(APIQuery):
 #                 filter_str = '{}&{}={}'.format(filter_str, key, val) 
 #             map_url = '{}/{}?{}'.format(url, mapname, filter_str)
 #         return map_url
-
-    # ...............................................
-    @classmethod
-    def find_projections_by_name(
-            cls, name, prjscenariocode=None, bbox='-180,-90,180,90', 
-            color=None, exceptions=None, height=300, layers='prj', frmat='png', 
-            request='getmap', srs='epsg:4326',  transparent=None, width=600, 
-            other_filters={}, logger=None):
-        """
-        List projections for a given scientific name.  
-        
-        Args:
-            name: a scientific name 'Accepted' according to the GBIF Backbone 
-                Taxonomy
-            prjscenariocode: a Lifemapper code indicating whether the 
-                environmental data used for creating the projection is 
-                observed, or modeled past or future.  Codes are in 
-                LmREx.common.lmconstants Lifemapper.*_SCENARIO_CODE*. If the 
-                code is None, return a map with only occurrence points
-            logger: optional logger for info and error messages.  If None, 
-                prints to stdout    
-
-        Note: 
-            Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
-            Taxonomy and this method requires them for success.
-
-        Todo:
-            handle full record returns instead of atoms
-        """
-        output = {}
-        recs = []
-        other_filters[Lifemapper.NAME_KEY] = name
-        other_filters[Lifemapper.ATOM_KEY] = 0
-#         other_filters[Lifemapper.MIN_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
-#         other_filters[Lifemapper.MAX_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
-        if prjscenariocode is not None:
-            other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
-        api = LifemapperAPI(
-            resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
-        try:
-            api.query_by_get()
-        except Exception:
-            msg = 'Failed on {}'.format(api.url)
-            log_error(msg, logger=logger)
-            output['error'] = msg
-        else:
-            # output returns a list of records
-            recs = api.output
-            if len(recs) == 0:
-                output['warning'] = 'Failed to find projections for {}'.format(
-                    name)
-            background_layer_name = 'bmng'
-            for rec in recs:
-                # Add base WMS map url with LM-specific parameters into 
-                #     map section of metadata
-                try:
-                    rec['map']['lmMapEndpoint'] = '{}/{}?layers={}'.format(
-                        rec['map']['endpoint'], rec['map']['mapName'],
-                        rec['map']['layerName'])
-                except Exception as err:
-                    msg = 'Failed getting map url components {}'.format(err)
-                    log_error(msg, logger=logger)
-                    output['error'] = msg
-                else:
-                    # Add background layername into map section of metadata
-                    rec['map']['backgroundLayerName']  = background_layer_name
-                    # Add point layername into map section of metadata
-                    try:
-                        occ_layer_name = 'occ_{}'.format(rec['occurrenceSet']['id'])
-                    except:
-                        occ_layer_name = ''
-                    rec['map']['pointLayerName']  = occ_layer_name
-                    # Add full WMS map url with all required parameters into metadata
-                    url = LifemapperAPI._construct_map_url(
-                        rec, bbox, color, exceptions, height, layers, frmat, 
-                        request, srs, transparent, width)
-                    if url is not None:
-                        rec['map_url'] = url
-        output['count'] = len(recs)
-        output['records'] = recs
-        return output
+# 
+#     # ...............................................
+#     @classmethod
+#     def find_projections_by_name(
+#             cls, name, prjscenariocode=None, bbox='-180,-90,180,90', 
+#             color=None, exceptions=None, height=300, layers='prj', frmat='png', 
+#             request='getmap', srs='epsg:4326',  transparent=None, width=600, 
+#             other_filters={}, logger=None):
+#         """
+#         List projections for a given scientific name.  
+#         
+#         Args:
+#             name: a scientific name 'Accepted' according to the GBIF Backbone 
+#                 Taxonomy
+#             prjscenariocode: a Lifemapper code indicating whether the 
+#                 environmental data used for creating the projection is 
+#                 observed, or modeled past or future.  Codes are in 
+#                 LmREx.common.lmconstants Lifemapper.*_SCENARIO_CODE*. If the 
+#                 code is None, return a map with only occurrence points
+#             logger: optional logger for info and error messages.  If None, 
+#                 prints to stdout    
+# 
+#         Note: 
+#             Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
+#             Taxonomy and this method requires them for success.
+# 
+#         Todo:
+#             handle full record returns instead of atoms
+#         """
+#         output = {}
+#         recs = []
+#         other_filters[Lifemapper.NAME_KEY] = name
+#         other_filters[Lifemapper.ATOM_KEY] = 0
+# #         other_filters[Lifemapper.MIN_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
+# #         other_filters[Lifemapper.MAX_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
+#         if prjscenariocode is not None:
+#             other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
+#         api = LifemapperAPI(
+#             resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
+#         try:
+#             api.query_by_get()
+#         except Exception:
+#             msg = 'Failed on {}'.format(api.url)
+#             log_error(msg, logger=logger)
+#             output['error'] = msg
+#         else:
+#             # output returns a list of records
+#             recs = api.output
+#             if len(recs) == 0:
+#                 output['warning'] = 'Failed to find projections for {}'.format(
+#                     name)
+#             background_layer_name = 'bmng'
+#             for rec in recs:
+#                 # Add base WMS map url with LM-specific parameters into 
+#                 #     map section of metadata
+#                 try:
+#                     rec['map']['lmMapEndpoint'] = '{}/{}?layers={}'.format(
+#                         rec['map']['endpoint'], rec['map']['mapName'],
+#                         rec['map']['layerName'])
+#                 except Exception as err:
+#                     msg = 'Failed getting map url components {}'.format(err)
+#                     log_error(msg, logger=logger)
+#                     output['error'] = msg
+#                 else:
+#                     # Add background layername into map section of metadata
+#                     rec['map']['backgroundLayerName']  = background_layer_name
+#                     # Add point layername into map section of metadata
+#                     try:
+#                         occ_layer_name = 'occ_{}'.format(rec['occurrenceSet']['id'])
+#                     except:
+#                         occ_layer_name = ''
+#                     rec['map']['pointLayerName']  = occ_layer_name
+#                     # Add full WMS map url with all required parameters into metadata
+#                     url = LifemapperAPI._construct_map_url(
+#                         rec, bbox, color, exceptions, height, layers, frmat, 
+#                         request, srs, transparent, width)
+#                     if url is not None:
+#                         rec['map_url'] = url
+#         output['count'] = len(recs)
+#         output['records'] = recs
+#         return output
 
     # ...............................................
     @classmethod
@@ -2127,8 +2190,6 @@ class LifemapperAPI(APIQuery):
             handle full record returns instead of atoms
         """
         std_output = {}
-        qry_meta = {
-            'provider': ServiceProvider.Lifemapper['name'], 'name': name}
         other_filters[Lifemapper.NAME_KEY] = name
         other_filters[Lifemapper.ATOM_KEY] = 0
 #         other_filters[Lifemapper.MIN_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
@@ -2137,6 +2198,9 @@ class LifemapperAPI(APIQuery):
             other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
             resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
+        qry_meta = {
+            'provider': ServiceProvider.Lifemapper['name'], 'name': name,
+            'query': api.url}
         try:
             api.query_by_get()
         except Exception as e:
@@ -2151,45 +2215,45 @@ class LifemapperAPI(APIQuery):
             std_output[key] = val                
         return std_output
 
-    # ...............................................
-    @classmethod
-    def get_sdmprojections_with_map(
-            cls, proj_id, bbox='-180,-90,180,90', color=None, exceptions=None, 
-            height=300, layers='prj', frmat='png', request='getmap', 
-            srs='epsg:4326',  transparent=None, width=600, logger=None):
-        """
-        Get a url for a projection map for a given projection id.  
-        
-        Args:
-            name: a Lifemapper unique identifier for an SDM projection
-            logger: optional logger for info and error messages.  If None, 
-                prints to stdout    
-
-        Note: 
-            Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
-            Taxonomy and this method requires them for success.
-        """
-        output = {}
-        full_recs = []
-        prjoutput = LifemapperAPI.find_sdmprojection(proj_id, logger=logger)
-        try:
-            records = prjoutput['records']
-        except:
-            output['error'] = prjoutput['error']
-        else:
-            if prjoutput['count'] == 0:
-                output['error'] = prjoutput['error']
-            else:
-                for rec in records:
-                    url = LifemapperAPI._construct_map_url(
-                        rec, bbox, color, exceptions, height, layers, frmat, 
-                        request, srs, transparent, width)
-                    if url is not None:
-                        rec['map_url'] = url
-                        full_recs.append(rec)
-        output['count'] = len(full_recs)
-        output['records'] = full_recs
-        return output
+#     # ...............................................
+#     @classmethod
+#     def get_sdmprojections_with_map(
+#             cls, proj_id, bbox='-180,-90,180,90', color=None, exceptions=None, 
+#             height=300, layers='prj', frmat='png', request='getmap', 
+#             srs='epsg:4326',  transparent=None, width=600, logger=None):
+#         """
+#         Get a url for a projection map for a given projection id.  
+#         
+#         Args:
+#             name: a Lifemapper unique identifier for an SDM projection
+#             logger: optional logger for info and error messages.  If None, 
+#                 prints to stdout    
+# 
+#         Note: 
+#             Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
+#             Taxonomy and this method requires them for success.
+#         """
+#         output = {}
+#         full_recs = []
+#         prjoutput = LifemapperAPI.find_sdmprojection(proj_id, logger=logger)
+#         try:
+#             records = prjoutput['records']
+#         except:
+#             output['error'] = prjoutput['error']
+#         else:
+#             if prjoutput['count'] == 0:
+#                 output['error'] = prjoutput['error']
+#             else:
+#                 for rec in records:
+#                     url = LifemapperAPI._construct_map_url(
+#                         rec, bbox, color, exceptions, height, layers, frmat, 
+#                         request, srs, transparent, width)
+#                     if url is not None:
+#                         rec['map_url'] = url
+#                         full_recs.append(rec)
+#         output['count'] = len(full_recs)
+#         output['records'] = full_recs
+#         return output
 
     # ...............................................
     @classmethod
@@ -2269,10 +2333,78 @@ class MorphoSourceAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def get_occurrences_by_occid(cls, occid, count_only=False, logger=None):
+    def _standardize_record(cls, rec):
+        # todo: standardize gbif output to DWC, DSO, etc
+        return rec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(cls, output, count_only, err=None):
+        std_output = {'count': 0}
+        errmsgs = []
+        stdrecs = []
+        ckey = MorphoSource.TOTAL_KEY
+        rkey = MorphoSource.RECORDS_KEY
+        if err is not None:
+            std_output['error'].append(err)
+        # Count
+        try:
+            total = output[ckey]
+        except:
+            msg = cls._get_error_message('{} element missing'.format(ckey))
+            errmsgs.append(msg)
+        else:
+            std_output['count'] = total
+        # Records
+        if count_only is False:
+            try:
+                recs = output[rkey]
+            except:
+                msg = cls._get_error_message('{} element missing'.format(rkey))
+                errmsgs.append(msg)
+            else:
+                for r in recs:
+                    try:
+                        stdrecs.append(cls._standardize_record(r))
+                    except Exception as e:
+                        msg = cls._get_error_message(err=e)
+                        errmsgs.append(msg)
+        # Only include records, errors if they exist
+        if stdrecs:
+            std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['error'] = errmsgs
+        return std_output
+
+    # ...............................................
+    @classmethod
+    def get_occurrences_page1_by_occid(cls, occid, count_only=False, logger=None):
+        start = 0
+        std_output = {'count': 0}
+        api = MorphoSourceAPI(
+            resource=MorphoSource.OCC_RESOURCE, 
+            q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
+            other_filters={'start': start, 'limit': MorphoSource.LIMIT})
         qry_meta = {
             'provider': ServiceProvider.MorphoSource['name'], 
-            'occurrenceid': occid}
+            'occurrenceid': occid, 'query': api.url}
+        try:
+            api.query_by_get()
+        except Exception as e:
+            msg = cls._get_error_message(msg=api.url, err=e)
+            std_output['error'] = msg
+            log_error(msg, logger=logger)
+        else:
+            std_output = cls._standardize_output(api.output, count_only)
+        # Add query metadata to output
+        for key, val in qry_meta.items():
+            std_output[key] = val                
+            # First query, report count
+        return std_output
+
+    # ...............................................
+    @classmethod
+    def get_occurrences_by_occid_old(cls, occid, count_only=False, logger=None):
         start = 0
         output = {}
         all_recs = []
@@ -2441,7 +2573,7 @@ if __name__ == '__main__':
     
     log_info('Mopho records:')
     for guid in TST_VALUES.BIRD_OCC_GUIDS:
-        moutput = MorphoSourceAPI.get_occurrences_by_occid(guid)
+        moutput = MorphoSourceAPI.get_occurrences_page1_by_occid(guid)
         for r in moutput['records']:
             occid = notes = None
             try:
