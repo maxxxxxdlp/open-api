@@ -17,9 +17,11 @@ class _OccurrenceSvc(_S2nService):
 class OccGBIF(_OccurrenceSvc):
     PROVIDER = ServiceProvider.GBIF
     # ...............................................
-    def _get_records(self, occid, count_only):
+    def get_records(self, occid, count_only):
         output = GbifAPI.get_occurrences_by_occid(
             occid, count_only=count_only)
+        output['service'] = self.SERVICE_TYPE
+        output['provider'] = self.PROVIDER['name']
         return output
 
     # ...............................................
@@ -30,7 +32,7 @@ class OccGBIF(_OccurrenceSvc):
         if occurrence_id is None:
             return self._show_online()
         else:
-            return self._get_records(occurrence_id, usr_params['count_only'])
+            return self.get_records(occurrence_id, usr_params['count_only'])
 
 
 # .............................................................................
@@ -38,8 +40,10 @@ class OccGBIF(_OccurrenceSvc):
 class OccIDB(_OccurrenceSvc):
     PROVIDER = ServiceProvider.iDigBio
     # ...............................................
-    def _get_records(self, occid, count_only):
+    def get_records(self, occid, count_only):
         output = IdigbioAPI.get_occurrences_by_occid(occid, count_only=count_only)
+        output['service'] = self.SERVICE_TYPE
+        output['provider'] = self.PROVIDER['name']
         return output
 
     # ...............................................
@@ -50,16 +54,18 @@ class OccIDB(_OccurrenceSvc):
         if occurrence_id is None:
             return self._show_online()
         else:
-            return self._get_records(occurrence_id, usr_params['count_only'])
+            return self.get_records(occurrence_id, usr_params['count_only'])
           
 # .............................................................................
 @cherrypy.expose
 class OccMopho(_OccurrenceSvc):
     PROVIDER = ServiceProvider.MorphoSource
     # ...............................................
-    def _get_records(self, occid, count_only):
+    def get_records(self, occid, count_only):
         output = MorphoSourceAPI.get_occurrences_page1_by_occid(
             occid, count_only=count_only)
+        output['service'] = self.SERVICE_TYPE
+        output['provider'] = self.PROVIDER['name']
         return output
 
     # ...............................................
@@ -70,14 +76,14 @@ class OccMopho(_OccurrenceSvc):
         if occurrence_id is None:
             return self._show_online()
         else:
-            return self._get_records(occurrence_id, usr_params['count_only'])
+            return self.get_records(occurrence_id, usr_params['count_only'])
 
 # .............................................................................
 @cherrypy.expose
 class OccSpecify(_OccurrenceSvc):
     PROVIDER = ServiceProvider.Specify
     # ...............................................
-    def _get_records(self, url, occid):
+    def get_records(self, url, occid):
         msg = 'Spocc failed: url = {}, occid = {}'.format(url, occid)
         if url is None:
             if occid is None:
@@ -93,6 +99,8 @@ class OccSpecify(_OccurrenceSvc):
             output = SpecifyPortalAPI.get_specify_record(url)
         else:
             output = {'info': msg}
+        output['service'] = self.SERVICE_TYPE
+        output['provider'] = self.PROVIDER['name']
         return output 
     
     # ...............................................
@@ -102,17 +110,20 @@ class OccSpecify(_OccurrenceSvc):
         if usr_params['url'] is None and usr_params['occid'] is None:
             return self._show_online()
         else:
-            return self._get_records(usr_params['url'], usr_params['occid'])
+            return self.get_records(usr_params['url'], usr_params['occid'])
 
 # .............................................................................
 @cherrypy.expose
 class OccTentacles(_OccurrenceSvc):
     
     # ...............................................
-    def _get_records(self, occid, count_only):
+    def get_records(self, usr_params):
         all_output = {}
         all_count = 0
-        msgs = {'error': [], 'warning': []}
+        
+        occid = usr_params['occid']
+        count_only = usr_params['count_only']
+        
         # Specify ARK Record
         spark = SpecifyResolve()
         solr_output = spark.get_specify_guid_meta(occid)
@@ -127,7 +138,7 @@ class OccTentacles(_OccurrenceSvc):
         (url, msg) = spark.get_url_from_meta(solr_output)
         if url is not None:
             spocc = OccSpecify()
-            sp_output = spocc.GET(url=url, occid=occid)
+            sp_output = spocc.get_records(url, occid)
             try:
                 all_count += sp_output['count']
             except:
@@ -138,7 +149,7 @@ class OccTentacles(_OccurrenceSvc):
         
         # GBIF copy/s of Specify Record
         gocc = OccGBIF()
-        gbif_output = gocc.GET(occid=occid, count_only=count_only)
+        gbif_output = gocc.get_records(occid, count_only)
         try:
             all_count += gbif_output['count']
         except:
@@ -147,7 +158,7 @@ class OccTentacles(_OccurrenceSvc):
         
         # iDigBio copy/s of Specify Record
         idbocc = OccIDB()
-        idb_output = idbocc.GET(occid=occid, count_only=count_only)
+        idb_output = idbocc.get_records(occid, count_only)
         try:
             all_count += idb_output['count']
         except:
@@ -156,7 +167,7 @@ class OccTentacles(_OccurrenceSvc):
         
         # MorphoSource records connected to Specify Record
         mopho = OccMopho()
-        mopho_output = mopho.GET(occid=occid, count_only=count_only)
+        mopho_output = mopho.get_records(occid, count_only)
         try:
             all_count += mopho_output['count']
         except:
@@ -169,7 +180,7 @@ class OccTentacles(_OccurrenceSvc):
     @cherrypy.tools.json_out()
     def GET(self, occid=None, count_only=None, **kwargs):
         usr_params = self._standardize_params(occid=occid, count_only=count_only)
-        return self._get_records(usr_params['occid'], usr_params['count_only'])
+        return self.get_records(usr_params)
         
 # .............................................................................
 if __name__ == '__main__':

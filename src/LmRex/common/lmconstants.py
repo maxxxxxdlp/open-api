@@ -106,66 +106,8 @@ class ServiceProvider:
 #             APIService.Resolver]}
 
 
-# # .............................................................................
-# class APIMount:
-#     # root, APIService, ServiceProvider['endpoint']
-#     # Specify ARK resolver service
-#     SpecifyArk = '{}/{}'.format(APIService.Root, APIService.SpecifyArk)
-#     
-#     # occurrence services
-#     Occurrence = '{}/{}'.format(APIService.Root, APIService.Occurrence)
-#     GBIF_Occurrence = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Occurrence, 
-#         ServiceProvider.GBIF['endpoint'])
-#     IDB_Occurrence = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Occurrence, 
-#         ServiceProvider.iDigBio['endpoint'])
-#     MorphoSource_Occurrence = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Occurrence, 
-#         ServiceProvider.MorphoSource['endpoint'])
-#     Specify_Occurrence = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Occurrence, 
-#         ServiceProvider.Specify['endpoint'])
-#     
-#     # occurrence dataset service
-#     GCollSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Dataset)
-#     BCollSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Dataset, ServiceProvider.BISON['endpoint'])
-#     
-#     # name services
-#     NameTentaclesSvc = '{}/{}'.format(APIService.Root, APIService.Name)
-#     GAcNameSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Name, ServiceProvider.GBIF['endpoint'])
-#     ITISSolrNameSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Name, ServiceProvider.ITISSolr['endpoint'])
-# #     ITISNameSvc = '{}/{}/{}'.format(
-# #         APIService.Root, APIService.Name, S2NEndpoint.ITISName)
-#     
-#     # map services
-#     LmMapSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Map, ServiceProvider.Lifemapper['endpoint'])
-#     BisonMapSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Map, ServiceProvider.BISON['endpoint'])
-#     
-#     # Service testing
-#     HeartbeatSvc = '{}/{}'.format(APIService.Root, APIService.Heartbeat)
-#     HeartbeatGbifSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Heartbeat, ServiceProvider.Gbif['endpoint'])
-# 
-#     @staticmethod
-#     def occurrence_services():
-#         return [
-#             APIMount.SpecifyArkSvc, APIMount.OccurrenceSvc, APIMount.GOccSvc, 
-#             APIMount.IDBOccSvc, APIMount.SPOccSvc]
-#     @staticmethod
-#     def name_services():
-#         return [
-#             APIMount.NameSvc, APIMount.GAcNameSvc, APIMount.ITISNameSvc, 
-#             APIMount.ITISSolrNameSvc]
-#     @staticmethod
-#     def dataset_services():
-#         return [APIMount.GCollSvc]
+ # .............................................................................
+
 
 # .............................................................................
 class DWCA:
