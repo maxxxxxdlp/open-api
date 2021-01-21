@@ -1,6 +1,7 @@
 import cherrypy
 
-from LmRex.common.lmconstants import (ServiceProvider, APIService, TST_VALUES)
+from LmRex.common.lmconstants import (ServiceProvider, APIService, Lifemapper, 
+                                      TST_VALUES)
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.name import NameGBIF
 from LmRex.tools.api import (LifemapperAPI, ItisAPI)
@@ -16,58 +17,58 @@ class _MapSvc(_S2nService):
 @cherrypy.expose
 class MapLM(_MapSvc):
     PROVIDER = ServiceProvider.Lifemapper
-    # ...............................................
-    def get_map_info(
-            self, namestr, scenariocode, bbox, color, height, 
-            layers, frmat, request, srs, transparent, width, do_match):
+#     # ...............................................
+#     def get_map_info(
+#             self, namestr, scenariocode, bbox, color, height, 
+#             layers, frmat, request, srs, transparent, width, do_match):
+# 
+#         output = {'count': 0, 'records': []}
+#         # Lifemapper only uses GBIF Backbone Taxonomy accepted names
+#         if do_match is False:
+#             scinames = [namestr] 
+#         else:
+#             gan = NameGBIF()
+#             goutput = gan.GET(
+#                 namestr=namestr, gbif_accepted=True, do_count=False, do_parse=True)
+#             good_names = goutput['records']
+#             # Lifemapper uses GBIF Backbone Taxonomy accepted names
+#             # If none, try provided namestr
+#             scinames = []        
+#             if len(good_names) == 0:
+#                 scinames.append(namestr)
+#             else:
+#                 for namerec in good_names:
+#                     try:
+#                         scinames.append(namerec['scientificName'])
+#                     except Exception as e:
+#                         print('No scientificName element in GBIF record {} for {}'
+#                               .format(namerec, namestr))
+#         # 2-step until LM returns full objects
+#         records = []
+#         msgs = []
+#         for sname in scinames:
+#             # Step 1, get projection atoms
+#             prj_output = LifemapperAPI.find_projections_by_name(
+#                 sname, prjscenariocode=scenariocode, bbox=bbox, color=color, 
+#                 height=height, layers=layers, 
+#                 frmat=frmat, request=request, srs=srs,  transparent=transparent, 
+#                 width=width)
+#             # Add to output
+#             # TODO: make sure these include projection displayName
+#             records.extend(prj_output['records'])
+#             for key in ['warning', 'error']:
+#                 try:
+#                     msgs.append(prj_output[key])
+#                 except:
+#                     pass
+#         if len(msgs) > 0:
+#             output['errors'] = msgs
+#         output['records'] = records
+#         output['count'] = len(records)
+#         return output
 
-        output = {'count': 0, 'records': []}
-        # Lifemapper only uses GBIF Backbone Taxonomy accepted names
-        if do_match is False:
-            scinames = [namestr] 
-        else:
-            gan = NameGBIF()
-            goutput = gan.GET(
-                namestr=namestr, gbif_accepted=True, do_count=False, do_parse=True)
-            good_names = goutput['records']
-            # Lifemapper uses GBIF Backbone Taxonomy accepted names
-            # If none, try provided namestr
-            scinames = []        
-            if len(good_names) == 0:
-                scinames.append(namestr)
-            else:
-                for namerec in good_names:
-                    try:
-                        scinames.append(namerec['scientificName'])
-                    except Exception as e:
-                        print('No scientificName element in GBIF record {} for {}'
-                              .format(namerec, namestr))
-        # 2-step until LM returns full objects
-        records = []
-        msgs = []
-        for sname in scinames:
-            # Step 1, get projection atoms
-            prj_output = LifemapperAPI.find_projections_by_name(
-                sname, prjscenariocode=scenariocode, bbox=bbox, color=color, 
-                height=height, layers=layers, 
-                frmat=frmat, request=request, srs=srs,  transparent=transparent, 
-                width=width)
-            # Add to output
-            # TODO: make sure these include projection displayName
-            records.extend(prj_output['records'])
-            for key in ['warning', 'error']:
-                try:
-                    msgs.append(prj_output[key])
-                except:
-                    pass
-        if len(msgs) > 0:
-            output['errors'] = msgs
-        output['records'] = records
-        output['count'] = len(records)
-        return output
-
     # ...............................................
-    def get_map_layers(self, namestr, color, do_match):
+    def get_map_layers(self, namestr, scenariocode, color, do_match):
 
         output = {'count': 0, 'records': []}
         # Lifemapper only uses GBIF Backbone Taxonomy accepted names
@@ -95,10 +96,8 @@ class MapLM(_MapSvc):
         msgs = []
         for sname in scinames:
             # Step 1, get projections
-            prj_output = LifemapperAPI.find_projections_by_name(
-                sname, color=color)
-            # Add to output
-            # TODO: make sure these include projection displayName
+            prj_output = LifemapperAPI.find_map_layers_by_name(
+                sname, prjscenariocode=scenariocode, color=color)
             records.extend(prj_output['records'])
             for key in ['warning', 'error']:
                 try:
@@ -106,35 +105,69 @@ class MapLM(_MapSvc):
                 except:
                     pass
         if len(msgs) > 0:
-            output['errors'] = msgs
+            output['error'] = msgs
         output['records'] = records
         output['count'] = len(records)
-        return outputh
+        return output
+
+#     # ...............................................
+#     @cherrypy.tools.json_out()
+#     def GET_old(self, namestr=None, scenariocode=None, 
+#             bbox=None, color=None, height=None, 
+#             layers=None, frmat=None, request=None, srs=None, 
+#             transparent=None, width=None, do_match=True, **kwargs):
+#         """Get GBIF taxon records for a scientific name string
+#         
+#         Args:
+#             namestr: a scientific name
+#             scenariocode: a Lifemapper projection scenario code, defaults to 
+#                 projection based on observed (not predicted) environmental data
+#             bbox: bbox as a comma-delimited string, minX, minY, maxX, maxY
+#             color: one of a defined set of color choices for projection display 
+#             exceptions: format for exceptions
+#             height: height of the image
+#             layers: a comma-delimted string of layers, with codes for 
+#                 projection ('prj'), occurrence points ('occ'), background 
+#                 blue marble satellite image ('bmng')
+#             frmat: output format
+#             request: WMS request
+#             srs: Spatial reference system, defaults to epsg:4326 (geographic)
+#             transparent: transparency
+#             width: width of the image
+#             kwargs: additional keyword arguments - to be ignored
+#         Return:
+#             a list of dictionaries containing a matching name 
+#             (synonym, invalid, etc), record count, and query URL for retrieving 
+#             the records.
+#             
+#         Todo: 
+#             fix color parameter in Lifemapper WMS service
+#         """
+#         usr_params = self._standardize_params(
+#             namestr=namestr, scenariocode=scenariocode, bbox=bbox, color=color, 
+#             height=height, layers=layers, frmat=frmat, 
+#             request=request, srs=srs, transparent=transparent, width=width, 
+#             do_match=do_match)
+#         namestr = usr_params['namestr']
+#         if not namestr:
+#             return self._show_online()
+#         else:
+#             return self.get_map_info(
+#                 namestr, usr_params['scenariocode'], usr_params['bbox'], 
+#                 usr_params['color'], usr_params['height'], usr_params['layers'], 
+#                 usr_params['format'], usr_params['request'], usr_params['srs'], 
+#                 usr_params['transparent'], usr_params['width'], 
+#                 usr_params['do_match'])
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET_old(self, namestr=None, scenariocode=None, 
-            bbox=None, color=None, height=None, 
-            layers=None, frmat=None, request=None, srs=None, 
-            transparent=None, width=None, do_match=True, **kwargs):
+    def GET(self, namestr=None, scenariocode=Lifemapper.OBSERVED_SCENARIO_CODE, 
+            color=None, do_match=True, **kwargs):
         """Get GBIF taxon records for a scientific name string
         
         Args:
             namestr: a scientific name
-            scenariocode: a Lifemapper projection scenario code, defaults to 
-                projection based on observed (not predicted) environmental data
-            bbox: bbox as a comma-delimited string, minX, minY, maxX, maxY
             color: one of a defined set of color choices for projection display 
-            exceptions: format for exceptions
-            height: height of the image
-            layers: a comma-delimted string of layers, with codes for 
-                projection ('prj'), occurrence points ('occ'), background 
-                blue marble satellite image ('bmng')
-            frmat: output format
-            request: WMS request
-            srs: Spatial reference system, defaults to epsg:4326 (geographic)
-            transparent: transparency
-            width: width of the image
             kwargs: additional keyword arguments - to be ignored
         Return:
             a list of dictionaries containing a matching name 
@@ -145,49 +178,15 @@ class MapLM(_MapSvc):
             fix color parameter in Lifemapper WMS service
         """
         usr_params = self._standardize_params(
-            namestr=namestr, scenariocode=scenariocode, bbox=bbox, color=color, 
-            height=height, layers=layers, frmat=frmat, 
-            request=request, srs=srs, transparent=transparent, width=width, 
-            do_match=do_match)
-        namestr = usr_params['namestr']
-        if not namestr:
-            return self._show_online()
-        else:
-            return self.get_map_info(
-                namestr, usr_params['scenariocode'], usr_params['bbox'], 
-                usr_params['color'], usr_params['height'], usr_params['layers'], 
-                usr_params['format'], usr_params['request'], usr_params['srs'], 
-                usr_params['transparent'], usr_params['width'], 
-                usr_params['do_match'])
-
-    # ...............................................
-    @cherrypy.tools.json_out()
-    def GET(self, namestr=None, color=None, do_match=True, **kwargs):
-        """Get GBIF taxon records for a scientific name string
-        
-        Args:
-            namestr: a scientific name
-            color: one of a defined set of color choices for projection display 
-            kwargs: additional keyword arguments - to be ignored
-        Return:
-            a list of dictionaries containing a matching name 
-            (synonym, invalid, etc), record count, and query URL for retrieving 
-            the records.
-            
-        Todo: 
-            fix color parameter in Lifemapper WMS service
-        """
-        usr_params = self._standardize_params(
-            namestr=namestr, scenariocode=scenariocode, bbox=bbox, color=color, 
-            height=height, layers=layers, frmat=frmat, 
-            request=request, srs=srs, transparent=transparent, width=width, 
+            namestr=namestr, scenariocode=scenariocode, color=color, 
             do_match=do_match)
         namestr = usr_params['namestr']
         if not namestr:
             return self._show_online()
         else:
             return self.get_map_layers(
-                namestr,  usr_params['color'], usr_params['do_match'])
+                namestr,  usr_params['scenariocode'], usr_params['color'], 
+                usr_params['do_match'])
 
 # .............................................................................
 @cherrypy.expose
@@ -282,6 +281,4 @@ if __name__ == '__main__':
         except:
             pass
         else:
-            print('  map_url: {}, pointlyr: {}, backlyr: {}'.format(
-                rec['map']['lmMapEndpoint'], rec['map']['pointLayerName'], 
-                rec['map']['backgroundLayerName']))
+            print(rec)

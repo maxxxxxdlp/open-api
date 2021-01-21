@@ -1677,7 +1677,7 @@ class IdigbioAPI(APIQuery):
 
         try:
             api.query()
-        except Exception:
+        except Exception as e:
             msg = cls._get_error_message(msg=api.url, err=e)
             std_output = {'error': msg}
             log_error(msg, logger=logger)
@@ -1875,37 +1875,41 @@ class LifemapperAPI(APIQuery):
     
     # ...............................................
     @classmethod
-    def _standardize_projection_layer_rec(cls, rec):
+    def _standardize_record(cls, rec, color=None):
         try:
             mapname = rec['map']['mapName']
             url = rec['map']['endpoint']
-            endpoint = '{}/{}'.format(url, mapname)
         except Exception as e:
             msg = 'Failed to retrieve map url from {}, {}'.format(rec, e)
             raise Exception(msg)
-
-        try:
-            data_url = rec['spatialRaster']['dataUrl']
-            proj_url = data_url.rstrip('/gtiff')
-        except:
-            msg = 'Failed to get projection API link (spatialRaster/dataUrl)'
-            raise Exception(msg)
-
-        try:
-            occid = rec['occurrenceset']['id']
-            point_url = rec['occurrenceset']['metadataUrl']
-            point_name = 'occ_{}'.format(occid)
-            newrec = {
-                'endpoint': endpoint,
-                'point_link': point_url,
-                'point_name': point_name,
-                'species_name': rec['speciesName'],
-                'modtime': rec['statusModTime'],
-                'projection_link': proj_url}
-        except Exception as e:
-            msg = 'Failed to retrieve point data from {}, {}'.format(rec, e)
-            raise Exception(msg)
+        else:
+            endpoint = '{}/{}'.format(url, mapname)
+            try:
+                data_url = rec['spatialRaster']['dataUrl']
+            except:
+                msg = 'Failed to get projection API link (spatialRaster/dataUrl)'
+                raise Exception(msg)
+            else:        
+                proj_url = data_url.rstrip('/gtiff')
+                try:
+                    occid = rec['occurrenceSet']['id']
+                    point_url = rec['occurrenceSet']['metadataUrl']
+                    point_name = 'occ_{}'.format(occid)
+                    newrec = {
+                        'endpoint': endpoint,
+                        'point_link': point_url,
+                        'point_name': point_name,
+                        'species_name': rec['speciesName'],
+                        'modtime': rec['statusModTime'],
+                        'projection_link': proj_url}
+                except Exception as e:
+                    msg = 'Failed to retrieve point data from {}, {}'.format(rec, e)
+                    raise Exception(msg)
         
+        # Ran the gauntlet of exceptions
+        if color is not None:
+            newrec['vendor-specific-parameters'] = {'color': color}
+        # Minor errors return messages within record
         record_errors = []
         try:
             stat = rec['status']
@@ -1913,34 +1917,36 @@ class LifemapperAPI(APIQuery):
             msg = 'Failed to get projection \'status\' for layer {}'.format(
                 proj_url)
             record_errors.append(msg)
-            
-        if stat == Lifemapper.COMPLETE_STAT_VAL:
-            try:
-                newrec['projection_name'] = rec['map']['layerName']
-            except:
-                msg = 'Failed to get projection map/layerName from {}'.format(
-                    proj_url)
-                record_errors.append(msg)
-            
-            try:
-                prj_metadata = rec['metadata']
-            except:
-                msg = 'Failed to retrieve projection metadata for {}'.format(
-                    proj_url)
-                record_errors.append(msg)
-            for key in Lifemapper.PROJECTION_METADATA_KEYS:
+        else:
+            # No projection layer without Complete status 
+            if stat == Lifemapper.COMPLETE_STAT_VAL:
                 try:
-                    prj_metadata[key] = rec[key]
+                    newrec['projection_name'] = rec['map']['layerName']
                 except:
-                    msg = 'Failed to retrieve projection {} for {}'.format(
-                        key, proj_url)
-                record_errors.append(msg)
+                    msg = 'Failed to get projection map/layerName from {}'.format(
+                        proj_url)
+                    record_errors.append(msg)
+                # Add projection metadata
+                try:
+                    prj_metadata = rec['metadata']
+                except:
+                    msg = 'Failed to retrieve projection metadata for {}'.format(
+                        proj_url)
+                    record_errors.append(msg)
+                for key in Lifemapper.PROJECTION_METADATA_KEYS:
+                    try:
+                        prj_metadata[key] = rec[key]
+                    except:
+                        msg = 'Failed to retrieve projection {} for {}'.format(
+                            key, proj_url)
+                        record_errors.append(msg)
+        if len(record_errors) > 0:
             newrec['error'] = record_errors
         return newrec
     
     # ...............................................
     @classmethod
-    def _standardize_output(cls, output, count_only, err=None):
+    def _standardize_output(cls, output, color=None, count_only=False, err=None):
         std_output = {'count': 0, 'records': [], 'error': []}
         if err is not None:
             std_output['error'].append(err)
@@ -1951,63 +1957,65 @@ class LifemapperAPI(APIQuery):
         if count_only is False:
             for r in output:
                 try:
-                    std_output['records'].append(cls._standardize_record(r))
-                except:
-                    pass
+                    std_output['records'].append(
+                        cls._standardize_record(r, color=color))
+                except Exception as e:
+                    msg = cls._get_error_message(err=e)
+                    std_output['error'].append(msg)
         return std_output
     
-    # ...............................................
-    @classmethod
-    def _construct_map_url(
-            cls, rec, bbox, color, exceptions, height, layers, frmat, request, 
-            srs, transparent, width):
-        """
-        service=wms&request=getmap&version=1.0&srs=epsg:4326&bbox=-180,-90,180,90&format=png&width=600&height=300&layers=prj_1848399
-        """
-        try:
-            mapname = rec['map']['mapName']
-            lyrname = rec['map']['layerName']
-            url = rec['map']['endpoint']
-        except Exception as e:
-            msg = 'Failed to retrieve map data from {}, {}'.format(rec, e)
-            rec = {'spcoco.error': msg}
-        else:
-            tmp = layers.split(',')
-            lyrcodes = [t.strip() for t in tmp]
-            lyrnames = []
-            # construct layers for display from bottom layer up to top: 
-            #     bmng (background image), prj (projection), occ (points)
-            if 'bmng' in lyrcodes:
-                lyrnames.append('bmng')
-            if 'prj' in lyrcodes:
-                lyrnames.append(lyrname)
-            if 'occ' in lyrcodes:
-                try:
-                    occid = rec['occurrenceSet']['id']
-                except:
-                    msg = 'Failed to retrieve occurrence layername'
-                else:
-                    occlyrname = 'occ_{}'.format(occid)
-                    lyrnames.append(occlyrname)
-            lyrstr = ','.join(lyrnames)
-            
-            filters = {
-                'bbox': bbox, 'height': height, 'layers': lyrstr, 
-                'format': frmat, 'request': request, 'srs': srs, 'width': width}
-            # Optional, LM-specific, filters
-            # TODO: fix color parameter in Lifemapper maps
-#             if color is not None:
-#                 filters['color'] = color 
-            if exceptions is not None:
-                filters['exceptions'] = exceptions
-            if transparent is not None:
-                filters['transparent'] = transparent
-                
-            filter_str = 'service=wms&version=1.0'
-            for (key, val) in filters.items():
-                filter_str = '{}&{}={}'.format(filter_str, key, val) 
-            map_url = '{}/{}?{}'.format(url, mapname, filter_str)
-        return map_url
+#     # ...............................................
+#     @classmethod
+#     def _construct_map_url(
+#             cls, rec, bbox, color, exceptions, height, layers, frmat, request, 
+#             srs, transparent, width):
+#         """
+#         service=wms&request=getmap&version=1.0&srs=epsg:4326&bbox=-180,-90,180,90&format=png&width=600&height=300&layers=prj_1848399
+#         """
+#         try:
+#             mapname = rec['map']['mapName']
+#             lyrname = rec['map']['layerName']
+#             url = rec['map']['endpoint']
+#         except Exception as e:
+#             msg = 'Failed to retrieve map data from {}, {}'.format(rec, e)
+#             rec = {'spcoco.error': msg}
+#         else:
+#             tmp = layers.split(',')
+#             lyrcodes = [t.strip() for t in tmp]
+#             lyrnames = []
+#             # construct layers for display from bottom layer up to top: 
+#             #     bmng (background image), prj (projection), occ (points)
+#             if 'bmng' in lyrcodes:
+#                 lyrnames.append('bmng')
+#             if 'prj' in lyrcodes:
+#                 lyrnames.append(lyrname)
+#             if 'occ' in lyrcodes:
+#                 try:
+#                     occid = rec['occurrenceSet']['id']
+#                 except:
+#                     msg = 'Failed to retrieve occurrence layername'
+#                 else:
+#                     occlyrname = 'occ_{}'.format(occid)
+#                     lyrnames.append(occlyrname)
+#             lyrstr = ','.join(lyrnames)
+#             
+#             filters = {
+#                 'bbox': bbox, 'height': height, 'layers': lyrstr, 
+#                 'format': frmat, 'request': request, 'srs': srs, 'width': width}
+#             # Optional, LM-specific, filters
+#             # TODO: fix color parameter in Lifemapper maps
+# #             if color is not None:
+# #                 filters['color'] = color 
+#             if exceptions is not None:
+#                 filters['exceptions'] = exceptions
+#             if transparent is not None:
+#                 filters['transparent'] = transparent
+#                 
+#             filter_str = 'service=wms&version=1.0'
+#             for (key, val) in filters.items():
+#                 filter_str = '{}&{}={}'.format(filter_str, key, val) 
+#             map_url = '{}/{}?{}'.format(url, mapname, filter_str)
+#         return map_url
 
     # ...............................................
     @classmethod
@@ -2090,20 +2098,24 @@ class LifemapperAPI(APIQuery):
         output['records'] = recs
         return output
 
-
     # ...............................................
     @classmethod
-    def find_maps_by_name(
-            cls, name, bbox='-180,-90,180,90', 
-            color=None, exceptions=None, height=300, frmat='png', 
-            request='getmap', srs='epsg:4326',  transparent=None, width=600, 
-            other_filters={}, logger=None):
+    def find_map_layers_by_name(
+            cls, name, prjscenariocode=None, color=None, other_filters={}, 
+            logger=None):
         """
-        List map and layers for a given scientific name.  
+        List projections for a given scientific name.  
         
         Args:
             name: a scientific name 'Accepted' according to the GBIF Backbone 
                 Taxonomy
+            prjscenariocode: a Lifemapper code indicating whether the 
+                environmental data used for creating the projection is 
+                observed, or modeled past or future.  Codes are in 
+                LmREx.common.lmconstants Lifemapper.*_SCENARIO_CODE*. If the 
+                code is None, return a map with only occurrence points
+            color: a string indicating a valid color for displaying a predicted
+                distribution map 
             logger: optional logger for info and error messages.  If None, 
                 prints to stdout    
 
@@ -2114,55 +2126,30 @@ class LifemapperAPI(APIQuery):
         Todo:
             handle full record returns instead of atoms
         """
-        output = {}
-        recs = []
+        std_output = {}
+        qry_meta = {
+            'provider': ServiceProvider.Lifemapper['name'], 'name': name}
         other_filters[Lifemapper.NAME_KEY] = name
         other_filters[Lifemapper.ATOM_KEY] = 0
 #         other_filters[Lifemapper.MIN_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
 #         other_filters[Lifemapper.MAX_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
+        if prjscenariocode is not None:
+            other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
             resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
         try:
             api.query_by_get()
-        except Exception:
-            msg = 'Failed on {}'.format(api.url)
+        except Exception as e:
+            msg = cls._get_error_message(msg=api.url, err=e)
+            std_output = {'error': msg}
             log_error(msg, logger=logger)
-            output['error'] = msg
         else:
-            # output returns a list of records
-            recs = api.output
-            if len(recs) == 0:
-                output['warning'] = 'Failed to find projections for {}'.format(
-                    name)
-            background_layer_name = 'bmng'
-            for rec in recs:
-                # Add base WMS map url with LM-specific parameters into 
-                #     map section of metadata
-                try:
-                    rec['map']['lmMapEndpoint'] = '{}/{}'.format(
-                        rec['map']['endpoint'], rec['map']['mapName'])
-                except Exception as err:
-                    msg = 'Failed getting map url components {}'.format(err)
-                    log_error(msg, logger=logger)
-                    output['error'] = msg
-                else:
-                    # Add background layername into map section of metadata
-                    rec['map']['backgroundLayerName']  = background_layer_name
-                    # Add point layername into map section of metadata
-                    try:
-                        occ_layer_name = 'occ_{}'.format(rec['occurrenceSet']['id'])
-                    except:
-                        occ_layer_name = ''
-                    rec['map']['pointLayerName']  = occ_layer_name
-                    # Add full WMS map url with all required parameters into metadata
-#                     url = LifemapperAPI._construct_map_url(
-#                         rec, bbox, color, exceptions, height, layers, frmat, 
-#                         request, srs, transparent, width)
-#                     if url is not None:
-#                         rec['map_url'] = url
-        output['count'] = len(recs)
-        output['records'] = recs
-        return output
+            std_output = cls._standardize_output(
+                api.output, color=color)
+        # Add query metadata to output
+        for key, val in qry_meta.items():
+            std_output[key] = val                
+        return std_output
 
     # ...............................................
     @classmethod
