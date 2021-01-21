@@ -1,0 +1,4377 @@
+openapi: 3.0.0
+info:
+  title: S^N services
+  description: '**description_needed_here**'
+  version: 0.0.1
+  termsOfService: 'https://lifemapper.ku.edu/?page_id=1096'
+  contact:
+    name: S^N
+    email: aimee.stewart@ku.edu
+    url: 'http://www.lifemapper.org/'
+  license:
+    name: GPL-3.0 License
+    url: 'https://www.gnu.org/licenses/gpl-3.0.en.html'
+servers:
+  - url: 'http://notyeti-192.lifemapper.org/api/v1'
+    description: Internal testing server
+tags:
+  - name: name
+    description: Get species determination information
+  - name: occ
+    description: Get species occurences
+  - name: dataset
+    description: '**description_needed_here**'
+  - name: resolve
+    description: '**description_needed_here**'
+  - name: map
+    description: Get URL to a projection map of a species
+externalDocs:
+  description: Lifemapper
+  url: 'http://www.lifemapper.org/'
+paths:
+  '/name/{namestr}':
+    get:
+      tags:
+        - name
+      summary: 'Tentacles : Get species determination information'
+      description: '**description_needed_here**'
+      operationId: nameTentacles
+      parameters:
+        - $ref: '#/components/parameters/namestr'
+        - $ref: '#/components/parameters/gbif_parse'
+        - $ref: '#/components/parameters/gbif_count'
+        - $ref: '#/components/parameters/gbif_accepted'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/names_tentacles'
+  '/name/gbif/{namestr}':
+    get:
+      tags:
+        - name
+      summary: 'GBIF : Get species determination information'
+      description: '**description_needed_here**'
+      operationId: nameGBIF
+      parameters:
+        - $ref: '#/components/parameters/namestr'
+        - $ref: '#/components/parameters/gbif_parse'
+        - $ref: '#/components/parameters/gbif_count'
+        - $ref: '#/components/parameters/gbif_accepted'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/names_gbif'
+              examples:
+                Denitrobacterium etoxificans:
+                  $ref: >-
+                    #/components/examples/names_gbif_Denitrobacterium_detoxificans
+                Plagioecia patina:
+                  $ref: '#/components/examples/names_gbif_Plagioecia_patina'
+                Tulipa ylvestris:
+                  $ref: '#/components/examples/names_gbif_Tulipa_ylvestris'
+  '/name/itis/{namestr}':
+    get:
+      tags:
+        - name
+      summary: 'ITIS : Get species determination information'
+      description: '**description_needed_here**'
+      operationId: nameITIS
+      parameters:
+        - $ref: '#/components/parameters/namestr'
+        - $ref: '#/components/parameters/gbif_parse'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/names_itis'
+              examples:
+                Denitrobacterium etoxificans:
+                  $ref: >-
+                    #/components/examples/names_itis_Denitrobacterium_detoxificans
+  '/occ/{occurrenceid}':
+    get:
+      tags:
+        - occ
+      summary: 'Tentacles : Get occurence information'
+      description: '**description_needed_here**'
+      operationId: occTentacles
+      parameters:
+        - $ref: '#/components/parameters/occurrenceid'
+        - $ref: '#/components/parameters/count_only'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/occ_tentacles'
+                  - $ref: '#/components/schemas/occ_tentacles_with_records'
+              examples:
+                KU Bird occurence:
+                  $ref: '#/components/examples/occ_tentacles'
+                KU Bird Occurence (count only):
+                  $ref: '#/components/examples/occ_tentacles_count_only'
+  '/occ/gbif/{occurrenceid}':
+    get:
+      tags:
+        - occ
+      summary: 'ITIS : Get occurence information'
+      description: '**description_needed_here**'
+      operationId: occGBIF
+      parameters:
+        - $ref: '#/components/parameters/occurrenceid'
+        - $ref: '#/components/parameters/count_only'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/occ_gbif'
+                  - $ref: '#/components/schemas/occ_gbif_with_records'
+              examples:
+                KU Birds dataset:
+                  $ref: '#/components/examples/occ_gbif'
+                KU Birds dataset (count only):
+                  $ref: '#/components/examples/occ_gbif_count_only'
+  '/occ/idb/{occurrenceid}':
+    get:
+      tags:
+        - occ
+      summary: 'iDigBio : Get occurence information'
+      description: '**description_needed_here**'
+      operationId: occIdb
+      parameters:
+        - $ref: '#/components/parameters/occurrenceid'
+        - $ref: '#/components/parameters/count_only'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/occ_idb'
+                  - $ref: '#/components/schemas/occ_idb_with_records'
+              examples:
+                KU Birds occurence:
+                  $ref: '#/components/examples/occ_idb'
+                KU Birds occurence (count only):
+                  $ref: '#/components/examples/occ_idb_count_only'
+  '/occ/mopho/{occurrenceid}':
+    get:
+      tags:
+        - occ
+      summary: 'MorphoSource : Get occurence information'
+      description: '**description_needed_here**'
+      operationId: occMopho
+      parameters:
+        - $ref: '#/components/parameters/occurrenceid'
+        - $ref: '#/components/parameters/count_only'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/occ_mopho'
+                  - $ref: '#/components/schemas/occ_mopho_with_records'
+              examples:
+                KU Bird occurence:
+                  $ref: '#/components/examples/occ_mopho'
+                KU Bird Occurence (count only):
+                  $ref: '#/components/examples/occ_mopho_count_only'
+  '/occ/specify/{occurrenceid}':
+    get:
+      tags:
+        - occ
+      summary: 'Specify : Get dataset occurences information'
+      description: '**description_needed_here**'
+      operationId: occSpecify
+      parameters:
+        - $ref: '#/components/parameters/occurrenceid'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/occ_specify_with_records'
+              examples:
+                KU Fish Occurence:
+                  $ref: '#/components/examples/occ_specify'
+  '/dataset/gbif/{datasetguid}':
+    get:
+      tags:
+        - dataset
+      summary: 'ITIS : Get a list of occurences in a dataset'
+      description: '**description_needed_here**'
+      operationId: datasetGBIF
+      parameters:
+        - $ref: '#/components/parameters/datasetguid'
+        - $ref: '#/components/parameters/count_only'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/dataset_gbif'
+                  - $ref: '#/components/schemas/dataset_gbif_with_records'
+              examples:
+                KU Birds dataset:
+                  $ref: '#/components/examples/dataset_gbif'
+                KU Birds dataset (count only):
+                  $ref: '#/components/examples/dataset_gbif_count_only'
+components:
+  parameters:
+    namestr:
+      name: namestr
+      in: path
+      description: Scientific name / Full name of a taxa record to search for
+      required: true
+      schema:
+        type: string
+      examples:
+        Plagioecia patina:
+          value: Plagioecia patina
+        Phlox longifolia Nutt.:
+          value: Phlox longifolia Nutt.
+        Tulipa sylvestris L.:
+          value: Tulipa sylvestris L.
+        Medinilla speciosa Blume:
+          value: Medinilla speciosa Blume
+        Acer caesium Wall. ex Brandis:
+          value: Acer caesium Wall. ex Brandis
+        Acer heldreichii Orph. ex Boiss.:
+          value: Acer heldreichii Orph. ex Boiss.
+        Acer pseudoplatanus L.:
+          value: Acer pseudoplatanus L.
+        Acer velutinum Boiss.:
+          value: Acer velutinum Boiss.
+        Acer hyrcanum Fisch. & Meyer:
+          value: Acer hyrcanum Fisch. & Meyer
+        Acer monspessulanum L.:
+          value: Acer monspessulanum L.
+        Acer obtusifolium Sibthorp & Smith:
+          value: Acer obtusifolium Sibthorp & Smith
+        Acer opalus Miller:
+          value: Acer opalus Miller
+        Acer sempervirens L.:
+          value: Acer sempervirens L.
+        Acer floridanum (Chapm.) Pax:
+          value: Acer floridanum (Chapm.) Pax
+        Acer grandidentatum Torr. & Gray:
+          value: Acer grandidentatum Torr. & Gray
+        Acer leucoderme Small:
+          value: Acer leucoderme Small
+        Acer nigrum Michx.f.:
+          value: Acer nigrum Michx.f.
+        Acer skutchii Rehder:
+          value: Acer skutchii Rehder
+        Acer saccharum Marshall:
+          value: Acer saccharum Marshall
+    gbif_parse:
+      name: gbif_parse
+      in: query
+      description: 'whether to parse the scientific name (removing author and date information)'
+      required: false
+      schema:
+        type: string
+    gbif_count:
+      name: gbif_count
+      in: query
+      description: >-
+        Whether to include `occurrence_count` and `occurrence_url` in the
+        response
+      required: false
+      schema:
+        type: boolean
+        default: true
+    gbif_accepted:
+      name: gbif_accepted
+      in: query
+      description: Whether to limit the response to `ACCEPTED` names only
+      required: false
+      schema:
+        type: boolean
+        default: true
+    datasetguid:
+      name: datasetguid
+      in: path
+      description: Dataset GUID
+      required: true
+      schema:
+        $ref: '#/components/schemas/guid'
+      examples:
+        Fish dataset 1:
+          value: 56caf05f-1364-4f24-85f6-0c82520c2792
+        Fish dataset 2:
+          value: 8f79c802-a58c-447f-99aa-1d6a0790825a
+        Birds dataset:
+          value: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+    occurrenceid:
+      name: occurrenceid
+      in: path
+      description: Occurence ID
+      required: true
+      schema:
+        $ref: '#/components/schemas/guid'
+      examples:
+        Fish occurence 1:
+          value: 2c1becd5-e641-4e83-b3f5-76a55206539a
+        Fish occurence 2:
+          value: a413b456-0bff-47da-ab26-f074d9be5219
+        Fish occurence 3:
+          value: dc92869c-1ed3-11e3-bfac-90b11c41863e
+        Fish occurence 4:
+          value: 21ac6644-5c55-44fd-b258-67eb66ea231d
+        Bird occurence 1:
+          value: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+        Bird occurence 2:
+          value: f5725a56-7b47-11e4-8ef3-782bcb9cd5b5
+        Bird occurence 3:
+          value: f69696a8-7b47-11e4-8ef3-782bcb9cd5b5
+        Bird occurence 4:
+          value: 5e7ec91c-4d20-42c4-ad98-8854800e82f7
+    count_only:
+      name: count_only
+      in: query
+      description: Whether to limit the response to results count only
+      required: false
+      schema:
+        type: boolean
+        default: false
+    count_only_default:
+      name: count_only
+      in: query
+      description: Whether to limit the response to results count only
+      required: false
+      schema:
+        type: boolean
+        default: true
+  schemas:
+    count: 
+      type: integer
+      description: Number of records that matched the query. Usually 0 or 1
+      minimum: 0
+      example: 1
+    guid:
+      type: string
+      minLength: 36
+      maxLength: 36
+    etag:
+      type: integer
+      minimum: 40
+      maximum: 40
+      example: f81047edaf16be575d75542872e01580be9a9a2b
+    base_response:
+      type: object
+      properties:
+        count:
+          $ref: '#/components/schemas/count'
+    names_tentacles:
+      type: object
+      properties:
+        GBIF Records:
+          $ref: '#/components/schemas/names_gbif'
+        ITIS Solr Taxon Records:
+          $ref: '#/components/schemas/names_itis'
+    names_gbif:
+      allOf:
+        - $ref: '#/components/schemas/base_response'
+        - oneOf:
+            - type: object
+              properties:
+                records:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/names_gbif_record'
+            - type: object
+              properties:
+                records:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/names_gbif_record_with_count'
+    names_gbif_record:
+      type: object
+      properties:
+        usageKey:
+          type: integer
+          minimum: 0
+          example: 1004151
+        scientificName:
+          type: string
+          example: 'Plagioecia patina (Lamarck, 1816)'
+        canonicalName:
+          type: string
+          example: Plagioecia patina
+        rank:
+          type: string
+          example: SPECIES
+        status:
+          type: string
+          example: ACCEPTED
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 98
+        note:
+          type: string
+          example: >-
+            Similarity: name=110; authorship=0; classification=-2; rank=5;
+            status=1; nextMatch=5
+        matchType:
+          type: string
+          example: EXACT
+        kingdom:
+          type: string
+          example: Animalia
+        phylum:
+          type: string
+          example: Bryozoa
+        order:
+          type: string
+          example: Cyclostomatida
+        family:
+          type: string
+          example: Plagioeciidae
+        genus:
+          type: string
+          example: Plagioecia
+        species:
+          type: string
+          example: Plagioecia patina
+        kingdomKey:
+          type: integer
+          minimum: 1
+          example: 1
+        phylumKey:
+          type: integer
+          minimum: 1
+          example: 53
+        classKey:
+          type: integer
+          minimum: 1
+          example: 226
+        orderKey:
+          type: integer
+          minimum: 1
+          example: 1497
+        familyKey:
+          type: integer
+          minimum: 1
+          example: 9593
+        genusKey:
+          type: integer
+          minimum: 1
+          example: 1004147
+        speciesKey:
+          type: integer
+          minimum: 1
+          example: 1004151
+        synonym:
+          type: boolean
+          example: false
+        class:
+          type: string
+          example: Stenolaemata
+    names_gbif_record_with_count:
+      allOf:
+        - type: object
+          properties:
+            occurrence_count:
+              type: integer
+              example: 926
+            occurrences_url:
+              type: string
+              format: uri
+              example: 'https://www.gbif.org/species/1004151'
+        - $ref: '#/components/schemas/names_gbif_record'
+    names_itis:
+      allOf:
+        - $ref: '#/components/schemas/base_response'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                type: object
+                properties:
+                  tsn:
+                    type: integer
+                    minimum: 0
+                    example: 961092
+                  nameWInd:
+                    type: string
+                    example: Denitrobacterium detoxificans
+                  nameWOInd:
+                    type: string
+                    example: Denitrobacterium detoxificans
+                  unit1:
+                    type: string
+                    example: Denitrobacterium
+                  unit2:
+                    type: string
+                    example: detoxificans
+                  usage:
+                    type: string
+                    example: valid
+                  credibilityRating:
+                    type: string
+                    example: TWG standards met
+                  taxonAuthor:
+                    type: string
+                    example: 'Anderson et al., 2000'
+                  kingdom:
+                    type: string
+                    example: Bacteria
+                  parentTSN:
+                    type: integer
+                    minimum: 0
+                    example: 957030
+                  rankID:
+                    type: integer
+                    minimum: 0
+                    example: 220
+                  rank:
+                    type: string
+                    example: Species
+                  hierarchySoFar:
+                    type: string
+                    example: >-
+                      961092:$Bacteria$Posibacteria$Actinobacteria$Coriobacteridae$Coriobacteriales$Coriobacterineae$Coriobacteriaceae$Denitrobacterium$Denitrobacterium
+                      detoxificans$
+                  hierarchySoFarWRanks:
+                    type: string
+                    example: >-
+                      961092:$Kingdom:Bacteria$Subkingdom:Posibacteria$Phylum:Actinobacteria$Subclass:Coriobacteridae$Order:Coriobacteriales$Suborder:Coriobacterineae$Family:Coriobacteriaceae$Genus:Denitrobacterium$Species:Denitrobacterium
+                      detoxificans$
+                  hierarchyTSN:
+                    type: string
+                    example: >-
+                      $50$956097$956099$956180$956210$956291$956365$957030$961092$
+                  otherSource:
+                    type: string
+                    example: >-
+                      $SRC$1096$website$Bacterial Nomenclature up-to-date$Jun
+                      2012$2012-07-02 00:00:00$Bacterial Nomenclature up-to-date
+                      published by the Leibniz Institute DSMZ-German Collection
+                      of Microorganisms and Cell Cultures at
+                      http://www.dsmz.de/bacterial-diversity/bacterial-nomenclature-up-to-date.html$2015-03-02
+                      00:00:00$
+                  comment:
+                    type: string
+                    example: >-
+                      $30315$DSMZ$sp. nov. (VP)$2014-12-22 13:38:32$2014-12-22
+                      00:00:00$,$36774$DSMZ$International Journal of Systematic
+                      and Evolutionary Microbiology (IJSEM), 2000 50:637:
+                      Original publication in the IJSEM$2015-03-02
+                      15:13:23$2015-03-02 00:00:00$,$36775$DSMZ$Risk group 1;
+                      Strains ATCC 700546, NPOH1$2015-03-02 15:13:24$2015-03-02
+                      00:00:00$
+                  createDate:
+                    type: string
+                    format: date-time
+                    example: 2015-03-02T13:52:49.000Z
+                  updateDate:
+                    type: string
+                    format: date-time
+                    example: 2015-03-02T00:00:00.000Z
+                  hierarchicalSort:
+                    type: string
+                    example: >-
+                      9990Bacteria-9980Posibacteria-9970Actinobacteria-9930Coriobacteridae-9900Coriobacteriales-9890Coriobacterineae-9860Coriobacteriaceae-9820Denitrobacterium-9780Denitrobacterium
+                      detoxificans
+                  _version_:
+                    type: integer
+                    minimum: 0
+                    example: 1687796933281710000
+    occ_gbif:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum:
+            - GBIF
+        dataset_key:
+          $ref: '#/components/schemas/guid'
+        count:
+          $ref: '#/components/schemas/count'
+    occ_gbif_with_records:
+      allOf:
+        - $ref: '#/components/schemas/occ_gbif'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/occ_gbif_record'
+    occ_gbif_record:
+      type: object
+      properties:
+        key:
+          type: integer
+          minimum: 1
+          example: 1309911159
+        datasetKey:
+          $ref: '#/components/schemas/guid'
+        publishingOrgKey:
+          $ref: '#/components/schemas/guid'
+        networkKeys:
+          type: array
+          items:
+            $ref: '#/components/schemas/guid'
+        installationKey:
+          $ref: '#/components/schemas/guid'
+        publishingCountry:
+          type: string
+          example: US
+        protocol:
+          type: string
+          example: DWC_ARCHIVE
+        lastCrawled:
+          type: string
+          format: date-time
+          example: 2021-01-13T13:33:24.456Z
+        lastParsed:
+          type: string
+          format: date-time
+          example: 2021-01-13T13:39:04.411Z
+        crawlId:
+          type: integer
+          minimum: 1
+          example: 212
+        hostingOrganizationKey:
+          $ref: '#/components/schemas/guid'
+        extensions:
+          type: object
+        basisOfRecord:
+          type: string
+          example: PRESERVED_SPECIMEN
+        occurrenceStatus:
+          type: string
+          example: PRESENT
+        sex:
+          type: string
+          example: MALE
+        establishmentMeans:
+          type: string
+          example: NATIVE
+        taxonKey:
+          type: integer
+          minimum: 1
+          example: 5959188
+        kingdomKey:
+          type: integer
+          minimum: 1
+          example: 1
+        phylumKey:
+          type: integer
+          minimum: 1
+          example: 44
+        classKey:
+          type: integer
+          minimum: 1
+          example: 212
+        orderKey:
+          type: integer
+          minimum: 1
+          example: 729
+        familyKey:
+          type: integer
+          minimum: 1
+          example: 3241790
+        genusKey:
+          type: integer
+          minimum: 1
+          example: 5959160
+        speciesKey:
+          type: integer
+          minimum: 1
+          example: 5959188
+        acceptedTaxonKey:
+          type: integer
+          minimum: 1
+          example: 5959188
+        scientificName:
+          type: string
+          example: 'Pachycephala pectoralis (Latham, 1802)'
+        acceptedScientificName:
+          type: string
+          example: 'Pachycephala pectoralis (Latham, 1802)'
+        kingdom:
+          type: string
+          example: Animalia
+        phylum:
+          type: string
+          example: Chordata
+        order:
+          type: string
+          example: Passeriformes
+        family:
+          type: string
+          example: Pachycephalidae
+        genus:
+          type: string
+          example: Pachycephala
+        species:
+          type: string
+          example: Pachycephala pectoralis
+        genericName:
+          type: string
+          example: Pachycephala
+        specificEpithet:
+          type: string
+          example: pectoralis
+        taxonRank:
+          type: string
+          example: SPECIES
+        taxonomicStatus:
+          type: string
+          example: ACCEPTED
+        decimalLongitude:
+          type: number
+          example: -179.99
+        decimalLatitude:
+          type: number
+          example: -16.825
+        continent:
+          type: string
+          example: OCEANIA
+        year:
+          type: integer
+          minimum: 1
+          example: 2020
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+          example: 7
+        day:
+          type: integer
+          minimum: 1
+          maximum: 31
+          example: 17
+        eventDate:
+          type: string
+          format: date-time
+          example: 2020-07-17T00:00:00.000Z
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/gbif_issue'
+          example:
+            - RECORDED_DATE_INVALID
+            - AMBIGUOUS_COLLECTION
+        lastInterpreted:
+          type: string
+          format: date-time
+          example: 2021-01-13T13:39:04.411Z
+        references:
+          type: string
+          format: uri
+          example: 'http://portal.vertnet.org/o/ku/birds?id=127237'
+        license:
+          type: string
+          format: uri
+          example: 'http://creativecommons.org/licenses/by/4.0/legalcode'
+        identifiers:
+          type: array
+          items: {}
+          example: []
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              format:
+                type: string
+              title:
+                type: string
+              creator:
+                type: string
+              publisher:
+                type: string
+              licence:
+                type: string
+              rightsHolder:
+                type: string
+              identifier:
+                type: string
+          example: []
+        facts:
+          type: array
+          items: {}
+          example: []
+        relations:
+          type: array
+          items: {}
+          example: []
+        gadm:
+          type: object
+        institutionKey:
+          $ref: '#/components/schemas/guid'
+        isInCluster:
+          type: boolean
+          example: false
+        geodeticDatum:
+          type: string
+          example: WGS84
+        class:
+          type: string
+          example: Aves
+        countryCode:
+          type: string
+          example: FJ
+        recordedByIDs:
+          type: array
+          items: {}
+          example: []
+        identifiedByIDs:
+          type: array
+          items: {}
+          example: []
+        country:
+          type: string
+          example: Fiji
+        identifier:
+          $ref: '#/components/schemas/guid'
+        nomenclaturalCode:
+          type: string
+          example: ICZN
+        institutionID:
+          type: string
+          format: uri
+          example: 'http://grbio.org/cool/iakn-125z'
+        higherGeography:
+          type: string
+          example: Pacific Ocean | Fiji |  |  |  |  |  |
+        verbatimEventDate:
+          type: string
+          format: date
+          example: 17 July 2010
+        dynamicProperties:
+          type: string
+          example: >-
+            {"bursa":"no", "gonads":"testess 15 x 9 mm", "molt":"no", "skull
+            ossification":"100 %", "stomach contents":"insects", "weight":"33.1
+            g" }
+        georeferenceVerificationStatus:
+          type: string
+          example: requires verification
+        locality:
+          type: string
+          example: 'Taveuni, Mount Manuka'
+        datasetName:
+          type: string
+          example: University of Kansas Biodiversity Institute Ornithology Collection
+        fieldNumber:
+          type: string
+          example: MJA 701
+        gbifID:
+          type: string
+          example: 1309911159
+        language:
+          type: string
+          example: en
+        verbatimLocality:
+          type: string
+          example: Pacific Ocean | Fiji
+        collectionCode:
+          type: string
+          example: Birds
+        occurrenceID:
+          $ref: '#/components/schemas/guid'
+        type:
+          type: string
+          example: PhysicalObject
+        preparations:
+          type: string
+          example: Tissue - 100; Skin - 1
+        catalogNumber:
+          type: string
+          example: 127237
+        otherCatalogNumbers:
+          type: string
+          example: 'KU Tissue Number: 24323'
+        institutionCode:
+          type: string
+          example: KU
+        accessRights:
+          type: string
+          format: uri
+          example: >-
+            http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+        collectionID:
+          type: string
+          format: uri
+          example: 'http://grbio.org/cool/v9yz-imvc'
+        higherClassification:
+          type: string
+          example: >-
+            Animalia | Chordata | Aves | Passeriformes | Pachycephalidae |
+            Pachycephala
+    occ_idb:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 1
+          minimum: 0
+    occ_idb_with_records:
+      allOf:
+        - $ref: '#/components/schemas/occ_idb'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/occ_idb_record'
+    occ_idb_record:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/guid'
+        type:
+          type: string
+          example: records
+        etag:
+          $ref: '#/components/schemas/etag'
+        data:
+          type: object
+          properties:
+            'dwc:startDayOfYear':
+              type: string
+              example: 163
+            'dwc:specificEpithet':
+              type: string
+              example: canadensis
+            'dwc:countryCode':
+              type: string
+              example: US
+            'dwc:county':
+              type: string
+              example: Boulder
+            'dwc:recordedBy':
+              type: string
+              example: 'PATTERSON, R. R.'
+            'dwc:fieldNumber':
+              type: string
+              example: 2102
+            'dwc:order':
+              type: string
+              example: Passeriformes
+            'dcterms:references':
+              type: string
+              format: uri
+              example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
+            'dcterms:accessRights':
+              type: string
+              format: uri
+              example: >-
+                http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+            'dwc:occurrenceID':
+              $ref: '#/components/schemas/guid'
+            'dcterms:language':
+              type: string
+              example: en
+            id:
+              $ref: '#/components/schemas/guid'
+            'dwc:establishmentMeans':
+              type: string
+              example: native
+            'dwc:stateProvince':
+              type: string
+              example: Colorado
+            'dwc:eventDate':
+              type: string
+              format: date
+              example: 1972-06-11T00:00:00.000Z
+            'dwc:collectionID':
+              type: string
+              format: uri
+              example: 'http://grbio.org/cool/v9yz-imvc'
+            'dwc:country':
+              type: string
+              example: United States
+            'dwc:collectionCode':
+              type: string
+              example: Birds
+            'dwc:occurrenceStatus':
+              type: string
+              example: present
+            'dwc:kingdom':
+              type: string
+              example: Animalia
+            'dwc:basisOfRecord':
+              type: string
+              example: PreservedSpecimen
+            'dwc:genus':
+              type: string
+              example: Perisoreus
+            'dwc:continent':
+              type: string
+              example: North America
+            'dwc:family':
+              type: string
+              example: Corvidae
+            'dwc:sex':
+              type: string
+              example: unknown
+            'dwc:higherClassification':
+              type: string
+              example: >-
+                Animalia | Chordata | Aves | Passeriformes | Corvidae |
+                Perisoreus
+            'dcterms:license':
+              type: string
+              format: uri
+              example: 'http://creativecommons.org/licenses/by/4.0/'
+            'dwc:phylum':
+              type: string
+              example: Chordata
+            'dwc:locality':
+              type: string
+              example: 'Ward, 2.5 mi. W'
+            'dwc:institutionID':
+              type: string
+              format: uri
+              example: 'http://grbio.org/cool/iakn-125z'
+            'dwc:institutionCode':
+              type: string
+              example: KU
+            'dwc:taxonRank':
+              type: string
+              example: species
+            'dwc:class':
+              type: string
+              example: Aves
+            'dwc:catalogNumber':
+              type: string
+              example: 66968
+            'dwc:nomenclaturalCode':
+              type: string
+              example: ICZN
+            'dcterms:type':
+              type: string
+              example: PhysicalObject
+            'dwc:higherGeography':
+              type: string
+              example: North America | USA | Colorado | Boulder |  |  |  |
+            'dwc:month':
+              type: string
+              example: 6
+            'dwc:datasetName':
+              type: string
+              example: >-
+                University of Kansas Biodiversity Institute Ornithology
+                Collection
+            'dwc:endDayOfYear':
+              type: string
+              example: 163
+            'dwc:verbatimLocality':
+              type: string
+              example: North America | USA | Colorado | Boulder
+            'dwc:verbatimEventDate':
+              type: string
+              format: date
+              example: 11 June 1972
+            'dwc:preparations':
+              type: string
+              example: Alcoholic - 1
+            'dwc:ResourceRelationship':
+              type: object
+              properties:
+                coreid:
+                  $ref: '#/components/schemas/guid'
+                'dwc:relationshipOfResource':
+                  type: string
+                  example: 'dwc:relationshipOfResource'
+                'dwc:relatedResourceID':
+                  type: string
+                  example: 'KU:Birds:66968'
+            'dcterms:modified':
+              type: string
+              format: date
+              example: 2014-10-29T12:38:05.000Z
+            'dwc:scientificName':
+              type: string
+              example: Perisoreus canadensis
+            'dwc:day':
+              type: string
+              example: 11
+            'dwc:year':
+              type: string
+              example: 1972
+        indexTerms:
+          type: object
+          properties:
+            family:
+              type: string
+              example: corvidae
+            recordset:
+              $ref: '#/components/schemas/guid'
+            dqs:
+              type: number
+              example: 0.3188405797101449
+            stateprovince:
+              type: string
+              example: colorado
+            county:
+              type: string
+              example: boulder
+            phylum:
+              type: string
+              example: chordata
+            catalognumber:
+              type: string
+              example: 66968
+            startdayofyear:
+              type: integer
+              example: 163
+            taxonrank:
+              type: string
+              example: species
+            specificepithet:
+              type: string
+              example: canadensis
+            continent:
+              type: string
+              example: north america
+            datemodified:
+              type: string
+              format: date-time
+              example: 2017-04-20T10:23:55.621Z
+            uuid:
+              $ref: '#/components/schemas/guid'
+            countrycode:
+              type: string
+              example: usa
+            basisofrecord:
+              type: string
+              example: preservedspecimen
+            collector:
+              type: string
+              example: 'patterson, r. r.'
+            institutioncode:
+              type: string
+              example: ku
+            verbatimlocality:
+              type: string
+              example: north america | usa | colorado | boulder
+            datecollected:
+              type: string
+              example: 1972-06-11T00:00:00.000Z
+            etag:
+              $ref: '#/components/schemas/etag'
+            flags:
+              type: array
+              items:
+                $ref: '#/components/schemas/idigbio_issue'
+              example:
+                - 'dwc_multimedia_added,gbif_reference_added'
+                - 'dwc_taxonrank_replaced,dwc_taxonomicstatus_added'
+                - 'gbif_genericname_added,dwc_datasetid_added'
+                - 'gbif_taxon_corrected,dwc_parentnameusageid_added'
+                - 'dwc_scientificnameauthorship_added,dwc_taxonid_added'
+                - idigbio_isocountrycode_added
+                - gbif_vernacularname_added
+                - gbif_canonicalname_added
+                - dwc_originalnameusageid_added
+            hasMedia:
+              type: boolean
+              example: false
+            hasImage:
+              type: boolean
+              example: false
+            kingdom:
+              type: string
+              example: animalia
+            highertaxon:
+              type: string
+              example: >-
+                animalia | chordata | aves | passeriformes | corvidae |
+                perisoreus
+            collectionid:
+              type: string
+              format: uri
+              example: 'http://grbio.org/cool/v9yz-imvc'
+            taxonid:
+              type: string
+              example: 2482436
+            scientificname:
+              type: string
+              example: perisoreus canadensis
+            indexData:
+              type: object
+              properties:
+                'dwc:startDayOfYear':
+                  type: string
+                  example: 163
+                'dwc:specificEpithet':
+                  type: string
+                  example: canadensis
+                'idigbio:dateModified':
+                  type: string
+                  format: date-time
+                  example: 2017-04-20T10:23:55.621Z
+                'dwc:countryCode':
+                  type: string
+                  example: US
+                'dwc:kingdom':
+                  type: string
+                  example: Animalia
+                'dwc:recordedBy':
+                  type: string
+                  example: 'PATTERSON, R. R.'
+                'idigbio:uuid':
+                  $ref: '#/components/schemas/guid'
+                flag_dwc_multimedia_added:
+                  type: boolean
+                  example: true
+                'dwc:fieldNumber':
+                  type: string
+                  example: 2102
+                'dwc:order':
+                  type: string
+                  example: Passeriformes
+                'dcterms:references':
+                  type: string
+                  format: uri
+                  example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
+                flag_gbif_reference_added:
+                  type: boolean
+                  example: true
+                'dcterms:accessRights':
+                  type: string
+                  format: uri
+                  example: >-
+                    http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+                'idigbio:recordIds':
+                  type: array
+                  items:
+                    type: string
+                    example: '3ad82604-c4b3-4fd0-b03e-d8f874062146\\ku:birds:66968'
+                  example:
+                    - '3ad82604-c4b3-4fd0-b03e-d8f874062146\ku:birds:66968'
+                    - >-
+                      3ad82604-c4b3-4fd0-b03e-d8f874062146\ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                'dwc:occurrenceID':
+                  $ref: '#/components/schemas/guid'
+                flag_dwc_taxonrank_replaced:
+                  type: boolean
+                  example: true
+                'dcterms:language':
+                  type: string
+                  example: en
+                'gbif:vernacularname':
+                  type: array
+                  items:
+                    anyOf:
+                      - type: object
+                        properties:
+                          coreid:
+                            type: string
+                            example: 2482436
+                          'dcterms:language':
+                            type: string
+                            example: et
+                          'dwc:vernacularname':
+                            type: string
+                            example: ameerika laanenäär
+                      - type: object
+                        properties:
+                          'dcterms:source':
+                            type: string
+                            example: colaboraciones americanas sobre aves
+                      - type: object
+                        properties:
+                          'dwc:countrycode':
+                            type: string
+                            example: de
+                      - type: object
+                        properties:
+                          'dwc:country':
+                            type: string
+                            example: germany
+                  example:
+                    - coreid: '2482436'
+                      'dcterms:language': et
+                      'dwc:vernacularname': ameerika laanenäär
+                    - coreid: '2482436'
+                      'dcterms:language': es
+                      'dwc:vernacularname': arrendajo canadiense
+                    - coreid: '2482436'
+                      'dcterms:language': nl
+                      'dwc:vernacularname': canadese taigagaai
+                    - coreid: '2482436'
+                      'dcterms:language': ca
+                      'dwc:vernacularname': gaig canadenc
+                    - coreid: '2482436'
+                      'dcterms:language': it
+                      'dwc:vernacularname': ghiandaia grigia
+                    - coreid: '2482436'
+                      'dcterms:language': da
+                      'dwc:vernacularname': grå lavskrige
+                    - coreid: '2482436'
+                      'dcterms:language': sv
+                      'dwc:vernacularname': grå lavskrika
+                    - coreid: '2482436'
+                      'dcterms:language': nb
+                      'dwc:vernacularname': gråskrike
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': catalogue of life
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': colaboraciones americanas sobre aves
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': integrated taxonomic information system (itis)
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': taxonomy in flux checklist
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': the clements checklist
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': yanayacu natural history research group
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': catalogue of life
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': colaboraciones americanas sobre aves
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': integrated taxonomic information system (itis)
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': 'ioc world bird list, v6.3'
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': phthiraptera.info
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': yanayacu natural history research group
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': fi
+                      'dwc:vernacularname': harmaakuukkeli
+                    - coreid: '2482436'
+                      'dcterms:language': ja
+                      'dwc:vernacularname': カナダカケス
+                    - coreid: '2482436'
+                      'dcterms:language': lv
+                      'dwc:vernacularname': kanādas bēdrozis
+                    - coreid: '2482436'
+                      'dcterms:language': lt
+                      'dwc:vernacularname': kanadinis kėkštas
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dcterms:source': integrated taxonomic information system (itis)
+                      'dwc:vernacularname': mÃ©sangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': de
+                      'dwc:vernacularname': meisenhäher
+                    - coreid: '2482436'
+                      'dcterms:language': de
+                      'dcterms:source': german wikipedia - species pages
+                      'dwc:vernacularname': meisenhäher
+                    - 'dwc:countrycode': de
+                      'dwc:country': germany
+                      'dwc:vernacularname': meisenhäher
+                    - coreid: '2482436'
+                      'dcterms:source': >-
+                        taxon list of animals with german names (worldwide)
+                        compiled at the smns
+                      'dcterms:language': de
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dwc:vernacularname': mésangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dcterms:source': catalogue of life
+                      'dwc:vernacularname': mésangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dcterms:source': colaboraciones americanas sobre aves
+                      'dwc:vernacularname': mésangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dcterms:source': yanayacu natural history research group
+                      'dwc:vernacularname': mésangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': sk
+                      'dwc:vernacularname': škriekavec bieločelý
+                    - coreid: '2482436'
+                      'dcterms:language': pl
+                      'dwc:vernacularname': sójka kanadyjska
+                    - coreid: '2482436'
+                      'dcterms:language': cs
+                      'dwc:vernacularname': sojka šedá
+                    - coreid: '2482436'
+                      'dcterms:language': hu
+                      'dwc:vernacularname': szürke szajkó
+                    - coreid: '2482436'
+                      'dcterms:language': ru
+                      'dwc:vernacularname': Канадская кукша
+                    - coreid: '2482436'
+                      'dcterms:language': zh
+                      'dwc:vernacularname': 灰噪鸦
+                flag_dwc_taxonomicstatus_added:
+                  type: boolean
+                  example: true
+                flag_gbif_genericname_added:
+                  type: boolean
+                  example: true
+                'dwc:occurrenceStatus':
+                  type: string
+                  example: present
+                'dwc:establishmentMeans':
+                  type: string
+                  example: native
+                flag_dwc_datasetid_added:
+                  type: boolean
+                  example: true
+                'idigbio:parent':
+                  $ref: '#/components/schemas/guid'
+                'dwc:stateProvince':
+                  type: string
+                  example: Colorado
+                flag_gbif_taxon_corrected:
+                  type: boolean
+                  example: true
+                'dwc:eventDate':
+                  type: string
+                  format: date
+                  example: 1972-06-11T00:00:00.000Z
+                'dwc:collectionID':
+                  type: string
+                  format: uri
+                  example: 'http://grbio.org/cool/v9yz-imvc'
+                'dwc:country':
+                  type: string
+                  example: United States
+                'dwc:multimedia':
+                  type: array
+                  items:
+                    anyOf:
+                      - type: object
+                        properties:
+                          'dcterms:license':
+                            type: string
+                            example: gnu free documentation license
+                          'dcterms:references':
+                            type: string
+                            format: uri
+                            example: >-
+                              http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
+                          coreid:
+                            type: string
+                            example: 2482436
+                          'dcterms:identifier':
+                            type: string
+                            format: uri
+                            example: >-
+                              http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
+                          'dcterms:source':
+                            type: string
+                            example: english wikipedia - species pages
+                          'dcterms:description':
+                            type: string
+                            example: >-
+                              english: gray jay, camp mercier in laurentides
+                              wildlife reserve, quebec, canada. français.:
+                              mésangeai du canada, camp mercier, réserve
+                              faunique des laurentides, québec, canada.
+                          'dcterms:creator':
+                            type: string
+                            example: cephas
+                          'dcterms:publisher':
+                            type: string
+                            example: wikimedia commons
+                      - type: object
+                        properties:
+                          'dcterms:title':
+                            type: string
+                            example: meisenhäher (perisoreus canadensis)
+                    example:
+                      - 'dcterms:license': gnu free documentation license
+                        'dcterms:references': >-
+                          http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
+                        coreid: '2482436'
+                        'dcterms:identifier': >-
+                          http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
+                        'dcterms:source': english wikipedia - species pages
+                        'dcterms:description': "english: gray jay, camp mercier in laurentides wildlife reserve, quebec, canada. français\_: mésangeai du canada, camp mercier, réserve faunique des laurentides, québec, canada."
+                        'dcterms:creator': cephas
+                        'dcterms:publisher': wikimedia commons
+                      - 'dcterms:license': gnu free documentation license
+                        'dcterms:title': meisenhäher (perisoreus canadensis)
+                        'dcterms:references': >-
+                          http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
+                        coreid: '2482436'
+                        'dcterms:identifier': >-
+                          http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
+                        'dcterms:source': german wikipedia - species pages
+                        'dcterms:description': "english: gray jay, camp mercier in laurentides wildlife reserve, quebec, canada. français\_: mésangeai du canada, camp mercier, réserve faunique des laurentides, québec, canada."
+                        'dcterms:creator': cephas
+                        'dcterms:publisher': wikimedia commons
+                'idigbio:etag':
+                  $ref: '#/components/schemas/etag'
+                'dwc:collectionCode':
+                  type: string
+                  example: Birds
+                id:
+                  $ref: '#/components/schemas/guid'
+                'dwc:county':
+                  type: string
+                  example: Boulder
+                'gbif:reference':
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      coreid:
+                        type: string
+                        example: 2482436
+                      'dcterms:source':
+                        type: string
+                        example: catalogue of life
+                      'dcterms:bibliographiccitation':
+                        type: string
+                        example: (1996) nodc taxonomic code
+                  example:
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': (1996) nodc taxonomic code
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        (2003) database,
+                        http://www.menv.gouv.qc.ca/biodiversite/centre.htm
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': '(2005) website, aou check-list (07-2005)'
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        (2012) zoonomen - zoological nomenclature resource,
+                        2011.12.31
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        banks, r. c., r. w. mcdiarmid, a. l. gardner, and w. c.
+                        starnes (2003) checklist of vertebrates of the united
+                        states, the u.s. territories, and canada
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        banks, r. c., r. w. mcdiarmid, and a. l. gardner (1987)
+                        checklist of vertebrates of the united states, the u.s.
+                        territories, and canada: resource publication, no. 166
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        gill, frank, and minturn wright (2006) birds of the
+                        world: recommended english names
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        gill, frank, and minturn wright (2006) birds of the
+                        world: recommended english names
+                'dwc:basisOfRecord':
+                  type: string
+                  example: PreservedSpecimen
+                'dwc:taxonomicstatus':
+                  type: string
+                  example: accepted
+                'dwc:genus':
+                  type: string
+                  example: Perisoreus
+                'dwc:continent':
+                  type: string
+                  example: North America
+                'dwc:family':
+                  type: string
+                  example: Corvidae
+                'dwc:sex':
+                  type: string
+                  example: unknown
+                flag_dwc_parentnameusageid_added:
+                  type: boolean
+                  example: true
+                flag_dwc_scientificnameauthorship_added:
+                  type: boolean
+                  example: true
+                'dwc:class':
+                  type: string
+                  example: Aves
+                flag_dwc_taxonid_added:
+                  type: boolean
+                  example: true
+                'idigbio:isocountrycode':
+                  type: string
+                  example: usa
+                'dcterms:license':
+                  type: string
+                  format: uri
+                  example: 'http://creativecommons.org/licenses/by/4.0/'
+                'idigbio:siblings':
+                  type: object
+                flag_idigbio_isocountrycode_added:
+                  type: boolean
+                  example: true
+                'gbif:canonicalname':
+                  type: string
+                  example: perisoreus canadensis
+                'dwc:scientificnameauthorship':
+                  type: string
+                  example: '(linnaeus, 1766)'
+                'dwc:phylum':
+                  type: string
+                  example: Chordata
+                'gbif:genericname':
+                  type: string
+                  example: perisoreus
+                'dwc:locality':
+                  type: string
+                  example: 'Ward, 2.5 mi. W'
+                'dwc:institutionID':
+                  type: string
+                  format: uri
+                  example: 'http://grbio.org/cool/iakn-125z'
+                flag_gbif_vernacularname_added:
+                  type: boolean
+                  example: true
+                'dwc:institutionCode':
+                  type: string
+                  example: KU
+                'dwc:taxonRank':
+                  type: string
+                  example: species
+                'dwc:parentnameusageid':
+                  type: string
+                  example: 2482435
+                'dwc:higherClassification':
+                  type: string
+                  example: >-
+                    Animalia | Chordata | Aves | Passeriformes | Corvidae |
+                    Perisoreus
+                'dwc:catalogNumber':
+                  type: string
+                  example: 66968
+                'dwc:taxonid':
+                  type: string
+                  example: 2482436
+                'dwc:nomenclaturalCode':
+                  type: string
+                  example: ICZN
+                'dcterms:type':
+                  type: string
+                  example: PhysicalObject
+                flag_gbif_canonicalname_added:
+                  type: boolean
+                  example: true
+                'dwc:higherGeography':
+                  type: string
+                  example: North America | USA | Colorado | Boulder |  |  |  |
+                'dwc:month':
+                  type: string
+                  example: 6
+                'dwc:datasetid':
+                  $ref: '#/components/schemas/guid'
+                'dwc:datasetName':
+                  type: string
+                  example: >-
+                    University of Kansas Biodiversity Institute Ornithology
+                    Collection
+                'dwc:endDayOfYear':
+                  type: string
+                  example: 163
+                'dwc:verbatimLocality':
+                  type: string
+                  example: North America | USA | Colorado | Boulder
+                'dwc:verbatimEventDate':
+                  type: string
+                  format: date
+                  example: 11 June 1972
+                'dwc:originalnameusageid':
+                  type: string
+                  example: 9174701
+                'dwc:preparations':
+                  type: string
+                  example: Alcoholic - 1
+                flag_dwc_originalnameusageid_added:
+                  type: boolean
+                  example: true
+                'dwc:ResourceRelationship':
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      coreid:
+                        $ref: '#/components/schemas/guid'
+                      'dwc:relatedResourceID':
+                        type: string
+                        example: 'KU:Birds:66968'
+                      'dwc:relationshipOfResource':
+                        type: string
+                        example: sameAs
+                'dcterms:modified':
+                  type: string
+                  format: date-time
+                  example: 2014-10-29T12:38:05.000Z
+                'dwc:scientificName':
+                  type: string
+                  example: Perisoreus canadensis
+                'dwc:day':
+                  type: string
+                  example: 11
+                'dwc:year':
+                  type: string
+                  example: 1972
+            class:
+              type: string
+              example: aves
+            occurrenceid:
+              $ref: '#/components/schemas/guid'
+            institutionid:
+              type: string
+              format: uri
+              example: 'http://grbio.org/cool/iakn-125z'
+            country:
+              type: string
+              example: united states
+            locality:
+              type: string
+              example: 'ward, 2.5 mi. w'
+            collectioncode:
+              type: string
+              example: birds
+            canonicalname:
+              type: string
+              example: perisoreus canadensis
+            eventdate:
+              type: string
+              format: date
+              example: 1972-06-11T00:00:00.000Z
+            fieldnumber:
+              type: string
+              example: 2102
+            verbatimeventdate:
+              type: string
+              format: date
+              example: 11 june 1972
+            taxonomicstatus:
+              type: string
+              example: accepted
+            recordids:
+              type: array
+              items:
+                type: string
+                example: '3ad82604-c4b3-4fd0-b03e-d8f874062146\\ku:birds:66968'
+              example:
+                - '3ad82604-c4b3-4fd0-b03e-d8f874062146\ku:birds:66968'
+                - >-
+                  3ad82604-c4b3-4fd0-b03e-d8f874062146\ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+            genus:
+              type: string
+              example: perisoreus
+            order:
+              type: string
+              example: passeriformes
+            datasetid:
+              $ref: '#/components/schemas/guid'
+    occ_mopho:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 1
+          minimum: 0
+    occ_mopho_with_records:
+      allOf:
+        - $ref: '#/components/schemas/occ_mopho'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/occ_mopho_record'
+    occ_mopho_record:
+      type: object
+      properties:
+        institution.name:
+          type: string
+          example: University of Kansas Biodiversity Institute
+        project.name:
+          type: string
+          example: University of Kansas Ornithology Specimens
+        project.project_id:
+          type: string
+          example: 737
+        specimen.absolute_age:
+          type: string
+          example: null
+        specimen.body_mass:
+          type: string
+          example: null
+        specimen.body_mass_bibref_id:
+          type: string
+          example: null
+        specimen.body_mass_comments:
+          type: string
+          example: null
+        specimen.catalog_number:
+          type: string
+          example: 66968
+        specimen.collected_on:
+          type: string
+          example: 77083200
+        specimen.collection_code:
+          type: string
+          example: birds
+        specimen.collector:
+          type: string
+          example: 'patterson, r. r.'
+        specimen.created_on:
+          type: string
+          example: 'September 7 2019 at 16:15:16'
+        specimen.description:
+          type: string
+          example: null
+        specimen.institution_code:
+          type: string
+          example: ku
+        specimen.institution_id:
+          type: string
+          example: 96
+        specimen.last_modified_on:
+          type: string
+          example: 'September 7 2019 at 16:15:39'
+        specimen.locality_absolute_age:
+          type: string
+          example: null
+        specimen.locality_absolute_age_bibref_id:
+          type: string
+          example: null
+        specimen.locality_coordinates:
+          type: string
+          example: null
+        specimen.locality_datum_zone:
+          type: string
+          example: null
+        specimen.locality_description:
+          type: string
+          example: 'ward, 2.5 mi. w'
+        specimen.locality_easting_coordinate:
+          type: string
+          example: null
+        specimen.locality_northing_coordinate:
+          type: string
+          example: null
+        specimen.locality_relative_age:
+          type: string
+          example: null
+        specimen.locality_relative_age_bibref_id:
+          type: string
+          example: null
+        specimen.notes:
+          type: string
+          example: >-
+            imported from iDigBio. uuid:438c6349-f17c-4908-88bd-c6cf9fe48747
+            Occurrence ID:ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+        specimen.occurrence_id:
+          $ref: '#/components/schemas/guid'
+        specimen.reference_source:
+          type: string
+          example: Vouchered
+        specimen.relative_age:
+          type: string
+          example: null
+        specimen.sex:
+          type: string
+          example: Male
+        specimen.specimen_id:
+          type: string
+          example: 25481
+        specimen.type:
+          type: string
+          example: 'Yes'
+        specimen.url:
+          type: string
+          format: uri
+          example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
+        specimen.uuid:
+          $ref: '#/components/schemas/guid'
+        taxonomy_name:
+          type: object
+          properties:
+            name:
+              type: array
+              items:
+                type: object
+                properties:
+                  ht_kingdom:
+                    type: string
+                    example: ''
+                  ht_phylum:
+                    type: string
+                    example: ''
+                  ht_class:
+                    type: string
+                    example: ''
+                  ht_subclass:
+                    type: string
+                    example: ''
+                  ht_superorder:
+                    type: string
+                    example: ''
+                  ht_order:
+                    type: string
+                    example: ''
+                  ht_suborder:
+                    type: string
+                    example: ''
+                  ht_superfamily:
+                    type: string
+                    example: ''
+                  ht_family:
+                    type: string
+                    example: ''
+                  ht_subfamily:
+                    type: string
+                    example: ''
+                  genus:
+                    type: string
+                    example: Perisoreus
+                  ht_supraspecific_clade:
+                    type: string
+                    example: ''
+                  species:
+                    type: string
+                    example: canadensis
+                  subspecies:
+                    type: string
+                    example: ''
+                  variety:
+                    type: string
+                    example: ''
+                  author:
+                    type: string
+                    example: ''
+                  year:
+                    type: string
+                    example: '0'
+                  notes:
+                    type: string
+                    example: imported from iDigBio
+                  is_primary:
+                    type: string
+                    example: '1'
+                  created_on:
+                    type: string
+                    example: ''
+                  last_modified_on:
+                    type: string
+                    example: ''
+            taxon_id:
+              type: string
+              example: 14997
+        user_email:
+          type: string
+          format: email
+          example: slbaumgart@uchicago.edu
+    occ_specify:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 1
+          minimum: 0
+    occ_specify_with_records:
+      allOf:
+        - $ref: '#/components/schemas/occ_specify'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/occ_specify_record'
+    occ_specify_record:
+      type: object
+      properties:
+        core:
+          type: array
+          items: {}
+            # oneOf:
+            #   - type: string
+            #     format: uri
+            #     example: http://rs.tdwg.org/dwc/terms/occurrenceID
+            #   - $ref: '#/components/schemas/guid'
+        extensions:
+          type: array
+          items:
+            type: object
+            properties:
+              class:
+                type: string
+                format: uri
+                example: http://data.ggbn.org/schemas/ggbn/terms/Amplification
+              records:
+                type: array
+                items:
+                  type: array
+                  items: {}
+                    # oneOf:
+                    #   - type: string
+                    #     format: uri
+                    #     example: http://rs.tdwg.org/dwc/terms/occurrenceID
+                    #   - $ref: '#/components/schemas/guid'
+    occ_ark:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 1
+          minimum: 0
+    occ_ark_with_docs:
+      allOf:
+        - $ref: '#/components/schemas/occ_ark'
+        - type: object
+          properties:
+            docs:
+              type: array
+              items:
+                $ref: '#/components/schemas/occ_ark_doc'
+    occ_ark_doc:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/guid'
+        dataset_guid:
+          $ref: '#/components/schemas/guid'
+        who:
+          type: string
+          example: University of Kansas Biodiversity Institute Fish Tissue Collection
+        what:
+          type: string
+          example: MaterialSample
+        when:
+          type: string
+          example: 6-20
+        where:
+          type: string
+          format: uri
+          example: http://spcoco.org/ark:/2c1becd5-e641-4e83-b3f5-76a55206539a
+        url:
+          type: string
+          format: uri
+          example: http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a
+        _version_:
+          type: integer
+          minimum: 0
+          example: 1684258724397449200
+    occ_tentacles_base:
+      type: object
+      properties:
+        Specify ARK:
+          $ref: '#/components/schemas/occ_ark_with_docs'
+        Specify Record:
+          $ref: '#/components/schemas/occ_specify_with_records'
+    occ_tentacles:
+      allOf:
+        - $ref: '#/components/schemas/occ_tentacles_base'
+        - type: object
+          properties:
+            GBIF Records:
+              $ref: '#/components/schemas/occ_gbif'
+            iDigBio Records:
+              $ref: '#/components/schemas/occ_idb'
+            MorphoSource Records:
+              $ref: '#/components/schemas/occ_mopho'
+    occ_tentacles_with_records:
+      allOf:
+        - $ref: '#/components/schemas/occ_tentacles_base'
+        - type: object
+          properties:
+            GBIF Records:
+              $ref: '#/components/schemas/occ_gbif_with_records'
+            iDigBio Records:
+              $ref: '#/components/schemas/occ_idb_with_records'
+            MorphoSource Records:
+              $ref: '#/components/schemas/occ_mopho_with_records'
+    dataset_gbif:
+      $ref: '#/components/schemas/occ_gbif'
+    dataset_gbif_with_records:
+      $ref: '#/components/schemas/occ_gbif_with_records'
+    gbif_issue:
+      type: string
+      enum:
+        - AMBIGUOUS_COLLECTION
+        - AMBIGUOUS_INSTITUTION
+        - BASIS_OF_RECORD_INVALID
+        - COLLECTION_MATCH_FUZZY
+        - COLLECTION_MATCH_NONE
+        - CONTINENT_COUNTRY_MISMATCH
+        - CONTINENT_DERIVED_FROM_COORDINATES
+        - CONTINENT_INVALID
+        - COORDINATE_ACCURACY_INVALID
+        - COORDINATE_INVALID
+        - COORDINATE_OUT_OF_RANGE
+        - COORDINATE_PRECISION_INVALID
+        - COORDINATE_PRECISION_UNCERTAINTY_MISMATCH
+        - COORDINATE_REPROJECTED
+        - COORDINATE_REPROJECTION_FAILED
+        - COORDINATE_REPROJECTION_SUSPICIOUS
+        - COORDINATE_ROUNDED
+        - COORDINATE_UNCERTAINTY_METERS_INVALID
+        - COUNTRY_COORDINATE_MISMATCH
+        - COUNTRY_DERIVED_FROM_COORDINATES
+        - COUNTRY_INVALID
+        - COUNTRY_MISMATCH
+        - DEPTH_MIN_MAX_SWAPPED
+        - DEPTH_NON_NUMERIC
+        - DEPTH_NOT_METRIC
+        - DEPTH_UNLIKELY
+        - ELEVATION_MIN_MAX_SWAPPED
+        - ELEVATION_NON_NUMERIC
+        - ELEVATION_NOT_METRIC
+        - ELEVATION_UNLIKELY
+        - GEODETIC_DATUM_ASSUMED_WGS84
+        - GEODETIC_DATUM_INVALID
+        - GEOREFERENCED_DATE_INVALID
+        - GEOREFERENCED_DATE_UNLIKELY
+        - IDENTIFIED_DATE_INVALID
+        - IDENTIFIED_DATE_UNLIKELY
+        - INDIVIDUAL_COUNT_CONFLICTS_WITH_OCCURRENCE_STATUS
+        - INDIVIDUAL_COUNT_INVALID
+        - INSTITUTION_COLLECTION_MISMATCH
+        - INSTITUTION_MATCH_FUZZY
+        - INSTITUTION_MATCH_NONE
+        - INTERPRETATION_ERROR
+        - MODIFIED_DATE_INVALID
+        - MODIFIED_DATE_UNLIKELY
+        - MULTIMEDIA_DATE_INVALID
+        - MULTIMEDIA_URI_INVALID
+        - OCCURRENCE_STATUS_INFERRED_FROM_BASIS_OF_RECORD
+        - OCCURRENCE_STATUS_INFERRED_FROM_INDIVIDUAL_COUNT
+        - OCCURRENCE_STATUS_UNPARSABLE
+        - POSSIBLY_ON_LOAN
+        - PRESUMED_NEGATED_LATITUDE
+        - PRESUMED_NEGATED_LONGITUDE
+        - PRESUMED_SWAPPED_COORDINATE
+        - RECORDED_DATE_INVALID
+        - RECORDED_DATE_MISMATCH
+        - RECORDED_DATE_UNLIKELY
+        - REFERENCES_URI_INVALID
+        - TAXON_MATCH_FUZZY
+        - TAXON_MATCH_HIGHERRANK
+        - TAXON_MATCH_NONE
+        - TYPE_STATUS_INVALID
+        - ZERO_COORDINATE
+    idigbio_issue:
+      type: string
+      enum:
+        - datecollected_bounds
+        - dwc_acceptednameusageid_added
+        - dwc_basisofrecord_invalid
+        - dwc_basisofrecord_paleo_conflict
+        - dwc_basisofrecord_removed
+        - dwc_class_added
+        - dwc_class_replaced
+        - dwc_continent_added
+        - dwc_continent_replaced
+        - dwc_country_added
+        - dwc_country_replaced
+        - dwc_datasetid_added
+        - dwc_datasetid_replaced
+        - dwc_family_added
+        - dwc_family_replaced
+        - dwc_genus_added
+        - dwc_genus_replaced
+        - dwc_infraspecificepithet_added
+        - dwc_infraspecificepithet_replaced
+        - dwc_kingdom_added
+        - dwc_kingdom_replaced
+        - dwc_kingdom_suspect
+        - dwc_multimedia_added
+        - dwc_order_added
+        - dwc_order_replaced
+        - dwc_originalnameusageid_added
+        - dwc_parentnameusageid_added
+        - dwc_phylum_added
+        - dwc_phylum_replaced
+        - dwc_scientificnameauthorship_added
+        - dwc_specificepithet_added
+        - dwc_specificepithet_replaced
+        - dwc_stateprovince_replaced
+        - dwc_taxonid_added
+        - dwc_taxonid_replaced
+        - dwc_taxonomicstatus_added
+        - dwc_taxonomicstatus_replaced
+        - dwc_taxonrank_added
+        - dwc_taxonrank_invalid
+        - dwc_taxonrank_removed
+        - dwc_taxonrank_replaced
+        - dwc_taxonremarks_added
+        - dwc_taxonremarks_replaced
+        - gbif_canonicalname_added
+        - gbif_genericname_added
+        - gbif_reference_added
+        - gbif_taxon_corrected
+        - gbif_vernacularname_added
+        - geopoint_0_coord
+        - geopoint_bounds
+        - geopoint_datum_error
+        - geopoint_datum_missing
+        - geopoint_low_precision
+        - geopoint_pre_flip
+        - geopoint_similar_coord
+        - idigbio_isocountrycode_added
+        - rev_geocode_both_sign
+        - rev_geocode_corrected
+        - rev_geocode_eez
+        - rev_geocode_eez_corrected
+        - rev_geocode_failure
+        - rev_geocode_flip
+        - rev_geocode_flip_both_sign
+        - rev_geocode_flip_lat_sign
+        - rev_geocode_flip_lon_sign
+        - rev_geocode_lat_sign
+        - rev_geocode_lon_sign
+        - rev_geocode_mismatch
+        - scientificname_added
+        - taxon_match_failed
+  examples:
+    names_gbif_Denitrobacterium_detoxificans:
+      description: 'namestr: Denitrobacterium%20detoxificans'
+      value:
+        count: 1
+        records:
+          - usageKey: 3223473
+            scientificName: 'Denitrobacterium detoxificans Anderson et al., 2000'
+            canonicalName: Denitrobacterium detoxificans
+            rank: SPECIES
+            status: ACCEPTED
+            confidence: 98
+            note: >-
+              Similarity: name=110; authorship=0; classification=-2; rank=5;
+              status=1; singleMatch=5
+            matchType: EXACT
+            kingdom: Bacteria
+            phylum: Actinobacteria
+            order: Coriobacteriales
+            family: Coriobacteriaceae
+            genus: Denitrobacterium
+            species: Denitrobacterium detoxificans
+            kingdomKey: 3
+            phylumKey: 26
+            orderKey: 568
+            familyKey: 8093
+            genusKey: 3223472
+            speciesKey: 3223473
+            synonym: false
+            occurrence_count: 25
+            occurrences_url: 'https://www.gbif.org/species/3223473'
+    names_gbif_Plagioecia_patina:
+      description: 'namestr: Plagioecia patina'
+      value:
+        count: 1
+        records:
+          - usageKey: 1004151
+            scientificName: 'Plagioecia patina (Lamarck, 1816)'
+            canonicalName: Plagioecia patina
+            rank: SPECIES
+            status: ACCEPTED
+            confidence: 98
+            note: >-
+              Similarity: name=110; authorship=0; classification=-2; rank=5;
+              status=1; nextMatch=5
+            matchType: EXACT
+            kingdom: Animalia
+            phylum: Bryozoa
+            order: Cyclostomatida
+            family: Plagioeciidae
+            genus: Plagioecia
+            species: Plagioecia patina
+            kingdomKey: 1
+            phylumKey: 53
+            classKey: 226
+            orderKey: 1497
+            familyKey: 9593
+            genusKey: 1004147
+            speciesKey: 1004151
+            synonym: false
+            class: Stenolaemata
+    names_gbif_Tulipa_ylvestris:
+      description: 'namestr: Tulipa sylvestris'
+      value:
+        count: 1
+        records:
+          - usageKey: 5299536
+            scientificName: Tulipa sylvestris L.
+            canonicalName: Tulipa sylvestris
+            rank: SPECIES
+            status: ACCEPTED
+            confidence: 97
+            note: >-
+              Similarity: name=110; authorship=0; classification=-2; rank=5;
+              status=1; nextMatch=0
+            matchType: EXACT
+            kingdom: Plantae
+            phylum: Tracheophyta
+            order: Liliales
+            family: Liliaceae
+            genus: Tulipa
+            species: Tulipa sylvestris
+            kingdomKey: 6
+            phylumKey: 7707728
+            classKey: 196
+            orderKey: 1172
+            familyKey: 7699
+            genusKey: 2750913
+            speciesKey: 5299536
+            synonym: false
+            class: Liliopsida
+            occurrence_count: 32523
+            occurrences_url: 'https://www.gbif.org/species/5299536'
+    names_itis_Denitrobacterium_detoxificans:
+      description: 'namestr: Denitrobacterium%20detoxificans'
+      value:
+        count: 1
+        records:
+          - tsn: '961092'
+            nameWInd: Denitrobacterium detoxificans
+            nameWOInd: Denitrobacterium detoxificans
+            unit1: Denitrobacterium
+            unit2: detoxificans
+            usage: valid
+            credibilityRating: TWG standards met
+            taxonAuthor: 'Anderson et al., 2000'
+            kingdom: Bacteria
+            parentTSN: '957030'
+            rankID: '220'
+            rank: Species
+            hierarchySoFar:
+              - >-
+                961092:$Bacteria$Posibacteria$Actinobacteria$Coriobacteridae$Coriobacteriales$Coriobacterineae$Coriobacteriaceae$Denitrobacterium$Denitrobacterium
+                detoxificans$
+            hierarchySoFarWRanks:
+              - >-
+                961092:$Kingdom:Bacteria$Subkingdom:Posibacteria$Phylum:Actinobacteria$Subclass:Coriobacteridae$Order:Coriobacteriales$Suborder:Coriobacterineae$Family:Coriobacteriaceae$Genus:Denitrobacterium$Species:Denitrobacterium
+                detoxificans$
+            hierarchyTSN:
+              - $50$956097$956099$956180$956210$956291$956365$957030$961092$
+            otherSource:
+              - >-
+                $SRC$1096$website$Bacterial Nomenclature up-to-date$Jun
+                2012$2012-07-02 00:00:00$Bacterial Nomenclature up-to-date
+                published by the Leibniz Institute DSMZ-German Collection of
+                Microorganisms and Cell Cultures at
+                http://www.dsmz.de/bacterial-diversity/bacterial-nomenclature-up-to-date.html$2015-03-02
+                00:00:00$
+            comment:
+              - >-
+                $30315$DSMZ$sp. nov. (VP)$2014-12-22 13:38:32$2014-12-22
+                00:00:00$
+              - >-
+                $36774$DSMZ$International Journal of Systematic and Evolutionary
+                Microbiology (IJSEM), 2000 50:637: Original publication in the
+                IJSEM$2015-03-02 15:13:23$2015-03-02 00:00:00$
+              - >-
+                $36775$DSMZ$Risk group 1; Strains ATCC 700546, NPOH1$2015-03-02
+                15:13:24$2015-03-02 00:00:00$
+            createDate: '2015-03-02 13:52:49'
+            updateDate: '2015-03-02 00:00:00'
+            hierarchicalSort: >-
+              9990Bacteria-9980Posibacteria-9970Actinobacteria-9930Coriobacteridae-9900Coriobacteriales-9890Coriobacterineae-9860Coriobacteriaceae-9820Denitrobacterium-9780Denitrobacterium
+              detoxificans
+            _version_: 1687796933281710000
+    occ_gbif_count_only:
+      value:
+        provider: GBIF
+        dataset_key: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+        count: 123915
+    occ_gbif:
+      value:
+        provider: GBIF
+        dataset_key: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+        count: 123915
+        records:
+          - key: 1309911159
+            datasetKey: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+            publishingOrgKey: b554c320-0560-11d8-b851-b8a03c50a862
+            networkKeys:
+              - 99d66b6c-9087-452f-a9d4-f15f2c2d0e7e
+            installationKey: c7b49e46-602a-4172-98d2-6b027c6b049f
+            publishingCountry: US
+            protocol: DWC_ARCHIVE
+            lastCrawled: '2021-01-13T13:33:24.456+00:00'
+            lastParsed: '2021-01-13T13:39:04.411+00:00'
+            crawlId: 212
+            hostingOrganizationKey: b554c320-0560-11d8-b851-b8a03c50a862
+            extensions:
+              'http://rs.tdwg.org/dwc/terms/ResourceRelationship':
+                - 'http://rs.tdwg.org/dwc/terms/relationshipOfResource': sameAs
+                  'http://rs.tdwg.org/dwc/terms/relatedResourceID': 'KU:Birds:127237'
+            basisOfRecord: PRESERVED_SPECIMEN
+            occurrenceStatus: PRESENT
+            sex: MALE
+            establishmentMeans: NATIVE
+            taxonKey: 5959188
+            kingdomKey: 1
+            phylumKey: 44
+            classKey: 212
+            orderKey: 729
+            familyKey: 3241790
+            genusKey: 5959160
+            speciesKey: 5959188
+            acceptedTaxonKey: 5959188
+            scientificName: 'Pachycephala pectoralis (Latham, 1802)'
+            acceptedScientificName: 'Pachycephala pectoralis (Latham, 1802)'
+            kingdom: Animalia
+            phylum: Chordata
+            order: Passeriformes
+            family: Pachycephalidae
+            genus: Pachycephala
+            species: Pachycephala pectoralis
+            genericName: Pachycephala
+            specificEpithet: pectoralis
+            taxonRank: SPECIES
+            taxonomicStatus: ACCEPTED
+            decimalLongitude: -179.99
+            decimalLatitude: -16.825
+            continent: OCEANIA
+            year: 2020
+            month: 7
+            day: 17
+            eventDate: '2020-07-17T00:00:00'
+            issues:
+              - RECORDED_DATE_INVALID
+              - AMBIGUOUS_COLLECTION
+            lastInterpreted: '2021-01-13T13:39:04.411+00:00'
+            references: 'http://portal.vertnet.org/o/ku/birds?id=127237'
+            license: 'http://creativecommons.org/licenses/by/4.0/legalcode'
+            identifiers: []
+            media: []
+            facts: []
+            relations: []
+            gadm:
+              level0:
+                gid: FJI
+                name: Fiji
+              level1:
+                gid: FJI.3_1
+                name: Northern
+              level2:
+                gid: FJI.3.2_1
+                name: Cakaudrove
+            institutionKey: 49fb6451-91b7-4af2-8cd3-354539a77589
+            isInCluster: false
+            geodeticDatum: WGS84
+            class: Aves
+            countryCode: FJ
+            recordedByIDs: []
+            identifiedByIDs: []
+            country: Fiji
+            identifier: a3b47cdd-f2c9-11e5-856f-90b11c41863e
+            nomenclaturalCode: ICZN
+            institutionID: 'http://grbio.org/cool/iakn-125z'
+            higherGeography: Pacific Ocean | Fiji |  |  |  |  |  |
+            verbatimEventDate: 17 July 2010
+            dynamicProperties: >-
+              {"bursa":"no", "gonads":"testess 15 x 9 mm", "molt":"no", "skull
+              ossification":"100 %", "stomach contents":"insects",
+              "weight":"33.1 g" }
+            georeferenceVerificationStatus: requires verification
+            locality: 'Taveuni, Mount Manuka'
+            datasetName: University of Kansas Biodiversity Institute Ornithology Collection
+            fieldNumber: MJA 701
+            gbifID: '1309911159'
+            language: en
+            verbatimLocality: Pacific Ocean | Fiji
+            collectionCode: Birds
+            occurrenceID: a3b47cdd-f2c9-11e5-856f-90b11c41863e
+            type: PhysicalObject
+            preparations: Tissue - 100; Skin - 1
+            catalogNumber: '127237'
+            otherCatalogNumbers: 'KU Tissue Number: 24323'
+            institutionCode: KU
+            accessRights: >-
+              http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+            collectionID: 'http://grbio.org/cool/v9yz-imvc'
+            higherClassification: >-
+              Animalia | Chordata | Aves | Passeriformes | Pachycephalidae |
+              Pachycephala
+    occ_idb_count_only:
+      value:
+        count: 1
+    occ_idb:
+      value:
+        count: 1
+        records:
+          - uuid: 438c6349-f17c-4908-88bd-c6cf9fe48747
+            type: records
+            etag: f81047edaf16be575d75542872e01580be9a9a2b
+            data:
+              'dwc:startDayOfYear': '163'
+              'dwc:specificEpithet': canadensis
+              'dwc:countryCode': US
+              'dwc:county': Boulder
+              'dwc:recordedBy': 'PATTERSON, R. R.'
+              'dwc:fieldNumber': '2102'
+              'dwc:order': Passeriformes
+              'dcterms:references': 'http://portal.vertnet.org/o/ku/birds?id=66968'
+              'dcterms:accessRights': >-
+                http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+              'dwc:occurrenceID': ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+              'dcterms:language': en
+              id: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+              'dwc:establishmentMeans': native
+              'dwc:stateProvince': Colorado
+              'dwc:eventDate': '1972-06-11'
+              'dwc:collectionID': 'http://grbio.org/cool/v9yz-imvc'
+              'dwc:country': United States
+              'dwc:collectionCode': Birds
+              'dwc:occurrenceStatus': present
+              'dwc:kingdom': Animalia
+              'dwc:basisOfRecord': PreservedSpecimen
+              'dwc:genus': Perisoreus
+              'dwc:continent': North America
+              'dwc:family': Corvidae
+              'dwc:sex': unknown
+              'dwc:higherClassification': >-
+                Animalia | Chordata | Aves | Passeriformes | Corvidae |
+                Perisoreus
+              'dcterms:license': 'http://creativecommons.org/licenses/by/4.0/'
+              'dwc:phylum': Chordata
+              'dwc:locality': 'Ward, 2.5 mi. W'
+              'dwc:institutionID': 'http://grbio.org/cool/iakn-125z'
+              'dwc:institutionCode': KU
+              'dwc:taxonRank': species
+              'dwc:class': Aves
+              'dwc:catalogNumber': '66968'
+              'dwc:nomenclaturalCode': ICZN
+              'dcterms:type': PhysicalObject
+              'dwc:higherGeography': North America | USA | Colorado | Boulder |  |  |  |
+              'dwc:month': '6'
+              'dwc:datasetName': >-
+                University of Kansas Biodiversity Institute Ornithology
+                Collection
+              'dwc:endDayOfYear': '163'
+              'dwc:verbatimLocality': North America | USA | Colorado | Boulder
+              'dwc:verbatimEventDate': 11 June 1972
+              'dwc:preparations': Alcoholic - 1
+              'dwc:ResourceRelationship':
+                - coreid: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                  'dwc:relationshipOfResource': sameAs
+                  'dwc:relatedResourceID': 'KU:Birds:66968'
+              'dcterms:modified': '2014-10-29 12:38:05.0'
+              'dwc:scientificName': Perisoreus canadensis
+              'dwc:day': '11'
+              'dwc:year': '1972'
+            indexTerms:
+              family: corvidae
+              recordset: 3ad82604-c4b3-4fd0-b03e-d8f874062146
+              dqs: 0.3188405797101449
+              stateprovince: colorado
+              county: boulder
+              phylum: chordata
+              catalognumber: '66968'
+              startdayofyear: 163
+              taxonrank: species
+              specificepithet: canadensis
+              continent: north america
+              datemodified: '2017-04-20T10:23:55.621021+00:00'
+              uuid: 438c6349-f17c-4908-88bd-c6cf9fe48747
+              countrycode: usa
+              basisofrecord: preservedspecimen
+              collector: 'patterson, r. r.'
+              institutioncode: ku
+              verbatimlocality: north america | usa | colorado | boulder
+              datecollected: '1972-06-11T00:00:00+00:00'
+              etag: f81047edaf16be575d75542872e01580be9a9a2b
+              flags:
+                - dwc_multimedia_added
+                - gbif_reference_added
+                - dwc_taxonrank_replaced
+                - dwc_taxonomicstatus_added
+                - gbif_genericname_added
+                - dwc_datasetid_added
+                - gbif_taxon_corrected
+                - dwc_parentnameusageid_added
+                - dwc_scientificnameauthorship_added
+                - dwc_taxonid_added
+                - idigbio_isocountrycode_added
+                - gbif_vernacularname_added
+                - gbif_canonicalname_added
+                - dwc_originalnameusageid_added
+              hasMedia: false
+              hasImage: false
+              kingdom: animalia
+              highertaxon: >-
+                animalia | chordata | aves | passeriformes | corvidae |
+                perisoreus
+              collectionid: 'http://grbio.org/cool/v9yz-imvc'
+              taxonid: '2482436'
+              scientificname: perisoreus canadensis
+              indexData:
+                'dwc:startDayOfYear': '163'
+                'dwc:specificEpithet': canadensis
+                'idigbio:dateModified': '2017-04-20T10:23:55.621021'
+                'dwc:countryCode': US
+                'dwc:kingdom': Animalia
+                'dwc:recordedBy': 'PATTERSON, R. R.'
+                'idigbio:uuid': 438c6349-f17c-4908-88bd-c6cf9fe48747
+                flag_dwc_multimedia_added: true
+                'dwc:fieldNumber': '2102'
+                'dwc:order': Passeriformes
+                'dcterms:references': 'http://portal.vertnet.org/o/ku/birds?id=66968'
+                flag_gbif_reference_added: true
+                'dcterms:accessRights': >-
+                  http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+                'idigbio:recordIds':
+                  - '3ad82604-c4b3-4fd0-b03e-d8f874062146\ku:birds:66968'
+                  - >-
+                    3ad82604-c4b3-4fd0-b03e-d8f874062146\ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                'dwc:occurrenceID': ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                flag_dwc_taxonrank_replaced: true
+                'dcterms:language': en
+                'gbif:vernacularname':
+                  - coreid: '2482436'
+                    'dcterms:language': et
+                    'dwc:vernacularname': ameerika laanenäär
+                  - coreid: '2482436'
+                    'dcterms:language': es
+                    'dwc:vernacularname': arrendajo canadiense
+                  - coreid: '2482436'
+                    'dcterms:language': nl
+                    'dwc:vernacularname': canadese taigagaai
+                  - coreid: '2482436'
+                    'dcterms:language': ca
+                    'dwc:vernacularname': gaig canadenc
+                  - coreid: '2482436'
+                    'dcterms:language': it
+                    'dwc:vernacularname': ghiandaia grigia
+                  - coreid: '2482436'
+                    'dcterms:language': da
+                    'dwc:vernacularname': grå lavskrige
+                  - coreid: '2482436'
+                    'dcterms:language': sv
+                    'dwc:vernacularname': grå lavskrika
+                  - coreid: '2482436'
+                    'dcterms:language': nb
+                    'dwc:vernacularname': gråskrike
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': catalogue of life
+                    'dwc:vernacularname': gray jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': colaboraciones americanas sobre aves
+                    'dwc:vernacularname': gray jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': integrated taxonomic information system (itis)
+                    'dwc:vernacularname': gray jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': taxonomy in flux checklist
+                    'dwc:vernacularname': gray jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': the clements checklist
+                    'dwc:vernacularname': gray jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': yanayacu natural history research group
+                    'dwc:vernacularname': gray jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dwc:vernacularname': grey jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': catalogue of life
+                    'dwc:vernacularname': grey jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': colaboraciones americanas sobre aves
+                    'dwc:vernacularname': grey jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': integrated taxonomic information system (itis)
+                    'dwc:vernacularname': grey jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': 'ioc world bird list, v6.3'
+                    'dwc:vernacularname': grey jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': phthiraptera.info
+                    'dwc:vernacularname': grey jay
+                  - coreid: '2482436'
+                    'dcterms:language': en
+                    'dcterms:source': yanayacu natural history research group
+                    'dwc:vernacularname': grey jay
+                  - coreid: '2482436'
+                    'dcterms:language': fi
+                    'dwc:vernacularname': harmaakuukkeli
+                  - coreid: '2482436'
+                    'dcterms:language': ja
+                    'dwc:vernacularname': カナダカケス
+                  - coreid: '2482436'
+                    'dcterms:language': lv
+                    'dwc:vernacularname': kanādas bēdrozis
+                  - coreid: '2482436'
+                    'dcterms:language': lt
+                    'dwc:vernacularname': kanadinis kėkštas
+                  - coreid: '2482436'
+                    'dcterms:language': fr
+                    'dcterms:source': integrated taxonomic information system (itis)
+                    'dwc:vernacularname': mÃ©sangeai du canada
+                  - coreid: '2482436'
+                    'dcterms:language': de
+                    'dwc:vernacularname': meisenhäher
+                  - coreid: '2482436'
+                    'dcterms:language': de
+                    'dcterms:source': german wikipedia - species pages
+                    'dwc:vernacularname': meisenhäher
+                  - 'dwc:countrycode': de
+                    'dwc:country': germany
+                    'dwc:vernacularname': meisenhäher
+                    coreid: '2482436'
+                    'dcterms:source': >-
+                      taxon list of animals with german names (worldwide)
+                      compiled at the smns
+                    'dcterms:language': de
+                  - coreid: '2482436'
+                    'dcterms:language': fr
+                    'dwc:vernacularname': mésangeai du canada
+                  - coreid: '2482436'
+                    'dcterms:language': fr
+                    'dcterms:source': catalogue of life
+                    'dwc:vernacularname': mésangeai du canada
+                  - coreid: '2482436'
+                    'dcterms:language': fr
+                    'dcterms:source': colaboraciones americanas sobre aves
+                    'dwc:vernacularname': mésangeai du canada
+                  - coreid: '2482436'
+                    'dcterms:language': fr
+                    'dcterms:source': yanayacu natural history research group
+                    'dwc:vernacularname': mésangeai du canada
+                  - coreid: '2482436'
+                    'dcterms:language': sk
+                    'dwc:vernacularname': škriekavec bieločelý
+                  - coreid: '2482436'
+                    'dcterms:language': pl
+                    'dwc:vernacularname': sójka kanadyjska
+                  - coreid: '2482436'
+                    'dcterms:language': cs
+                    'dwc:vernacularname': sojka šedá
+                  - coreid: '2482436'
+                    'dcterms:language': hu
+                    'dwc:vernacularname': szürke szajkó
+                  - coreid: '2482436'
+                    'dcterms:language': ru
+                    'dwc:vernacularname': Канадская кукша
+                  - coreid: '2482436'
+                    'dcterms:language': zh
+                    'dwc:vernacularname': 灰噪鸦
+                flag_dwc_taxonomicstatus_added: true
+                flag_gbif_genericname_added: true
+                'dwc:occurrenceStatus': present
+                'dwc:establishmentMeans': native
+                flag_dwc_datasetid_added: true
+                'idigbio:parent': 3ad82604-c4b3-4fd0-b03e-d8f874062146
+                'dwc:stateProvince': Colorado
+                flag_gbif_taxon_corrected: true
+                'dwc:eventDate': '1972-06-11'
+                'dwc:collectionID': 'http://grbio.org/cool/v9yz-imvc'
+                'dwc:country': United States
+                'dwc:multimedia':
+                  - 'dcterms:license': gnu free documentation license
+                    'dcterms:references': >-
+                      http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
+                    coreid: '2482436'
+                    'dcterms:identifier': >-
+                      http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
+                    'dcterms:source': english wikipedia - species pages
+                    'dcterms:description': "english: gray jay, camp mercier in laurentides wildlife reserve, quebec, canada. français\_: mésangeai du canada, camp mercier, réserve faunique des laurentides, québec, canada."
+                    'dcterms:creator': cephas
+                    'dcterms:publisher': wikimedia commons
+                  - 'dcterms:license': gnu free documentation license
+                    'dcterms:title': meisenhäher (perisoreus canadensis)
+                    'dcterms:references': >-
+                      http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
+                    coreid: '2482436'
+                    'dcterms:identifier': >-
+                      http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
+                    'dcterms:source': german wikipedia - species pages
+                    'dcterms:description': "english: gray jay, camp mercier in laurentides wildlife reserve, quebec, canada. français\_: mésangeai du canada, camp mercier, réserve faunique des laurentides, québec, canada."
+                    'dcterms:creator': cephas
+                    'dcterms:publisher': wikimedia commons
+                'idigbio:etag': f81047edaf16be575d75542872e01580be9a9a2b
+                'dwc:collectionCode': Birds
+                id: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                'dwc:county': Boulder
+                'gbif:reference':
+                  - coreid: '2482436'
+                    'dcterms:source': catalogue of life
+                    'dcterms:bibliographiccitation': (1996) nodc taxonomic code
+                  - coreid: '2482436'
+                    'dcterms:source': catalogue of life
+                    'dcterms:bibliographiccitation': >-
+                      (2003) database,
+                      http://www.menv.gouv.qc.ca/biodiversite/centre.htm
+                  - coreid: '2482436'
+                    'dcterms:source': catalogue of life
+                    'dcterms:bibliographiccitation': '(2005) website, aou check-list (07-2005)'
+                  - coreid: '2482436'
+                    'dcterms:source': catalogue of life
+                    'dcterms:bibliographiccitation': >-
+                      (2012) zoonomen - zoological nomenclature resource,
+                      2011.12.31
+                  - coreid: '2482436'
+                    'dcterms:source': catalogue of life
+                    'dcterms:bibliographiccitation': >-
+                      banks, r. c., r. w. mcdiarmid, a. l. gardner, and w. c.
+                      starnes (2003) checklist of vertebrates of the united
+                      states, the u.s. territories, and canada
+                  - coreid: '2482436'
+                    'dcterms:source': catalogue of life
+                    'dcterms:bibliographiccitation': >-
+                      banks, r. c., r. w. mcdiarmid, and a. l. gardner (1987)
+                      checklist of vertebrates of the united states, the u.s.
+                      territories, and canada: resource publication, no. 166
+                  - coreid: '2482436'
+                    'dcterms:source': catalogue of life
+                    'dcterms:bibliographiccitation': >-
+                      gill, frank, and minturn wright (2006) birds of the world:
+                      recommended english names
+                  - coreid: '2482436'
+                    'dcterms:source': catalogue of life
+                    'dcterms:bibliographiccitation': >-
+                      gill, frank, and minturn wright (2006) birds of the world:
+                      recommended english names
+                'dwc:basisOfRecord': PreservedSpecimen
+                'dwc:taxonomicstatus': accepted
+                'dwc:genus': Perisoreus
+                'dwc:continent': North America
+                'dwc:family': Corvidae
+                'dwc:sex': unknown
+                flag_dwc_parentnameusageid_added: true
+                flag_dwc_scientificnameauthorship_added: true
+                'dwc:class': Aves
+                flag_dwc_taxonid_added: true
+                'idigbio:isocountrycode': usa
+                'dcterms:license': 'http://creativecommons.org/licenses/by/4.0/'
+                'idigbio:siblings': {}
+                flag_idigbio_isocountrycode_added: true
+                'gbif:canonicalname': perisoreus canadensis
+                'dwc:scientificnameauthorship': '(linnaeus, 1766)'
+                'dwc:phylum': Chordata
+                'gbif:genericname': perisoreus
+                'dwc:locality': 'Ward, 2.5 mi. W'
+                'dwc:institutionID': 'http://grbio.org/cool/iakn-125z'
+                flag_gbif_vernacularname_added: true
+                'dwc:institutionCode': KU
+                'dwc:taxonRank': species
+                'dwc:parentnameusageid': '2482435'
+                'dwc:higherClassification': >-
+                  Animalia | Chordata | Aves | Passeriformes | Corvidae |
+                  Perisoreus
+                'dwc:catalogNumber': '66968'
+                'dwc:taxonid': '2482436'
+                'dwc:nomenclaturalCode': ICZN
+                'dcterms:type': PhysicalObject
+                flag_gbif_canonicalname_added: true
+                'dwc:higherGeography': North America | USA | Colorado | Boulder |  |  |  |
+                'dwc:month': '6'
+                'dwc:datasetid': 7ddf754f-d193-4cc9-b351-99906754a03b
+                'dwc:datasetName': >-
+                  University of Kansas Biodiversity Institute Ornithology
+                  Collection
+                'dwc:endDayOfYear': '163'
+                'dwc:verbatimLocality': North America | USA | Colorado | Boulder
+                'dwc:verbatimEventDate': 11 June 1972
+                'dwc:originalnameusageid': '9174701'
+                'dwc:preparations': Alcoholic - 1
+                flag_dwc_originalnameusageid_added: true
+                'dwc:ResourceRelationship':
+                  - coreid: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                    'dwc:relatedResourceID': 'KU:Birds:66968'
+                    'dwc:relationshipOfResource': sameAs
+                'dcterms:modified': '2014-10-29 12:38:05.0'
+                'dwc:scientificName': Perisoreus canadensis
+                'dwc:day': '11'
+                'dwc:year': '1972'
+              class: aves
+              occurrenceid: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+              institutionid: 'http://grbio.org/cool/iakn-125z'
+              country: united states
+              locality: 'ward, 2.5 mi. w'
+              collectioncode: birds
+              canonicalname: perisoreus canadensis
+              eventdate: '1972-06-11'
+              fieldnumber: '2102'
+              verbatimeventdate: 11 june 1972
+              taxonomicstatus: accepted
+              recordids:
+                - '3ad82604-c4b3-4fd0-b03e-d8f874062146\ku:birds:66968'
+                - >-
+                  3ad82604-c4b3-4fd0-b03e-d8f874062146\ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+              genus: perisoreus
+              order: passeriformes
+              datasetid: 7ddf754f-d193-4cc9-b351-99906754a03b
+    occ_mopho_count_only:
+      value:
+        count: 1
+    occ_mopho:
+      value:
+        count: 1
+        records:
+          - institution.name: University of Kansas Biodiversity Institute
+            project.name: University of Kansas Ornithology Specimens
+            project.project_id: '737'
+            specimen.absolute_age: ''
+            specimen.body_mass: ''
+            specimen.body_mass_bibref_id: ''
+            specimen.body_mass_comments: ''
+            specimen.catalog_number: '66968'
+            specimen.collected_on: '77083200'
+            specimen.collection_code: birds
+            specimen.collector: 'patterson, r. r.'
+            specimen.created_on: 'September 7 2019 at 16:15:16'
+            specimen.description: ''
+            specimen.institution_code: ku
+            specimen.institution_id: '96'
+            specimen.last_modified_on: 'September 7 2019 at 16:15:39'
+            specimen.locality_absolute_age: ''
+            specimen.locality_absolute_age_bibref_id: ''
+            specimen.locality_coordinates: ''
+            specimen.locality_datum_zone: ''
+            specimen.locality_description: 'ward, 2.5 mi. w'
+            specimen.locality_easting_coordinate: ''
+            specimen.locality_northing_coordinate: ''
+            specimen.locality_relative_age: ''
+            specimen.locality_relative_age_bibref_id: ''
+            specimen.notes: >-
+              imported from iDigBio. uuid:438c6349-f17c-4908-88bd-c6cf9fe48747
+              Occurrence ID:ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+            specimen.occurrence_id: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+            specimen.reference_source: Vouchered
+            specimen.relative_age: ''
+            specimen.sex: Male
+            specimen.specimen_id: '25481'
+            specimen.type: 'Yes'
+            specimen.url: 'http://portal.vertnet.org/o/ku/birds?id=66968'
+            specimen.uuid: 438c6349-f17c-4908-88bd-c6cf9fe48747
+            taxonomy_name:
+              - names:
+                  - ht_kingdom: ''
+                    ht_phylum: ''
+                    ht_class: ''
+                    ht_subclass: ''
+                    ht_superorder: ''
+                    ht_order: ''
+                    ht_suborder: ''
+                    ht_superfamily: ''
+                    ht_family: ''
+                    ht_subfamily: ''
+                    genus: Perisoreus
+                    ht_supraspecific_clade: ''
+                    species: canadensis
+                    subspecies: ''
+                    variety: ''
+                    author: ''
+                    year: '0'
+                    notes: imported from iDigBio
+                    is_primary: '1'
+                    created_on: ''
+                    last_modified_on: ''
+                taxon_id: '14997'
+            user.email: slbaumgart@uchicago.edu
+    occ_specify_count_only:
+      value:
+        count: 1
+    occ_specify:
+      value:
+        records:
+          - core:
+              - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                - 2c1becd5-e641-4e83-b3f5-76a55206539a
+              - - 'http://rs.tdwg.org/dwc/terms/institutionCode'
+                - KU
+              - - 'http://rs.tdwg.org/dwc/terms/institutionID'
+                - 'http://grbio.org/cool/iakn-125z'
+              - - 'http://purl.org/dc/terms/license'
+                - 'https://creativecommons.org/licenses/by/4.0/legalcode'
+              - - 'http://purl.org/dc/terms/accessRights'
+                - 'http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms'
+              - - 'http://rs.tdwg.org/dwc/terms/collectionCode'
+                - KUIT
+              - - 'http://rs.tdwg.org/dwc/terms/basisOfRecord'
+                - MaterialSample
+              - - 'http://rs.tdwg.org/dwc/terms/datasetName'
+                - University of Kansas Biodiversity Institute Fish Tissue Collection
+              - - 'http://rs.tdwg.org/dwc/terms/catalogNumber'
+                - '15'
+              - - 'http://purl.org/dc/terms/modified'
+                - '2019-01-17'
+              - - 'http://rs.tdwg.org/dwc/terms/dynamicProperties'
+                - 65mm SL
+              - - 'http://rs.tdwg.org/dwc/terms/sex'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/kingdom'
+                - Animalia
+              - - 'http://rs.tdwg.org/dwc/terms/phylum'
+                - Chordata
+              - - 'http://rs.tdwg.org/dwc/terms/class'
+                - Actinopterygii
+              - - 'http://rs.tdwg.org/dwc/terms/order'
+                - Perciformes
+              - - 'http://rs.tdwg.org/dwc/terms/family'
+                - Serranidae
+              - - 'http://rs.tdwg.org/dwc/terms/genus'
+                - Mycteroperca
+              - - 'http://rs.tdwg.org/dwc/terms/specificEpithet'
+                - microlepis
+              - - 'http://rs.tdwg.org/dwc/terms/infraspecificEpithet'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/scientificName'
+                - Mycteroperca microlepis
+              - - 'http://rs.tdwg.org/dwc/terms/scientificNameAuthorship'
+                - '(Goode & Bean, 1879)'
+              - - 'http://rs.tdwg.org/dwc/terms/taxonRank'
+                - Species
+              - - 'http://rs.tdwg.org/dwc/terms/identifiedBy'
+                - ''
+              - - 'http://rs.tdwg.org/dwc/terms/dateIdentified'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/typeStatus'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/eventID'
+                - EOW 90-06
+              - - 'http://rs.tdwg.org/dwc/terms/eventDate'
+                - 06/20/1990
+              - - 'http://rs.tdwg.org/dwc/terms/day'
+                - 20
+              - - 'http://rs.tdwg.org/dwc/terms/month'
+                - 6
+              - - 'http://rs.tdwg.org/dwc/terms/year'
+                - 1990
+              - - 'http://rs.tdwg.org/dwc/terms/eventRemarks'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/recordedBy'
+                - 'Wiley, Edward O'
+              - - 'http://rs.tdwg.org/dwc/terms/minimumDepthInMeters'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/maximumDepthInMeters'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/locality'
+                - Charleston Harbor
+              - - 'http://rs.tdwg.org/dwc/terms/geodeticDatum'
+                - WGS84
+              - - 'http://rs.tdwg.org/dwc/terms/decimalLatitude'
+                - '32.7533836365'
+              - - 'http://rs.tdwg.org/dwc/terms/decimalLongitude'
+                - '-79.9105224609'
+              - - 'http://rs.tdwg.org/dwc/terms/georeferenceSources'
+                - GEOLocate
+              - - 'http://rs.tdwg.org/dwc/terms/locationRemarks'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/coordinateUncertaintyInMeters'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/georeferenceRemarks'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/georeferencedDate'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/georeferencedBy'
+                - ''
+              - - 'http://rs.tdwg.org/dwc/terms/continent'
+                - North America
+              - - 'http://rs.tdwg.org/dwc/terms/country'
+                - United States
+              - - 'http://rs.tdwg.org/dwc/terms/stateProvince'
+                - South Carolina
+              - - 'http://rs.tdwg.org/dwc/terms/county'
+                - Charleston
+              - - 'http://rs.tdwg.org/dwc/terms/higherGeography'
+                - 'North America, United States, South Carolina, Charleston'
+              - - 'http://rs.tdwg.org/dwc/terms/waterBody'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/island'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/islandGroup'
+                - null
+              - - 'http://rs.tdwg.org/dwc/iri/habitat'
+                - Marine
+            extensions:
+              - class: 'http://data.ggbn.org/schemas/ggbn/terms/Amplification'
+                records: []
+              - class: 'http://data.ggbn.org/schemas/ggbn/terms/MaterialSample'
+                records:
+                  - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                      - 2c1becd5-e641-4e83-b3f5-76a55206539a
+                    - - 'http://data.ggbn.org/schemas/ggbn/terms/materialSampleType'
+                      - Tissue
+              - class: 'http://data.ggbn.org/schemas/ggbn/terms/Preparation'
+                records:
+                  - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                      - 2c1becd5-e641-4e83-b3f5-76a55206539a
+                    - - 'http://data.ggbn.org/schemas/ggbn/terms/preparationType'
+                      - Muscle
+              - class: 'http://rs.tdwg.org/dwc/terms/ResourceRelationship'
+                records:
+                  - - - 'http://rs.tdwg.org/dwc/terms/relationshipOfResource'
+                      - Same individual
+                    - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                      - 2c1becd5-e641-4e83-b3f5-76a55206539a
+                    - - 'http://rs.tdwg.org/dwc/terms/relatedResourceID'
+                      - 'institutionCode=KU&collectionCode=KUI&catalogNumber=22956&accesspoint=http://ipt.nhm.ku.edu:8080/ipt/archive.do?r=kubi_ichthyology&guid=dc72bcd1-1ed3-11e3-bfac-90b11c41863e'
+              - class: 'http://rs.tdwg.org/ac/terms/Multimedia'
+                records:
+                  - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                      - 2c1becd5-e641-4e83-b3f5-76a55206539a
+                    - - 'http://purl.org/dc/terms/title'
+                      - EOW 90-6
+                    - - 'http://rs.tdwg.org/ac/terms/digitizationDate'
+                      - null
+                    - - 'http://purl.org/dc/terms/identifier'
+                      - 46666efd-1568-4247-a30a-558b86b43aae
+                    - - 'http://purl.org/dc/terms/type'
+                      - Text
+                    - - 'http://rs.tdwg.org/ac/terms/subtype'
+                      - Scanned Text
+                    - - 'http://purl.org/dc/elements/1.1/format'
+                      - application/pdf
+                    - - 'http://rs.tdwg.org/ac/terms/subjectOrientation'
+                      - null
+                    - - 'http://rs.tdwg.org/ac/terms/accessURI'
+                      - 'http://biimages.biodiversity.ku.edu/static/Ichthyology/originals/sp68854446198103814691.att.pdf'
+                    - - 'http://purl.org/dc/terms/license'
+                      - 'https://creativecommons.org/licenses/by/4.0/legalcode'
+                    - - 'http://purl.org/dc/terms/accessRights'
+                      - 'http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms'
+                    - - 'http://ns.adobe.com/xap/1.0/rights/Owner'
+                      - University of Kansas Biodiversity Institute
+                    - - 'http://ns.adobe.com/photoshop/1.0/Credit'
+                      - KU Biodiversity Institute Ichthyology Division
+              - class: 'http://eol.org/schema/reference/Reference'
+                records: []
+        count: 1
+    occ_tentacles_count_only:
+      value:
+        Specify ARK:
+          docs:
+            - id: 2c1becd5-e641-4e83-b3f5-76a55206539a
+              dataset_guid: 56caf05f-1364-4f24-85f6-0c82520c2792
+              who: University of Kansas Biodiversity Institute Fish Tissue Collection
+              what: MaterialSample
+              when: 6-20
+              where: 'http://spcoco.org/ark:/2c1becd5-e641-4e83-b3f5-76a55206539a'
+              url: 'http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a'
+              _version_: 1684258724397449200
+          count: 1
+        Specify Record:
+          $ref: '#/components/examples/occ_specify_count_only'
+        GBIF Records:
+          $ref: '#/components/examples/occ_gbif_count_only'
+        iDigBio Records:
+          $ref: '#/components/examples/occ_idb_count_only'
+        MorphoSource Records:
+          $ref: '#/components/examples/occ_mopho_count_only'
+    occ_tentacles:
+      value:
+        Specify ARK:
+          docs:
+            - id: 2c1becd5-e641-4e83-b3f5-76a55206539a
+              dataset_guid: 56caf05f-1364-4f24-85f6-0c82520c2792
+              who: University of Kansas Biodiversity Institute Fish Tissue Collection
+              what: MaterialSample
+              when: 6-20
+              where: 'http://spcoco.org/ark:/2c1becd5-e641-4e83-b3f5-76a55206539a'
+              url: 'http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a'
+              _version_: 1684258724397449200
+          count: 1
+        Specify Record:
+          records:
+            core:
+              - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                - 2c1becd5-e641-4e83-b3f5-76a55206539a
+              - - 'http://rs.tdwg.org/dwc/terms/institutionCode'
+                - KU
+              - - 'http://rs.tdwg.org/dwc/terms/institutionID'
+                - 'http://grbio.org/cool/iakn-125z'
+              - - 'http://purl.org/dc/terms/license'
+                - 'https://creativecommons.org/licenses/by/4.0/legalcode'
+              - - 'http://purl.org/dc/terms/accessRights'
+                - 'http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms'
+              - - 'http://rs.tdwg.org/dwc/terms/collectionCode'
+                - KUIT
+              - - 'http://rs.tdwg.org/dwc/terms/basisOfRecord'
+                - MaterialSample
+              - - 'http://rs.tdwg.org/dwc/terms/datasetName'
+                - University of Kansas Biodiversity Institute Fish Tissue Collection
+              - - 'http://rs.tdwg.org/dwc/terms/catalogNumber'
+                - '15'
+              - - 'http://purl.org/dc/terms/modified'
+                - '2019-01-17'
+              - - 'http://rs.tdwg.org/dwc/terms/dynamicProperties'
+                - 65mm SL
+              - - 'http://rs.tdwg.org/dwc/terms/sex'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/kingdom'
+                - Animalia
+              - - 'http://rs.tdwg.org/dwc/terms/phylum'
+                - Chordata
+              - - 'http://rs.tdwg.org/dwc/terms/class'
+                - Actinopterygii
+              - - 'http://rs.tdwg.org/dwc/terms/order'
+                - Perciformes
+              - - 'http://rs.tdwg.org/dwc/terms/family'
+                - Serranidae
+              - - 'http://rs.tdwg.org/dwc/terms/genus'
+                - Mycteroperca
+              - - 'http://rs.tdwg.org/dwc/terms/specificEpithet'
+                - microlepis
+              - - 'http://rs.tdwg.org/dwc/terms/infraspecificEpithet'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/scientificName'
+                - Mycteroperca microlepis
+              - - 'http://rs.tdwg.org/dwc/terms/scientificNameAuthorship'
+                - '(Goode & Bean, 1879)'
+              - - 'http://rs.tdwg.org/dwc/terms/taxonRank'
+                - Species
+              - - 'http://rs.tdwg.org/dwc/terms/identifiedBy'
+                - ''
+              - - 'http://rs.tdwg.org/dwc/terms/dateIdentified'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/typeStatus'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/eventID'
+                - EOW 90-06
+              - - 'http://rs.tdwg.org/dwc/terms/eventDate'
+                - 06/20/1990
+              - - 'http://rs.tdwg.org/dwc/terms/day'
+                - 20
+              - - 'http://rs.tdwg.org/dwc/terms/month'
+                - 6
+              - - 'http://rs.tdwg.org/dwc/terms/year'
+                - 1990
+              - - 'http://rs.tdwg.org/dwc/terms/eventRemarks'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/recordedBy'
+                - 'Wiley, Edward O'
+              - - 'http://rs.tdwg.org/dwc/terms/minimumDepthInMeters'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/maximumDepthInMeters'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/locality'
+                - Charleston Harbor
+              - - 'http://rs.tdwg.org/dwc/terms/geodeticDatum'
+                - WGS84
+              - - 'http://rs.tdwg.org/dwc/terms/decimalLatitude'
+                - '32.7533836365'
+              - - 'http://rs.tdwg.org/dwc/terms/decimalLongitude'
+                - '-79.9105224609'
+              - - 'http://rs.tdwg.org/dwc/terms/georeferenceSources'
+                - GEOLocate
+              - - 'http://rs.tdwg.org/dwc/terms/locationRemarks'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/coordinateUncertaintyInMeters'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/georeferenceRemarks'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/georeferencedDate'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/georeferencedBy'
+                - ''
+              - - 'http://rs.tdwg.org/dwc/terms/continent'
+                - North America
+              - - 'http://rs.tdwg.org/dwc/terms/country'
+                - United States
+              - - 'http://rs.tdwg.org/dwc/terms/stateProvince'
+                - South Carolina
+              - - 'http://rs.tdwg.org/dwc/terms/county'
+                - Charleston
+              - - 'http://rs.tdwg.org/dwc/terms/higherGeography'
+                - 'North America, United States, South Carolina, Charleston'
+              - - 'http://rs.tdwg.org/dwc/terms/waterBody'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/island'
+                - null
+              - - 'http://rs.tdwg.org/dwc/terms/islandGroup'
+                - null
+              - - 'http://rs.tdwg.org/dwc/iri/habitat'
+                - Marine
+          extensions:
+            - class: 'http://data.ggbn.org/schemas/ggbn/terms/Amplification'
+              records: []
+            - class: 'http://data.ggbn.org/schemas/ggbn/terms/MaterialSample'
+              records:
+                - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                    - 2c1becd5-e641-4e83-b3f5-76a55206539a
+                  - - 'http://data.ggbn.org/schemas/ggbn/terms/materialSampleType'
+                    - Tissue
+            - class: 'http://data.ggbn.org/schemas/ggbn/terms/Preparation'
+              records:
+                - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                    - 2c1becd5-e641-4e83-b3f5-76a55206539a
+                  - - 'http://data.ggbn.org/schemas/ggbn/terms/preparationType'
+                    - Muscle
+            - class: 'http://rs.tdwg.org/dwc/terms/ResourceRelationship'
+              records:
+                - - - 'http://rs.tdwg.org/dwc/terms/relationshipOfResource'
+                    - Same individual
+                  - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                    - 2c1becd5-e641-4e83-b3f5-76a55206539a
+                  - - 'http://rs.tdwg.org/dwc/terms/relatedResourceID'
+                    - 'institutionCode=KU&collectionCode=KUI&catalogNumber=22956&accesspoint=http://ipt.nhm.ku.edu:8080/ipt/archive.do?r=kubi_ichthyology&guid=dc72bcd1-1ed3-11e3-bfac-90b11c41863e'
+            - class: 'http://rs.tdwg.org/ac/terms/Multimedia'
+              records:
+                - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
+                    - 2c1becd5-e641-4e83-b3f5-76a55206539a
+                  - - 'http://purl.org/dc/terms/title'
+                    - EOW 90-6
+                  - - 'http://rs.tdwg.org/ac/terms/digitizationDate'
+                    - null
+                  - - 'http://purl.org/dc/terms/identifier'
+                    - 46666efd-1568-4247-a30a-558b86b43aae
+                  - - 'http://purl.org/dc/terms/type'
+                    - Text
+                  - - 'http://rs.tdwg.org/ac/terms/subtype'
+                    - Scanned Text
+                  - - 'http://purl.org/dc/elements/1.1/format'
+                    - application/pdf
+                  - - 'http://rs.tdwg.org/ac/terms/subjectOrientation'
+                    - null
+                  - - 'http://rs.tdwg.org/ac/terms/accessURI'
+                    - 'http://biimages.biodiversity.ku.edu/static/Ichthyology/originals/sp68854446198103814691.att.pdf'
+                  - - 'http://purl.org/dc/terms/license'
+                    - 'https://creativecommons.org/licenses/by/4.0/legalcode'
+                  - - 'http://purl.org/dc/terms/accessRights'
+                    - 'http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms'
+                  - - 'http://ns.adobe.com/xap/1.0/rights/Owner'
+                    - University of Kansas Biodiversity Institute
+                  - - 'http://ns.adobe.com/photoshop/1.0/Credit'
+                    - KU Biodiversity Institute Ichthyology Division
+            - class: 'http://eol.org/schema/reference/Reference'
+              records: []
+          count: 1
+        GBIF Records:
+          provider: GBIF
+          dataset_key: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+          count: 123915
+          records:
+            - key: 1309911159
+              datasetKey: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+              publishingOrgKey: b554c320-0560-11d8-b851-b8a03c50a862
+              networkKeys:
+                - 99d66b6c-9087-452f-a9d4-f15f2c2d0e7e
+              installationKey: c7b49e46-602a-4172-98d2-6b027c6b049f
+              publishingCountry: US
+              protocol: DWC_ARCHIVE
+              lastCrawled: '2021-01-13T13:33:24.456+00:00'
+              lastParsed: '2021-01-13T13:39:04.411+00:00'
+              crawlId: 212
+              hostingOrganizationKey: b554c320-0560-11d8-b851-b8a03c50a862
+              extensions:
+                'http://rs.tdwg.org/dwc/terms/ResourceRelationship':
+                  - 'http://rs.tdwg.org/dwc/terms/relationshipOfResource': sameAs
+                    'http://rs.tdwg.org/dwc/terms/relatedResourceID': 'KU:Birds:127237'
+              basisOfRecord: PRESERVED_SPECIMEN
+              occurrenceStatus: PRESENT
+              sex: MALE
+              establishmentMeans: NATIVE
+              taxonKey: 5959188
+              kingdomKey: 1
+              phylumKey: 44
+              classKey: 212
+              orderKey: 729
+              familyKey: 3241790
+              genusKey: 5959160
+              speciesKey: 5959188
+              acceptedTaxonKey: 5959188
+              scientificName: 'Pachycephala pectoralis (Latham, 1802)'
+              acceptedScientificName: 'Pachycephala pectoralis (Latham, 1802)'
+              kingdom: Animalia
+              phylum: Chordata
+              order: Passeriformes
+              family: Pachycephalidae
+              genus: Pachycephala
+              species: Pachycephala pectoralis
+              genericName: Pachycephala
+              specificEpithet: pectoralis
+              taxonRank: SPECIES
+              taxonomicStatus: ACCEPTED
+              decimalLongitude: -179.99
+              decimalLatitude: -16.825
+              continent: OCEANIA
+              year: 2020
+              month: 7
+              day: 17
+              eventDate: '2020-07-17T00:00:00'
+              issues:
+                - RECORDED_DATE_INVALID
+                - AMBIGUOUS_COLLECTION
+              lastInterpreted: '2021-01-13T13:39:04.411+00:00'
+              references: 'http://portal.vertnet.org/o/ku/birds?id=127237'
+              license: 'http://creativecommons.org/licenses/by/4.0/legalcode'
+              identifiers: []
+              media: []
+              facts: []
+              relations: []
+              gadm:
+                level0:
+                  gid: FJI
+                  name: Fiji
+                level1:
+                  gid: FJI.3_1
+                  name: Northern
+                level2:
+                  gid: FJI.3.2_1
+                  name: Cakaudrove
+              institutionKey: 49fb6451-91b7-4af2-8cd3-354539a77589
+              isInCluster: false
+              geodeticDatum: WGS84
+              class: Aves
+              countryCode: FJ
+              recordedByIDs: []
+              identifiedByIDs: []
+              country: Fiji
+              identifier: a3b47cdd-f2c9-11e5-856f-90b11c41863e
+              nomenclaturalCode: ICZN
+              institutionID: 'http://grbio.org/cool/iakn-125z'
+              higherGeography: Pacific Ocean | Fiji |  |  |  |  |  |
+              verbatimEventDate: 17 July 2010
+              dynamicProperties: >-
+                {"bursa":"no", "gonads":"testess 15 x 9 mm", "molt":"no", "skull
+                ossification":"100 %", "stomach contents":"insects",
+                "weight":"33.1 g" }
+              georeferenceVerificationStatus: requires verification
+              locality: 'Taveuni, Mount Manuka'
+              datasetName: University of Kansas Biodiversity Institute Ornithology Collection
+              fieldNumber: MJA 701
+              gbifID: '1309911159'
+              language: en
+              verbatimLocality: Pacific Ocean | Fiji
+              collectionCode: Birds
+              occurrenceID: a3b47cdd-f2c9-11e5-856f-90b11c41863e
+              type: PhysicalObject
+              preparations: Tissue - 100; Skin - 1
+              catalogNumber: '127237'
+              otherCatalogNumbers: 'KU Tissue Number: 24323'
+              institutionCode: KU
+              accessRights: >-
+                http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+              collectionID: 'http://grbio.org/cool/v9yz-imvc'
+              higherClassification: >-
+                Animalia | Chordata | Aves | Passeriformes | Pachycephalidae |
+                Pachycephala
+        iDigBio Records:
+          count: 1
+          records:
+            - uuid: 438c6349-f17c-4908-88bd-c6cf9fe48747
+              type: records
+              etag: f81047edaf16be575d75542872e01580be9a9a2b
+              data:
+                'dwc:startDayOfYear': '163'
+                'dwc:specificEpithet': canadensis
+                'dwc:countryCode': US
+                'dwc:county': Boulder
+                'dwc:recordedBy': 'PATTERSON, R. R.'
+                'dwc:fieldNumber': '2102'
+                'dwc:order': Passeriformes
+                'dcterms:references': 'http://portal.vertnet.org/o/ku/birds?id=66968'
+                'dcterms:accessRights': >-
+                  http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+                'dwc:occurrenceID': ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                'dcterms:language': en
+                id: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                'dwc:establishmentMeans': native
+                'dwc:stateProvince': Colorado
+                'dwc:eventDate': '1972-06-11'
+                'dwc:collectionID': 'http://grbio.org/cool/v9yz-imvc'
+                'dwc:country': United States
+                'dwc:collectionCode': Birds
+                'dwc:occurrenceStatus': present
+                'dwc:kingdom': Animalia
+                'dwc:basisOfRecord': PreservedSpecimen
+                'dwc:genus': Perisoreus
+                'dwc:continent': North America
+                'dwc:family': Corvidae
+                'dwc:sex': unknown
+                'dwc:higherClassification': >-
+                  Animalia | Chordata | Aves | Passeriformes | Corvidae |
+                  Perisoreus
+                'dcterms:license': 'http://creativecommons.org/licenses/by/4.0/'
+                'dwc:phylum': Chordata
+                'dwc:locality': 'Ward, 2.5 mi. W'
+                'dwc:institutionID': 'http://grbio.org/cool/iakn-125z'
+                'dwc:institutionCode': KU
+                'dwc:taxonRank': species
+                'dwc:class': Aves
+                'dwc:catalogNumber': '66968'
+                'dwc:nomenclaturalCode': ICZN
+                'dcterms:type': PhysicalObject
+                'dwc:higherGeography': North America | USA | Colorado | Boulder |  |  |  |
+                'dwc:month': '6'
+                'dwc:datasetName': >-
+                  University of Kansas Biodiversity Institute Ornithology
+                  Collection
+                'dwc:endDayOfYear': '163'
+                'dwc:verbatimLocality': North America | USA | Colorado | Boulder
+                'dwc:verbatimEventDate': 11 June 1972
+                'dwc:preparations': Alcoholic - 1
+                'dwc:ResourceRelationship':
+                  - coreid: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                    'dwc:relationshipOfResource': sameAs
+                    'dwc:relatedResourceID': 'KU:Birds:66968'
+                'dcterms:modified': '2014-10-29 12:38:05.0'
+                'dwc:scientificName': Perisoreus canadensis
+                'dwc:day': '11'
+                'dwc:year': '1972'
+              indexTerms:
+                family: corvidae
+                recordset: 3ad82604-c4b3-4fd0-b03e-d8f874062146
+                dqs: 0.3188405797101449
+                stateprovince: colorado
+                county: boulder
+                phylum: chordata
+                catalognumber: '66968'
+                startdayofyear: 163
+                taxonrank: species
+                specificepithet: canadensis
+                continent: north america
+                datemodified: '2017-04-20T10:23:55.621021+00:00'
+                uuid: 438c6349-f17c-4908-88bd-c6cf9fe48747
+                countrycode: usa
+                basisofrecord: preservedspecimen
+                collector: 'patterson, r. r.'
+                institutioncode: ku
+                verbatimlocality: north america | usa | colorado | boulder
+                datecollected: '1972-06-11T00:00:00+00:00'
+                etag: f81047edaf16be575d75542872e01580be9a9a2b
+                flags:
+                  - dwc_multimedia_added
+                  - gbif_reference_added
+                  - dwc_taxonrank_replaced
+                  - dwc_taxonomicstatus_added
+                  - gbif_genericname_added
+                  - dwc_datasetid_added
+                  - gbif_taxon_corrected
+                  - dwc_parentnameusageid_added
+                  - dwc_scientificnameauthorship_added
+                  - dwc_taxonid_added
+                  - idigbio_isocountrycode_added
+                  - gbif_vernacularname_added
+                  - gbif_canonicalname_added
+                  - dwc_originalnameusageid_added
+                hasMedia: false
+                hasImage: false
+                kingdom: animalia
+                highertaxon: >-
+                  animalia | chordata | aves | passeriformes | corvidae |
+                  perisoreus
+                collectionid: 'http://grbio.org/cool/v9yz-imvc'
+                taxonid: '2482436'
+                scientificname: perisoreus canadensis
+                indexData:
+                  'dwc:startDayOfYear': '163'
+                  'dwc:specificEpithet': canadensis
+                  'idigbio:dateModified': '2017-04-20T10:23:55.621021'
+                  'dwc:countryCode': US
+                  'dwc:kingdom': Animalia
+                  'dwc:recordedBy': 'PATTERSON, R. R.'
+                  'idigbio:uuid': 438c6349-f17c-4908-88bd-c6cf9fe48747
+                  flag_dwc_multimedia_added: true
+                  'dwc:fieldNumber': '2102'
+                  'dwc:order': Passeriformes
+                  'dcterms:references': 'http://portal.vertnet.org/o/ku/birds?id=66968'
+                  flag_gbif_reference_added: true
+                  'dcterms:accessRights': >-
+                    http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+                  'idigbio:recordIds':
+                    - '3ad82604-c4b3-4fd0-b03e-d8f874062146\ku:birds:66968'
+                    - >-
+                      3ad82604-c4b3-4fd0-b03e-d8f874062146\ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                  'dwc:occurrenceID': ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                  flag_dwc_taxonrank_replaced: true
+                  'dcterms:language': en
+                  'gbif:vernacularname':
+                    - coreid: '2482436'
+                      'dcterms:language': et
+                      'dwc:vernacularname': ameerika laanenäär
+                    - coreid: '2482436'
+                      'dcterms:language': es
+                      'dwc:vernacularname': arrendajo canadiense
+                    - coreid: '2482436'
+                      'dcterms:language': nl
+                      'dwc:vernacularname': canadese taigagaai
+                    - coreid: '2482436'
+                      'dcterms:language': ca
+                      'dwc:vernacularname': gaig canadenc
+                    - coreid: '2482436'
+                      'dcterms:language': it
+                      'dwc:vernacularname': ghiandaia grigia
+                    - coreid: '2482436'
+                      'dcterms:language': da
+                      'dwc:vernacularname': grå lavskrige
+                    - coreid: '2482436'
+                      'dcterms:language': sv
+                      'dwc:vernacularname': grå lavskrika
+                    - coreid: '2482436'
+                      'dcterms:language': nb
+                      'dwc:vernacularname': gråskrike
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': catalogue of life
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': colaboraciones americanas sobre aves
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': integrated taxonomic information system (itis)
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': taxonomy in flux checklist
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': the clements checklist
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': yanayacu natural history research group
+                      'dwc:vernacularname': gray jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': catalogue of life
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': colaboraciones americanas sobre aves
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': integrated taxonomic information system (itis)
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': 'ioc world bird list, v6.3'
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': phthiraptera.info
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': en
+                      'dcterms:source': yanayacu natural history research group
+                      'dwc:vernacularname': grey jay
+                    - coreid: '2482436'
+                      'dcterms:language': fi
+                      'dwc:vernacularname': harmaakuukkeli
+                    - coreid: '2482436'
+                      'dcterms:language': ja
+                      'dwc:vernacularname': カナダカケス
+                    - coreid: '2482436'
+                      'dcterms:language': lv
+                      'dwc:vernacularname': kanādas bēdrozis
+                    - coreid: '2482436'
+                      'dcterms:language': lt
+                      'dwc:vernacularname': kanadinis kėkštas
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dcterms:source': integrated taxonomic information system (itis)
+                      'dwc:vernacularname': mÃ©sangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': de
+                      'dwc:vernacularname': meisenhäher
+                    - coreid: '2482436'
+                      'dcterms:language': de
+                      'dcterms:source': german wikipedia - species pages
+                      'dwc:vernacularname': meisenhäher
+                    - 'dwc:countrycode': de
+                      'dwc:country': germany
+                      'dwc:vernacularname': meisenhäher
+                      coreid: '2482436'
+                      'dcterms:source': >-
+                        taxon list of animals with german names (worldwide)
+                        compiled at the smns
+                      'dcterms:language': de
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dwc:vernacularname': mésangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dcterms:source': catalogue of life
+                      'dwc:vernacularname': mésangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dcterms:source': colaboraciones americanas sobre aves
+                      'dwc:vernacularname': mésangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': fr
+                      'dcterms:source': yanayacu natural history research group
+                      'dwc:vernacularname': mésangeai du canada
+                    - coreid: '2482436'
+                      'dcterms:language': sk
+                      'dwc:vernacularname': škriekavec bieločelý
+                    - coreid: '2482436'
+                      'dcterms:language': pl
+                      'dwc:vernacularname': sójka kanadyjska
+                    - coreid: '2482436'
+                      'dcterms:language': cs
+                      'dwc:vernacularname': sojka šedá
+                    - coreid: '2482436'
+                      'dcterms:language': hu
+                      'dwc:vernacularname': szürke szajkó
+                    - coreid: '2482436'
+                      'dcterms:language': ru
+                      'dwc:vernacularname': Канадская кукша
+                    - coreid: '2482436'
+                      'dcterms:language': zh
+                      'dwc:vernacularname': 灰噪鸦
+                  flag_dwc_taxonomicstatus_added: true
+                  flag_gbif_genericname_added: true
+                  'dwc:occurrenceStatus': present
+                  'dwc:establishmentMeans': native
+                  flag_dwc_datasetid_added: true
+                  'idigbio:parent': 3ad82604-c4b3-4fd0-b03e-d8f874062146
+                  'dwc:stateProvince': Colorado
+                  flag_gbif_taxon_corrected: true
+                  'dwc:eventDate': '1972-06-11'
+                  'dwc:collectionID': 'http://grbio.org/cool/v9yz-imvc'
+                  'dwc:country': United States
+                  'dwc:multimedia':
+                    - 'dcterms:license': gnu free documentation license
+                      'dcterms:references': >-
+                        http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
+                      coreid: '2482436'
+                      'dcterms:identifier': >-
+                        http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
+                      'dcterms:source': english wikipedia - species pages
+                      'dcterms:description': "english: gray jay, camp mercier in laurentides wildlife reserve, quebec, canada. français\_: mésangeai du canada, camp mercier, réserve faunique des laurentides, québec, canada."
+                      'dcterms:creator': cephas
+                      'dcterms:publisher': wikimedia commons
+                    - 'dcterms:license': gnu free documentation license
+                      'dcterms:title': meisenhäher (perisoreus canadensis)
+                      'dcterms:references': >-
+                        http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
+                      coreid: '2482436'
+                      'dcterms:identifier': >-
+                        http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
+                      'dcterms:source': german wikipedia - species pages
+                      'dcterms:description': "english: gray jay, camp mercier in laurentides wildlife reserve, quebec, canada. français\_: mésangeai du canada, camp mercier, réserve faunique des laurentides, québec, canada."
+                      'dcterms:creator': cephas
+                      'dcterms:publisher': wikimedia commons
+                  'idigbio:etag': f81047edaf16be575d75542872e01580be9a9a2b
+                  'dwc:collectionCode': Birds
+                  id: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                  'dwc:county': Boulder
+                  'gbif:reference':
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': (1996) nodc taxonomic code
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        (2003) database,
+                        http://www.menv.gouv.qc.ca/biodiversite/centre.htm
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': '(2005) website, aou check-list (07-2005)'
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        (2012) zoonomen - zoological nomenclature resource,
+                        2011.12.31
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        banks, r. c., r. w. mcdiarmid, a. l. gardner, and w. c.
+                        starnes (2003) checklist of vertebrates of the united
+                        states, the u.s. territories, and canada
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        banks, r. c., r. w. mcdiarmid, and a. l. gardner (1987)
+                        checklist of vertebrates of the united states, the u.s.
+                        territories, and canada: resource publication, no. 166
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        gill, frank, and minturn wright (2006) birds of the world:
+                        recommended english names
+                    - coreid: '2482436'
+                      'dcterms:source': catalogue of life
+                      'dcterms:bibliographiccitation': >-
+                        gill, frank, and minturn wright (2006) birds of the world:
+                        recommended english names
+                  'dwc:basisOfRecord': PreservedSpecimen
+                  'dwc:taxonomicstatus': accepted
+                  'dwc:genus': Perisoreus
+                  'dwc:continent': North America
+                  'dwc:family': Corvidae
+                  'dwc:sex': unknown
+                  flag_dwc_parentnameusageid_added: true
+                  flag_dwc_scientificnameauthorship_added: true
+                  'dwc:class': Aves
+                  flag_dwc_taxonid_added: true
+                  'idigbio:isocountrycode': usa
+                  'dcterms:license': 'http://creativecommons.org/licenses/by/4.0/'
+                  'idigbio:siblings': {}
+                  flag_idigbio_isocountrycode_added: true
+                  'gbif:canonicalname': perisoreus canadensis
+                  'dwc:scientificnameauthorship': '(linnaeus, 1766)'
+                  'dwc:phylum': Chordata
+                  'gbif:genericname': perisoreus
+                  'dwc:locality': 'Ward, 2.5 mi. W'
+                  'dwc:institutionID': 'http://grbio.org/cool/iakn-125z'
+                  flag_gbif_vernacularname_added: true
+                  'dwc:institutionCode': KU
+                  'dwc:taxonRank': species
+                  'dwc:parentnameusageid': '2482435'
+                  'dwc:higherClassification': >-
+                    Animalia | Chordata | Aves | Passeriformes | Corvidae |
+                    Perisoreus
+                  'dwc:catalogNumber': '66968'
+                  'dwc:taxonid': '2482436'
+                  'dwc:nomenclaturalCode': ICZN
+                  'dcterms:type': PhysicalObject
+                  flag_gbif_canonicalname_added: true
+                  'dwc:higherGeography': North America | USA | Colorado | Boulder |  |  |  |
+                  'dwc:month': '6'
+                  'dwc:datasetid': 7ddf754f-d193-4cc9-b351-99906754a03b
+                  'dwc:datasetName': >-
+                    University of Kansas Biodiversity Institute Ornithology
+                    Collection
+                  'dwc:endDayOfYear': '163'
+                  'dwc:verbatimLocality': North America | USA | Colorado | Boulder
+                  'dwc:verbatimEventDate': 11 June 1972
+                  'dwc:originalnameusageid': '9174701'
+                  'dwc:preparations': Alcoholic - 1
+                  flag_dwc_originalnameusageid_added: true
+                  'dwc:ResourceRelationship':
+                    - coreid: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                      'dwc:relatedResourceID': 'KU:Birds:66968'
+                      'dwc:relationshipOfResource': sameAs
+                  'dcterms:modified': '2014-10-29 12:38:05.0'
+                  'dwc:scientificName': Perisoreus canadensis
+                  'dwc:day': '11'
+                  'dwc:year': '1972'
+                class: aves
+                occurrenceid: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                institutionid: 'http://grbio.org/cool/iakn-125z'
+                country: united states
+                locality: 'ward, 2.5 mi. w'
+                collectioncode: birds
+                canonicalname: perisoreus canadensis
+                eventdate: '1972-06-11'
+                fieldnumber: '2102'
+                verbatimeventdate: 11 june 1972
+                taxonomicstatus: accepted
+                recordids:
+                  - '3ad82604-c4b3-4fd0-b03e-d8f874062146\ku:birds:66968'
+                  - >-
+                    3ad82604-c4b3-4fd0-b03e-d8f874062146\ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+                genus: perisoreus
+                order: passeriformes
+                datasetid: 7ddf754f-d193-4cc9-b351-99906754a03b
+        MorphoSource Records:
+          count: 1
+          records:
+            - institution.name: University of Kansas Biodiversity Institute
+              project.name: University of Kansas Ornithology Specimens
+              project.project_id: '737'
+              specimen.absolute_age: ''
+              specimen.body_mass: ''
+              specimen.body_mass_bibref_id: ''
+              specimen.body_mass_comments: ''
+              specimen.catalog_number: '66968'
+              specimen.collected_on: '77083200'
+              specimen.collection_code: birds
+              specimen.collector: 'patterson, r. r.'
+              specimen.created_on: 'September 7 2019 at 16:15:16'
+              specimen.description: ''
+              specimen.institution_code: ku
+              specimen.institution_id: '96'
+              specimen.last_modified_on: 'September 7 2019 at 16:15:39'
+              specimen.locality_absolute_age: ''
+              specimen.locality_absolute_age_bibref_id: ''
+              specimen.locality_coordinates: ''
+              specimen.locality_datum_zone: ''
+              specimen.locality_description: 'ward, 2.5 mi. w'
+              specimen.locality_easting_coordinate: ''
+              specimen.locality_northing_coordinate: ''
+              specimen.locality_relative_age: ''
+              specimen.locality_relative_age_bibref_id: ''
+              specimen.notes: >-
+                imported from iDigBio. uuid:438c6349-f17c-4908-88bd-c6cf9fe48747
+                Occurrence ID:ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+              specimen.occurrence_id: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
+              specimen.reference_source: Vouchered
+              specimen.relative_age: ''
+              specimen.sex: Male
+              specimen.specimen_id: '25481'
+              specimen.type: 'Yes'
+              specimen.url: 'http://portal.vertnet.org/o/ku/birds?id=66968'
+              specimen.uuid: 438c6349-f17c-4908-88bd-c6cf9fe48747
+              taxonomy_name:
+                - names:
+                    - ht_kingdom: ''
+                      ht_phylum: ''
+                      ht_class: ''
+                      ht_subclass: ''
+                      ht_superorder: ''
+                      ht_order: ''
+                      ht_suborder: ''
+                      ht_superfamily: ''
+                      ht_family: ''
+                      ht_subfamily: ''
+                      genus: Perisoreus
+                      ht_supraspecific_clade: ''
+                      species: canadensis
+                      subspecies: ''
+                      variety: ''
+                      author: ''
+                      year: '0'
+                      notes: imported from iDigBio
+                      is_primary: '1'
+                      created_on: ''
+                      last_modified_on: ''
+                  taxon_id: '14997'
+              user.email: slbaumgart@uchicago.edu
+    dataset_gbif_count_only:
+      value:
+        count: 123915
+        provider: GBIF
+        query: http://api.gbif.org/v1/occurrence/search?occurrenceID=2c1becd5-e641-4e83-b3f5-76a55206539a
+    dataset_gbif:
+      value:
+        count: 123915
+        provider: GBIF
+        query: http://api.gbif.org/v1/occurrence/search?occurrenceID=2c1becd5-e641-4e83-b3f5-76a55206539a
+        records:
+          - key: 1309911159
+            datasetKey: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+            publishingOrgKey: b554c320-0560-11d8-b851-b8a03c50a862
+            networkKeys:
+              - 99d66b6c-9087-452f-a9d4-f15f2c2d0e7e
+            installationKey: c7b49e46-602a-4172-98d2-6b027c6b049f
+            publishingCountry: US
+            protocol: DWC_ARCHIVE
+            lastCrawled: '2021-01-13T13:33:24.456+00:00'
+            lastParsed: '2021-01-13T13:39:04.411+00:00'
+            crawlId: 212
+            hostingOrganizationKey: b554c320-0560-11d8-b851-b8a03c50a862
+            extensions:
+              'http://rs.tdwg.org/dwc/terms/ResourceRelationship':
+                - 'http://rs.tdwg.org/dwc/terms/relationshipOfResource': sameAs
+                  'http://rs.tdwg.org/dwc/terms/relatedResourceID': 'KU:Birds:127237'
+            basisOfRecord: PRESERVED_SPECIMEN
+            occurrenceStatus: PRESENT
+            sex: MALE
+            establishmentMeans: NATIVE
+            taxonKey: 5959188
+            kingdomKey: 1
+            phylumKey: 44
+            classKey: 212
+            orderKey: 729
+            familyKey: 3241790
+            genusKey: 5959160
+            speciesKey: 5959188
+            acceptedTaxonKey: 5959188
+            scientificName: 'Pachycephala pectoralis (Latham, 1802)'
+            acceptedScientificName: 'Pachycephala pectoralis (Latham, 1802)'
+            kingdom: Animalia
+            phylum: Chordata
+            order: Passeriformes
+            family: Pachycephalidae
+            genus: Pachycephala
+            species: Pachycephala pectoralis
+            genericName: Pachycephala
+            specificEpithet: pectoralis
+            taxonRank: SPECIES
+            taxonomicStatus: ACCEPTED
+            decimalLongitude: -179.99
+            decimalLatitude: -16.825
+            continent: OCEANIA
+            year: 2020
+            month: 7
+            day: 17
+            eventDate: '2020-07-17T00:00:00'
+            issues:
+              - RECORDED_DATE_INVALID
+              - AMBIGUOUS_COLLECTION
+            lastInterpreted: '2021-01-13T13:39:04.411+00:00'
+            references: 'http://portal.vertnet.org/o/ku/birds?id=127237'
+            license: 'http://creativecommons.org/licenses/by/4.0/legalcode'
+            identifiers: []
+            media: []
+            facts: []
+            relations: []
+            gadm:
+              level0:
+                gid: FJI
+                name: Fiji
+              level1:
+                gid: FJI.3_1
+                name: Northern
+              level2:
+                gid: FJI.3.2_1
+                name: Cakaudrove
+            institutionKey: 49fb6451-91b7-4af2-8cd3-354539a77589
+            isInCluster: false
+            geodeticDatum: WGS84
+            class: Aves
+            countryCode: FJ
+            recordedByIDs: []
+            identifiedByIDs: []
+            country: Fiji
+            identifier: a3b47cdd-f2c9-11e5-856f-90b11c41863e
+            nomenclaturalCode: ICZN
+            institutionID: 'http://grbio.org/cool/iakn-125z'
+            higherGeography: Pacific Ocean | Fiji |  |  |  |  |  |
+            verbatimEventDate: 17 July 2010
+            dynamicProperties: >-
+              {"bursa":"no", "gonads":"testess 15 x 9 mm", "molt":"no", "skull
+              ossification":"100 %", "stomach contents":"insects",
+              "weight":"33.1 g" }
+            georeferenceVerificationStatus: requires verification
+            locality: 'Taveuni, Mount Manuka'
+            datasetName: University of Kansas Biodiversity Institute Ornithology Collection
+            fieldNumber: MJA 701
+            gbifID: '1309911159'
+            language: en
+            verbatimLocality: Pacific Ocean | Fiji
+            collectionCode: Birds
+            occurrenceID: a3b47cdd-f2c9-11e5-856f-90b11c41863e
+            type: PhysicalObject
+            preparations: Tissue - 100; Skin - 1
+            catalogNumber: '127237'
+            otherCatalogNumbers: 'KU Tissue Number: 24323'
+            institutionCode: KU
+            accessRights: >-
+              http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+            collectionID: 'http://grbio.org/cool/v9yz-imvc'
+            higherClassification: >-
+              Animalia | Chordata | Aves | Passeriformes | Pachycephalidae |
+              Pachycephala
+          - key: 1937485883
+            datasetKey: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+            publishingOrgKey: b554c320-0560-11d8-b851-b8a03c50a862
+            networkKeys:
+              - 99d66b6c-9087-452f-a9d4-f15f2c2d0e7e
+            installationKey: c7b49e46-602a-4172-98d2-6b027c6b049f
+            publishingCountry: US
+            protocol: DWC_ARCHIVE
+            lastCrawled: '2021-01-13T13:33:24.456+00:00'
+            lastParsed: '2021-01-13T13:39:03.570+00:00'
+            crawlId: 212
+            hostingOrganizationKey: b554c320-0560-11d8-b851-b8a03c50a862
+            extensions:
+              'http://rs.tdwg.org/dwc/terms/ResourceRelationship':
+                - 'http://rs.tdwg.org/dwc/terms/relationshipOfResource': sameAs
+                  'http://rs.tdwg.org/dwc/terms/relatedResourceID': 'KU:Birds:133475'
+            basisOfRecord: PRESERVED_SPECIMEN
+            occurrenceStatus: PRESENT
+            sex: MALE
+            establishmentMeans: NATIVE
+            taxonKey: 2495863
+            kingdomKey: 1
+            phylumKey: 44
+            classKey: 212
+            orderKey: 1446
+            familyKey: 5233
+            genusKey: 2495852
+            speciesKey: 2495863
+            acceptedTaxonKey: 2495863
+            scientificName: 'Columbina inca (Lesson, 1847)'
+            acceptedScientificName: 'Columbina inca (Lesson, 1847)'
+            kingdom: Animalia
+            phylum: Chordata
+            order: Columbiformes
+            family: Columbidae
+            genus: Columbina
+            species: Columbina inca
+            genericName: Columbina
+            specificEpithet: inca
+            taxonRank: SPECIES
+            taxonomicStatus: ACCEPTED
+            decimalLongitude: -93.778
+            decimalLatitude: 38.526
+            continent: NORTH_AMERICA
+            stateProvince: Missouri
+            year: 2018
+            month: 1
+            day: 15
+            eventDate: '2018-01-15T00:00:00'
+            issues:
+              - AMBIGUOUS_COLLECTION
+            lastInterpreted: '2021-01-13T13:39:03.570+00:00'
+            references: 'http://portal.vertnet.org/o/ku/birds?id=133475'
+            license: 'http://creativecommons.org/licenses/by/4.0/legalcode'
+            identifiers: []
+            media: []
+            facts: []
+            relations: []
+            gadm:
+              level0:
+                gid: USA
+                name: United States
+              level1:
+                gid: USA.26_1
+                name: Missouri
+              level2:
+                gid: USA.26.42_1
+                name: Henry
+            institutionKey: 49fb6451-91b7-4af2-8cd3-354539a77589
+            isInCluster: false
+            geodeticDatum: WGS84
+            class: Aves
+            countryCode: US
+            recordedByIDs: []
+            identifiedByIDs: []
+            country: United States of America
+            institutionID: 'http://grbio.org/cool/iakn-125z'
+            dynamicProperties: >-
+              {"bursa":"no", "gonads":"testes 1 x 0.5 mm", "molt":"no", "skull
+              ossification":"sk. oss.", "stomach contents":"full of seed -- from
+              feeder", "weight":"48.5 g" }
+            county: Henry
+            fieldNumber: MBR 9490
+            gbifID: '1937485883'
+            language: en
+            type: PhysicalObject
+            preparations: skin - 1 | tissue - 1
+            catalogNumber: '133475'
+            institutionCode: KU
+            identifier: 64a2975c-550b-4c7a-8f79-24e287f388d6
+            nomenclaturalCode: ICZN
+            higherGeography: North America | USA | Missouri | Henry |  |  |  |
+            verbatimEventDate: 15 January 2018
+            georeferenceVerificationStatus: requires verification
+            endDayOfYear: '15'
+            locality: 'Clinton, ca. 10 miles north'
+            datasetName: University of Kansas Biodiversity Institute Ornithology Collection
+            verbatimLocality: North America | USA | Missouri | Henry
+            collectionCode: Birds
+            occurrenceID: 64a2975c-550b-4c7a-8f79-24e287f388d6
+            otherCatalogNumbers: 'KU Tissue Number: 34745'
+            startDayOfYear: '15'
+            accessRights: >-
+              http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+            higherClassification: >-
+              Animalia | Chordata | Aves | Columbiformes | Columbidae |
+              Columbina
+            collectionID: 'http://grbio.org/cool/v9yz-imvc'
+          - key: 1937485147
+            datasetKey: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
+            publishingOrgKey: b554c320-0560-11d8-b851-b8a03c50a862
+            networkKeys:
+              - 99d66b6c-9087-452f-a9d4-f15f2c2d0e7e
+            installationKey: c7b49e46-602a-4172-98d2-6b027c6b049f
+            publishingCountry: US
+            protocol: DWC_ARCHIVE
+            lastCrawled: '2021-01-13T13:33:24.456+00:00'
+            lastParsed: '2021-01-13T13:39:01.253+00:00'
+            crawlId: 212
+            hostingOrganizationKey: b554c320-0560-11d8-b851-b8a03c50a862
+            extensions:
+              'http://rs.tdwg.org/dwc/terms/ResourceRelationship':
+                - 'http://rs.tdwg.org/dwc/terms/relationshipOfResource': sameAs
+                  'http://rs.tdwg.org/dwc/terms/relatedResourceID': 'KU:Birds:133861'
+              'http://rs.tdwg.org/ac/terms/Multimedia':
+                - 'http://purl.org/dc/terms/identifier': 4645ce9d-3d7c-4c31-bd25-6c18b32a3999
+                  'http://rs.tdwg.org/ac/terms/providerLiteral': KU
+                  'http://ns.adobe.com/xap/1.0/rights/Owner': KU
+                  'http://purl.org/dc/elements/1.1/language': en
+                  'http://purl.org/dc/elements/1.1/format': image/jpeg
+                  'http://purl.org/dc/elements/1.1/type': StillImage
+                  'http://purl.org/dc/terms/language': en
+                  'http://purl.org/dc/elements/1.1/creator': KU
+                  'http://purl.org/dc/terms/creator': KU
+                  'http://purl.org/dc/terms/title': Prinia bairdii
+                  'http://rs.tdwg.org/ac/terms/accessURI': >-
+                    http://biimages.biodiversity.ku.edu/static/Ornithology/originals/sp63825343563360374064.att.JPG
+                  'http://purl.org/dc/elements/1.1/rights': CC-BY-NC
+                  'http://rs.tdwg.org/ac/terms/serviceExpectation': online
+                  'http://purl.org/dc/terms/rights': CC-BY-NC
+                  'http://purl.org/dc/terms/type': StillImage
+                  'http://ns.adobe.com/xap/1.0/rights/WebStatement': 'https://creativecommons.org/licenses/by-nc/4.0/'
+                  'http://rs.tdwg.org/ac/terms/furtherInformationURL': 'http://portal.vertnet.org/o/ku/birds?id=133861'
+                  'http://purl.org/dc/terms/format': image/jpeg
+                - 'http://purl.org/dc/terms/identifier': aa501ab7-ceea-41f3-bdd7-2b96bf97bc3d
+                  'http://rs.tdwg.org/ac/terms/providerLiteral': KU
+                  'http://ns.adobe.com/xap/1.0/rights/Owner': KU
+                  'http://purl.org/dc/elements/1.1/language': en
+                  'http://purl.org/dc/elements/1.1/format': image/jpeg
+                  'http://purl.org/dc/elements/1.1/type': StillImage
+                  'http://purl.org/dc/terms/language': en
+                  'http://purl.org/dc/elements/1.1/creator': KU
+                  'http://purl.org/dc/terms/creator': KU
+                  'http://purl.org/dc/terms/title': Prinia bairdii
+                  'http://rs.tdwg.org/ac/terms/accessURI': >-
+                    http://biimages.biodiversity.ku.edu/static/Ornithology/originals/sp61996203005929874633.att.JPG
+                  'http://purl.org/dc/elements/1.1/rights': CC-BY-NC
+                  'http://rs.tdwg.org/ac/terms/serviceExpectation': online
+                  'http://purl.org/dc/terms/rights': CC-BY-NC
+                  'http://purl.org/dc/terms/type': StillImage
+                  'http://ns.adobe.com/xap/1.0/rights/WebStatement': 'https://creativecommons.org/licenses/by-nc/4.0/'
+                  'http://rs.tdwg.org/ac/terms/furtherInformationURL': 'http://portal.vertnet.org/o/ku/birds?id=133861'
+                  'http://purl.org/dc/terms/format': image/jpeg
+            basisOfRecord: PRESERVED_SPECIMEN
+            occurrenceStatus: PRESENT
+            sex: MALE
+            establishmentMeans: NATIVE
+            taxonKey: 2492753
+            kingdomKey: 1
+            phylumKey: 44
+            classKey: 212
+            orderKey: 729
+            familyKey: 9293
+            genusKey: 2492743
+            speciesKey: 2492753
+            acceptedTaxonKey: 2492753
+            scientificName: 'Prinia bairdii (Cassin, 1855)'
+            acceptedScientificName: 'Prinia bairdii (Cassin, 1855)'
+            kingdom: Animalia
+            phylum: Chordata
+            order: Passeriformes
+            family: Cisticolidae
+            genus: Prinia
+            species: Prinia bairdii
+            genericName: Prinia
+            specificEpithet: bairdii
+            taxonRank: SPECIES
+            taxonomicStatus: ACCEPTED
+            decimalLongitude: 9.268
+            decimalLatitude: 4.255
+            stateProvince: Southwest Region
+            year: 2018
+            month: 2
+            day: 11
+            eventDate: '2018-02-11T00:00:00'
+            issues:
+              - COUNTRY_DERIVED_FROM_COORDINATES
+              - AMBIGUOUS_COLLECTION
+            lastInterpreted: '2021-01-13T13:39:01.253+00:00'
+            references: 'http://portal.vertnet.org/o/ku/birds?id=133861'
+            license: 'http://creativecommons.org/licenses/by/4.0/legalcode'
+            identifiers: []
+            media:
+              - type: StillImage
+                format: image/jpeg
+                title: Prinia bairdii
+                creator: KU
+                publisher: KU
+                license: 'http://creativecommons.org/licenses/by-nc/4.0/'
+                rightsHolder: KU
+                identifier: >-
+                  http://biimages.biodiversity.ku.edu/static/Ornithology/originals/sp61996203005929874633.att.JPG
+              - type: StillImage
+                format: image/jpeg
+                title: Prinia bairdii
+                creator: KU
+                publisher: KU
+                license: 'http://creativecommons.org/licenses/by-nc/4.0/'
+                rightsHolder: KU
+                identifier: >-
+                  http://biimages.biodiversity.ku.edu/static/Ornithology/originals/sp63825343563360374064.att.JPG
+            facts: []
+            relations: []
+            gadm:
+              level0:
+                gid: CMR
+                name: Cameroon
+              level1:
+                gid: CMR.9_1
+                name: Sud-Ouest
+              level2:
+                gid: CMR.9.1_1
+                name: Fako
+              level3:
+                gid: CMR.9.1.1_1
+                name: Buéa
+            institutionKey: 49fb6451-91b7-4af2-8cd3-354539a77589
+            isInCluster: false
+            geodeticDatum: WGS84
+            class: Aves
+            countryCode: CM
+            recordedByIDs: []
+            identifiedByIDs: []
+            country: Cameroon
+            institutionID: 'http://grbio.org/cool/iakn-125z'
+            dynamicProperties: >-
+              {"bursa":"no", "gonads":"testes 1 mm", "molt":"heavy wing, tail &
+              body", "skull ossification":"100 %", "stomach contents":"insects",
+              "weight":"13 g" }
+            fieldNumber: MBR 9385
+            gbifID: '1937485147'
+            language: en
+            type: PhysicalObject
+            preparations: skin - 1 | tissue - 1
+            catalogNumber: '133861'
+            institutionCode: KU
+            identifier: 00a377f7-168e-442e-95f6-4aadb7d9f7ce
+            nomenclaturalCode: ICZN
+            higherGeography: Africa | Cameroon | Southwest Region |  |  |  |  |
+            verbatimEventDate: 11 February 2018
+            georeferenceVerificationStatus: requires verification
+            endDayOfYear: '42'
+            locality: 'Mount Cameroon, northeast flank'
+            datasetName: University of Kansas Biodiversity Institute Ornithology Collection
+            verbatimLocality: Africa | Cameroon | Southwest Region
+            collectionCode: Birds
+            occurrenceID: 00a377f7-168e-442e-95f6-4aadb7d9f7ce
+            otherCatalogNumbers: 'KU Tissue Number: 34573'
+            startDayOfYear: '42'
+            occurrenceRemarks: Submontane forest
+            accessRights: >-
+              http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
+            higherClassification: Animalia | Chordata | Aves | Passeriformes | Cisticolidae | Prinia
+            collectionID: 'http://grbio.org/cool/v9yz-imvc'
+
