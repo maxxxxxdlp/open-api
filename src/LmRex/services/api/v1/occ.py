@@ -17,7 +17,7 @@ class OccGBIF(_OccurrenceSvc):
     PROVIDER = ServiceProvider.GBIF
     # ...............................................
     def _get_records(self, occid, count_only):
-        output = GbifAPI.get_specimen_records_by_occid(
+        output = GbifAPI.get_occurrences_by_occid(
             occid, count_only=count_only)
         return output
 
@@ -38,7 +38,7 @@ class OccIDB(_OccurrenceSvc):
     PROVIDER = ServiceProvider.iDigBio
     # ...............................................
     def _get_records(self, occid, count_only):
-        output = IdigbioAPI.get_records_by_occid(occid, count_only=count_only)
+        output = IdigbioAPI.get_occurrences_by_occid(occid, count_only=count_only)
         return output
 
     # ...............................................
@@ -57,7 +57,7 @@ class OccMopho(_OccurrenceSvc):
     PROVIDER = ServiceProvider.MorphoSource
     # ...............................................
     def _get_records(self, occid, count_only):
-        output = MorphoSourceAPI.get_specimen_records_by_occid(
+        output = MorphoSourceAPI.get_occurrences_by_occid(
             occid, count_only=count_only)
         return output
 
@@ -84,9 +84,9 @@ class OccSpecify(_OccurrenceSvc):
             else:
                 # Specify ARK Record
                 spark = SpecifyResolve()
-                solr_output = spark.get_specify_arc_rec(occid)
+                solr_output = spark.get_specify_guid_meta(occid)
                 # Specify Record from URL in ARK
-                (url, msg) = spark.get_url_from_spark(solr_output)
+                (url, msg) = spark.get_url_from_meta(solr_output)
                 
         if url is not None:
             output = SpecifyPortalAPI.get_specify_record(url)
@@ -114,7 +114,7 @@ class OccTentacles(_OccurrenceSvc):
         msgs = {'error': [], 'warning': []}
         # Specify ARK Record
         spark = SpecifyResolve()
-        solr_output = spark.get_specify_arc_rec(occid)
+        solr_output = spark.get_specify_cor_meta(occid)
         try:
             all_count += solr_output['count']
         except:
@@ -123,7 +123,7 @@ class OccTentacles(_OccurrenceSvc):
         # all_output[ServiceProvider.Specify['name']] = solr_output
         
         # Specify Record from URL in ARK
-        (url, msg) = spark.get_url_from_spark(solr_output)
+        (url, msg) = spark.get_url_from_meta(solr_output)
         if url is not None:
             spocc = OccSpecify()
             sp_output = spocc.GET(url=url, occid=occid)

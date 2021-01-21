@@ -44,6 +44,7 @@ class TST_VALUES:
         'KU :KUIZ:1743', 'KU :KUIZ:3019', 'KU :KUIZ:1816', 'KU :KUIZ:2542', 
         'KU :KUIZ:2396']
     NAMES = [
+        'Plagioecia patina',
         'Phlox longifolia Nutt.',
         'Tulipa sylvestris L.',
         'Medinilla speciosa Blume',
@@ -340,6 +341,8 @@ class Lifemapper:
     MAX_STAT_KEY = 'before_status'
     COMPLETE_STAT_VAL = 300
     SCENARIO_KEY = 'projectionscenariocode'
+    PROJECTION_METADATA_KEYS = [
+        'modelScenario', 'projectionScenario', 'algorithm', 'spatialRaster']
     COMMANDS = ['count']
     VALID_COLORS = [
         'red', 'gray', 'green', 'blue', 'safe', 'pretty', 'yellow', 

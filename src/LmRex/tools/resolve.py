@@ -152,7 +152,7 @@ def main(zname, dwca_url, outpath, solr_location, testguids=[]):
 #     for oguid in testguids:
 #         doc = spsolr.query_guid(collection, oguid, solr_location=solr_location)
 #         print('{}: {}'.format(oguid, doc))logger
-#         grecs = GbifAPI.get_specimen_records_by_occid(oguid)
+#         grecs = GbifAPI.get_occurrences_by_occid(oguid)
 #         for r in grecs:
 #             print('  Returned {} with {} issues from collection {}'.format(
 #                 r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))

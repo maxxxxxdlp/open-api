@@ -1,9 +1,8 @@
 import cherrypy
 
 from LmRex.tools.api import SpecifyPortalAPI
-from LmRex.api.gocc import GOcc
-from LmRex.api.idbocc import IDBOcc
-from LmRex.api.sparks import SpecifyArk
+from LmRex.api.v1.occ import OccIDB, OccGBIF
+from LmRex.api.v1.resolve import SpecifyResolve
 
 # .............................................................................
 @cherrypy.expose
@@ -38,8 +37,8 @@ class Testp:
     def _get_records(self, occid, count_only):
         all_output = {}
         # Specify ARK Record
-        spark = SpecifyArk()
-        rec = spark.get_specify_arc_rec(occid=occid)
+        spark = SpecifyResolve()
+        rec = spark.get_specify_guid_meta(occid=occid)
         all_output['Specify ARK'] = self._assemble_output([rec], count_only)
         # Get url from ARK for Specify query
         try:

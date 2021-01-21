@@ -67,8 +67,53 @@ class MapLM(_MapSvc):
         return output
 
     # ...............................................
+    def get_map_layers(self, namestr, color, do_match):
+
+        output = {'count': 0, 'records': []}
+        # Lifemapper only uses GBIF Backbone Taxonomy accepted names
+        if do_match is False:
+            scinames = [namestr] 
+        else:
+            gan = NameGBIF()
+            goutput = gan.GET(
+                namestr=namestr, gbif_accepted=True, do_count=False, do_parse=True)
+            good_names = goutput['records']
+            # Lifemapper uses GBIF Backbone Taxonomy accepted names
+            # If none, try provided namestr
+            scinames = []        
+            if len(good_names) == 0:
+                scinames.append(namestr)
+            else:
+                for namerec in good_names:
+                    try:
+                        scinames.append(namerec['scientificName'])
+                    except Exception as e:
+                        print('No scientificName element in GBIF record {} for {}'
+                              .format(namerec, namestr))
+        # 2-step until LM returns full objects
+        records = []
+        msgs = []
+        for sname in scinames:
+            # Step 1, get projections
+            prj_output = LifemapperAPI.find_projections_by_name(
+                sname, color=color)
+            # Add to output
+            # TODO: make sure these include projection displayName
+            records.extend(prj_output['records'])
+            for key in ['warning', 'error']:
+                try:
+                    msgs.append(prj_output[key])
+                except:
+                    pass
+        if len(msgs) > 0:
+            output['errors'] = msgs
+        output['records'] = records
+        output['count'] = len(records)
+        return outputh
+
+    # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None, scenariocode=None, 
+    def GET_old(self, namestr=None, scenariocode=None, 
             bbox=None, color=None, height=None, 
             layers=None, frmat=None, request=None, srs=None, 
             transparent=None, width=None, do_match=True, **kwargs):
@@ -110,11 +155,39 @@ class MapLM(_MapSvc):
         else:
             return self.get_map_info(
                 namestr, usr_params['scenariocode'], usr_params['bbox'], 
-                usr_params['color'], usr_params['exceptions'], 
-                usr_params['height'], usr_params['layers'], usr_params['format'], 
-                usr_params['request'], usr_params['srs'], 
+                usr_params['color'], usr_params['height'], usr_params['layers'], 
+                usr_params['format'], usr_params['request'], usr_params['srs'], 
                 usr_params['transparent'], usr_params['width'], 
                 usr_params['do_match'])
+
+    # ...............................................
+    @cherrypy.tools.json_out()
+    def GET(self, namestr=None, color=None, do_match=True, **kwargs):
+        """Get GBIF taxon records for a scientific name string
+        
+        Args:
+            namestr: a scientific name
+            color: one of a defined set of color choices for projection display 
+            kwargs: additional keyword arguments - to be ignored
+        Return:
+            a list of dictionaries containing a matching name 
+            (synonym, invalid, etc), record count, and query URL for retrieving 
+            the records.
+            
+        Todo: 
+            fix color parameter in Lifemapper WMS service
+        """
+        usr_params = self._standardize_params(
+            namestr=namestr, scenariocode=scenariocode, bbox=bbox, color=color, 
+            height=height, layers=layers, frmat=frmat, 
+            request=request, srs=srs, transparent=transparent, width=width, 
+            do_match=do_match)
+        namestr = usr_params['namestr']
+        if not namestr:
+            return self._show_online()
+        else:
+            return self.get_map_layers(
+                namestr,  usr_params['color'], usr_params['do_match'])
 
 # .............................................................................
 @cherrypy.expose

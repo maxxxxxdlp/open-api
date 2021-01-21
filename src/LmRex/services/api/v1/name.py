@@ -107,8 +107,7 @@ class NameITISSolr(_NameSvc):
     PROVIDER = ServiceProvider.ITISSolr
     # ...............................................
     def get_itis_accepted_taxon(self, namestr, status, kingdom):
-        ioutput = ItisAPI.match_name_solr(
-            namestr, status=status, kingdom=kingdom)
+        ioutput = ItisAPI.match_name(namestr, status=status, kingdom=kingdom)
         return ioutput
 
     # ...............................................
@@ -149,12 +148,12 @@ class NameTentacles(_NameSvc):
         # GBIF Taxon Record
         gacc = NameGBIF()
         goutput = gacc.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
-        all_output[ServiceProvider.GBIF['name']] = goutput
+        all_output[ServiceProvider.GBIF]['name'] = goutput
         
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(namestr, status, kingdom)
-        all_output[ServiceProvider.ITISSolr['name'] = isoutput
+        all_output[ServiceProvider.ITISSolr]['name'] = isoutput
         
         return all_output
 

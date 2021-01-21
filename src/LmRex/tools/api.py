@@ -451,8 +451,10 @@ class BisonAPI(APIQuery):
                 std_output['error'].append(msg)
             else:
                 for r in recs:
-                    std_output['records'].append(
-                        cls._standardize_record(r))
+                    try:
+                        std_output['records'].append(cls._standardize_record(r))
+                    except:
+                        pass
         return std_output
         # Check for api failure
 #         if curr_error is not None:
@@ -796,7 +798,7 @@ class ItisAPI(APIQuery):
             
 # ...............................................
     @classmethod
-    def match_name_solr(cls, sciname, status=None, kingdom=None, logger=None):
+    def match_name(cls, sciname, status=None, kingdom=None, logger=None):
         """Return an ITIS record for a scientific name using the 
         ITIS Solr service.
         
@@ -850,7 +852,7 @@ class ItisAPI(APIQuery):
     
 # ...............................................
     @classmethod
-    def match_name(cls, sciname, count_only=False, outformat='json', logger=None):
+    def match_name_nonsolr(cls, sciname, count_only=False, outformat='json', logger=None):
         """Return matching names for scienfific name using the ITIS Web service.
         
         Args:
@@ -900,7 +902,7 @@ class ItisAPI(APIQuery):
 
 # ...............................................
     @classmethod
-    def get_name_by_tsn_solr(cls, tsn, logger=None):
+    def get_name_by_tsn(cls, tsn, logger=None):
         """Return a name and kingdom for an ITIS TSN using the ITIS Solr service.
         
         Args:
@@ -1131,7 +1133,7 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def get_specimen_records_by_occid(cls, occid, count_only=False, logger=None):
+    def get_occurrences_by_occid(cls, occid, count_only=False, logger=None):
         """Return GBIF occurrences for this occurrenceId.  This should retrieve 
         a single record if the occurrenceId is unique.
         
@@ -1211,8 +1213,10 @@ class GbifAPI(APIQuery):
                 std_output['error'].append(msg)
             else:
                 for r in recs:
-                    std_output['records'].append(
-                        cls._standardize_record(r))
+                    try:
+                        std_output['records'].append(cls._standardize_record(r))
+                    except:
+                        pass
         return std_output
     
     # ...............................................
@@ -1630,8 +1634,10 @@ class IdigbioAPI(APIQuery):
                 std_output['error'].append(msg)
             else:
                 for r in recs:
-                    std_output['records'].append(
-                        cls._standardize_record(r))
+                    try:
+                        std_output['records'].append(cls._standardize_record(r))
+                    except:
+                        pass
         return std_output
     
     # ...............................................
@@ -1657,7 +1663,7 @@ class IdigbioAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def get_records_by_occid(cls, occid, count_only=False, logger=None):
+    def get_occurrences_by_occid(cls, occid, count_only=False, logger=None):
         """Return iDigBio occurrences for this occurrenceId.  This will
         retrieve a one or more records with the given occurrenceId.
         
@@ -1866,6 +1872,90 @@ class LifemapperAPI(APIQuery):
             url = '{}/{}'.format(url, command)
         APIQuery.__init__(self, url, other_filters=other_filters, logger=logger)
 
+    
+    # ...............................................
+    @classmethod
+    def _standardize_projection_layer_rec(cls, rec):
+        try:
+            mapname = rec['map']['mapName']
+            url = rec['map']['endpoint']
+            endpoint = '{}/{}'.format(url, mapname)
+        except Exception as e:
+            msg = 'Failed to retrieve map url from {}, {}'.format(rec, e)
+            raise Exception(msg)
+
+        try:
+            data_url = rec['spatialRaster']['dataUrl']
+            proj_url = data_url.rstrip('/gtiff')
+        except:
+            msg = 'Failed to get projection API link (spatialRaster/dataUrl)'
+            raise Exception(msg)
+
+        try:
+            occid = rec['occurrenceset']['id']
+            point_url = rec['occurrenceset']['metadataUrl']
+            point_name = 'occ_{}'.format(occid)
+            newrec = {
+                'endpoint': endpoint,
+                'point_link': point_url,
+                'point_name': point_name,
+                'species_name': rec['speciesName'],
+                'modtime': rec['statusModTime'],
+                'projection_link': proj_url}
+        except Exception as e:
+            msg = 'Failed to retrieve point data from {}, {}'.format(rec, e)
+            raise Exception(msg)
+        
+        record_errors = []
+        try:
+            stat = rec['status']
+        except:
+            msg = 'Failed to get projection \'status\' for layer {}'.format(
+                proj_url)
+            record_errors.append(msg)
+            
+        if stat == Lifemapper.COMPLETE_STAT_VAL:
+            try:
+                newrec['projection_name'] = rec['map']['layerName']
+            except:
+                msg = 'Failed to get projection map/layerName from {}'.format(
+                    proj_url)
+                record_errors.append(msg)
+            
+            try:
+                prj_metadata = rec['metadata']
+            except:
+                msg = 'Failed to retrieve projection metadata for {}'.format(
+                    proj_url)
+                record_errors.append(msg)
+            for key in Lifemapper.PROJECTION_METADATA_KEYS:
+                try:
+                    prj_metadata[key] = rec[key]
+                except:
+                    msg = 'Failed to retrieve projection {} for {}'.format(
+                        key, proj_url)
+                record_errors.append(msg)
+            newrec['error'] = record_errors
+        return newrec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(cls, output, count_only, err=None):
+        std_output = {'count': 0, 'records': [], 'error': []}
+        if err is not None:
+            std_output['error'].append(err)
+        # Count
+        total = len(output)
+        std_output['count'] = total
+        # Records]
+        if count_only is False:
+            for r in output:
+                try:
+                    std_output['records'].append(cls._standardize_record(r))
+                except:
+                    pass
+        return std_output
+    
     # ...............................................
     @classmethod
     def _construct_map_url(
@@ -1951,8 +2041,8 @@ class LifemapperAPI(APIQuery):
         recs = []
         other_filters[Lifemapper.NAME_KEY] = name
         other_filters[Lifemapper.ATOM_KEY] = 0
-        other_filters[Lifemapper.MIN_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
-        other_filters[Lifemapper.MAX_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
+#         other_filters[Lifemapper.MIN_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
+#         other_filters[Lifemapper.MAX_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
         if prjscenariocode is not None:
             other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
@@ -2000,6 +2090,79 @@ class LifemapperAPI(APIQuery):
         output['records'] = recs
         return output
 
+
+    # ...............................................
+    @classmethod
+    def find_maps_by_name(
+            cls, name, bbox='-180,-90,180,90', 
+            color=None, exceptions=None, height=300, frmat='png', 
+            request='getmap', srs='epsg:4326',  transparent=None, width=600, 
+            other_filters={}, logger=None):
+        """
+        List map and layers for a given scientific name.  
+        
+        Args:
+            name: a scientific name 'Accepted' according to the GBIF Backbone 
+                Taxonomy
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+
+        Note: 
+            Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
+            Taxonomy and this method requires them for success.
+
+        Todo:
+            handle full record returns instead of atoms
+        """
+        output = {}
+        recs = []
+        other_filters[Lifemapper.NAME_KEY] = name
+        other_filters[Lifemapper.ATOM_KEY] = 0
+#         other_filters[Lifemapper.MIN_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
+#         other_filters[Lifemapper.MAX_STAT_KEY] = Lifemapper.COMPLETE_STAT_VAL
+        api = LifemapperAPI(
+            resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
+        try:
+            api.query_by_get()
+        except Exception:
+            msg = 'Failed on {}'.format(api.url)
+            log_error(msg, logger=logger)
+            output['error'] = msg
+        else:
+            # output returns a list of records
+            recs = api.output
+            if len(recs) == 0:
+                output['warning'] = 'Failed to find projections for {}'.format(
+                    name)
+            background_layer_name = 'bmng'
+            for rec in recs:
+                # Add base WMS map url with LM-specific parameters into 
+                #     map section of metadata
+                try:
+                    rec['map']['lmMapEndpoint'] = '{}/{}'.format(
+                        rec['map']['endpoint'], rec['map']['mapName'])
+                except Exception as err:
+                    msg = 'Failed getting map url components {}'.format(err)
+                    log_error(msg, logger=logger)
+                    output['error'] = msg
+                else:
+                    # Add background layername into map section of metadata
+                    rec['map']['backgroundLayerName']  = background_layer_name
+                    # Add point layername into map section of metadata
+                    try:
+                        occ_layer_name = 'occ_{}'.format(rec['occurrenceSet']['id'])
+                    except:
+                        occ_layer_name = ''
+                    rec['map']['pointLayerName']  = occ_layer_name
+                    # Add full WMS map url with all required parameters into metadata
+#                     url = LifemapperAPI._construct_map_url(
+#                         rec, bbox, color, exceptions, height, layers, frmat, 
+#                         request, srs, transparent, width)
+#                     if url is not None:
+#                         rec['map_url'] = url
+        output['count'] = len(recs)
+        output['records'] = recs
+        return output
 
     # ...............................................
     @classmethod
@@ -2097,7 +2260,7 @@ class MorphoSourceAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def _page_specimen_records(cls, start, occid, logger=None):
+    def _page_occurrences(cls, start, occid, logger=None):
         output = {'curr_count': 0, 'count': 0, 'records': []}
         api = MorphoSourceAPI(
             resource=MorphoSource.OCC_RESOURCE, 
@@ -2119,7 +2282,7 @@ class MorphoSourceAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def get_specimen_records_by_occid(cls, occid, count_only=False, logger=None):
+    def get_occurrences_by_occid(cls, occid, count_only=False, logger=None):
         qry_meta = {
             'provider': ServiceProvider.MorphoSource['name'], 
             'occurrenceid': occid}
@@ -2129,7 +2292,7 @@ class MorphoSourceAPI(APIQuery):
         is_end = False
 
         while not is_end:
-            curr_output = MorphoSourceAPI._page_specimen_records(
+            curr_output = MorphoSourceAPI._page_occurrences(
                 start, occid, logger=logger)
             # Total found
             output['count'] = curr_output['count']
@@ -2291,7 +2454,7 @@ if __name__ == '__main__':
     
     log_info('Mopho records:')
     for guid in TST_VALUES.BIRD_OCC_GUIDS:
-        moutput = MorphoSourceAPI.get_specimen_records_by_occid(guid)
+        moutput = MorphoSourceAPI.get_occurrences_by_occid(guid)
         for r in moutput['records']:
             occid = notes = None
             try:
@@ -2337,7 +2500,7 @@ if __name__ == '__main__':
                 log_info('{}: {}, {}'.format(
                     n['scientificName'], n['status'], n['rank']))
             log_info ('')
-            itis_names = ItisAPI.match_name_solr(name)
+            itis_names = ItisAPI.match_name(name)
 #             log_info ('Matched {} with {} ITIS names using Solr'.format(
 #                 name, len(itis_names)))
 #             for n in itis_names:

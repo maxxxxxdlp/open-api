@@ -53,7 +53,7 @@ class _S2nService:
 
     # ...............................................
     def match_name_with_itis(self, namestr):
-        output = ItisAPI.match_name_solr(namestr, status='valid')
+        output = ItisAPI.match_name(namestr, status='valid')
         try:
             namestr = output['records'][0]['nameWOInd']
         except:
