@@ -1,0 +1,10 @@
+{% extends "menu.html" %}
+
+{% block content %}
+	{% for tag_name, tag_description in tags %}
+		<a class="tag" href="/tags/{{ tag_name }}">
+			<div class="tag_name">{{ tag_name }}</div>
+			<div class="tag_description">{{ tag_description }}</div>
+		</a>
+	{% endfor %}
+{% endblock %}
