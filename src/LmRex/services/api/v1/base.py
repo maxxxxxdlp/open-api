@@ -279,6 +279,8 @@ class _S2nService:
             'do_match': do_match}
         usr_params = self._process_params(kwarg_defaults, user_kwargs)
         # Remove 'gbif_accepted' flag and replace with 'gbif_status' filter for GBIF
+        # GBIF Taxonomic Constants at:
+        # https://gbif.github.io/gbif-api/apidocs/org/gbif/api/vocabulary/TaxonomicStatus.html
         gbif_accepted = usr_params.pop('gbif_accepted')
         if gbif_accepted is True:
             usr_params['gbif_status'] = 'accepted'

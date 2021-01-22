@@ -35,7 +35,9 @@ class NameGBIF(_NameSvc):
                     namerec['occurrences_url'] = output2['url']
         # Assemble output
         output['count'] = moutput['count']
+        output['record_format'] = moutput['record_format']
         output['records'] = good_names
+        output['provider_query'] = moutput['provider_query']
         output['service'] = self.SERVICE_TYPE
         output['provider'] = self.PROVIDER['name']
         return output
@@ -166,7 +168,8 @@ class NameTentacles(_NameSvc):
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(
-            usr_params['namestr'], usr_params['status'], usr_params['kingdom'])
+            usr_params['namestr'], usr_params['itis_accepted'], 
+            usr_params['kingdom'])
         all_output[ServiceProvider.ITISSolr['name']] = isoutput
         
         return all_output
@@ -174,7 +177,7 @@ class NameTentacles(_NameSvc):
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, namestr=None, gbif_accepted=True, gbif_parse=True, 
-            gbif_count=True, status=None, kingdom=None, **kwargs):
+            gbif_count=True, itis_accepted=None, kingdom=None, **kwargs):
         """Get one or more taxon records for a scientific name string from each
         available name service.
         
@@ -189,7 +192,7 @@ class NameTentacles(_NameSvc):
         """
         usr_params = self._standardize_params(
             namestr=namestr, gbif_accepted=gbif_accepted, gbif_parse=gbif_parse, 
-            gbif_count=gbif_count, status=status, kingdom=kingdom)
+            gbif_count=gbif_count, itis_accepted=itis_accepted, kingdom=kingdom)
         namestr = usr_params['namestr']
         if not namestr:
             return self._show_online()
@@ -203,21 +206,20 @@ if __name__ == '__main__':
         print('Name = {}'.format(namestr))
         
         for gparse in (True, False):
-#             s2napi = NameTentacles()
-#             all_output  = s2napi.GET(
-#                 namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
-#                 gbif_count=True, status=None, kingdom=None)
-#             
-#             for svc, one_output in all_output.items():
-#                 print('  {}:'.format(svc))
-#                 for k, v in one_output.items():
-#                     print('  {}: {}'.format(k, v))
-#             print('')
+            s2napi = NameTentacles()
+            all_output  = s2napi.GET(
+                namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
+                gbif_count=True, itis_accepted=True, kingdom=None)
+             
+            for svc, one_output in all_output.items():
+                for k, v in one_output.items():
+                    print('  {}: {}'.format(k, v))
+                print('')
         
-            iapi = NameITISSolr()
-            iout = iapi.GET(
-                namestr=namestr, gbif_parse=gparse, itis_accepted=True, kingdom=None)
-            print('  S2n ITIS Solr GET')
-            for k, v in iout.items():
-                print('  {}: {}'.format(k, v))
-            print('')
+#             iapi = NameITISSolr()
+#             iout = iapi.GET(
+#                 namestr=namestr, gbif_parse=gparse, itis_accepted=True, kingdom=None)
+#             print('  S2n ITIS Solr GET')
+#             for k, v in iout.items():
+#                 print('  {}: {}'.format(k, v))
+#             print('')
