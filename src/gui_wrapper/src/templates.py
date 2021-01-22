@@ -1,14 +1,14 @@
-import os
-
 import settings
-from string import Template
+from jinja2 import FileSystemLoader, Environment, select_autoescape
+
+env = Environment(
+	loader=FileSystemLoader(settings.TEMPLATES_DIR),
+)
 
 
-def _read_template(template_path):
-	with open(os.path.join(settings.TEMPLATES_DIR, template_path)) as template:
-		return template.read()
+def load(path: str):
+	return env.get_template(path).render
 
-def render(template_path, **kwargs):
-	return Template(
-		_read_template(template_path)
-	).substitute(**kwargs)
+
+def render(path: str, **kwargs):
+	load(path)(**kwargs)
