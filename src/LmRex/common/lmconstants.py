@@ -26,19 +26,20 @@ VALID_MAP_REQUESTS = ['getmap', 'getlegendgraphic']
 
 # .............................................................................
 class TST_VALUES:
-    FISH_DS_GUIDS = ['56caf05f-1364-4f24-85f6-0c82520c2792', 
-                     '8f79c802-a58c-447f-99aa-1d6a0790825a']
-    FISH_OCC_GUIDS = [
+    DS_GUIDS_W_SPECIFY_ACCESS_RECS = [
+        '56caf05f-1364-4f24-85f6-0c82520c2792', 
+        '8f79c802-a58c-447f-99aa-1d6a0790825a']
+    GUIDS_W_SPECIFY_ACCESS = [
         '2c1becd5-e641-4e83-b3f5-76a55206539a', 
         'a413b456-0bff-47da-ab26-f074d9be5219',
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
-    BIRD_OCC_GUIDS = [
+    GUIDS_WO_SPECIFY_ACCESS = [
         'ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5',
         'f5725a56-7b47-11e4-8ef3-782bcb9cd5b5',
         'f69696a8-7b47-11e4-8ef3-782bcb9cd5b5',
         '5e7ec91c-4d20-42c4-ad98-8854800e82f7']
-    BIRD_DS_GUID = 'e635240a-3cb1-4d26-ab87-57d8c7afdfdb'
+    DS_GUIDS_WO_SPECIFY_ACCESS_RECS = ['e635240a-3cb1-4d26-ab87-57d8c7afdfdb']
     BAD_GUIDS = [
         'KU :KUIZ:2200', 'KU :KUIZ:1663', 'KU :KUIZ:1569', 'KU :KUIZ:2462', 
         'KU :KUIZ:1743', 'KU :KUIZ:3019', 'KU :KUIZ:1816', 'KU :KUIZ:2542', 

@@ -441,6 +441,8 @@ class BisonAPI(APIQuery):
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
+                # TODO: standardize_record
+                std_output['record_format'] = 'BISON Solr API at https://bison.usgs.gov/doc/api.jsp'
         # Only include records, errors if they exist
         if stdrecs:
             std_output['records'] = stdrecs
@@ -752,6 +754,8 @@ class ItisAPI(APIQuery):
                         usage = doc['usage'].lower()
                         if usage in ('accepted', 'valid'):
                             stdrecs.append(cls._standardize_record(doc))
+                # TODO: standardize_record and provide schema here
+                std_output['record_format'] = 'https://www.itis.gov/solr_documentation.html'
         # Only include records, errors if they exist
         if stdrecs:
             std_output['records'] = stdrecs
@@ -1139,13 +1143,28 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def _standardize_record(cls, rec):
+    def _standardize_gbif_occurrence(cls, rec):
         # todo: standardize gbif output to DWC, DSO, etc
+        return rec
+    # ...............................................
+    @classmethod
+    def _standardize_gbif_name(cls, rec):
+        # todo: standardize gbif output
         return rec
     
     # ...............................................
     @classmethod
-    def _standardize_output(cls, output, count_only, err=None):
+    def _standardize_record(cls, rec, is_occurrence_data):
+        # todo: standardize gbif output to DWC, DSO, etc
+        if is_occurrence_data is True:
+            return cls._standardize_gbif_occurrence(rec)
+        else:
+            return cls._standardize_gbif_name(rec)
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(
+            cls, output, count_only, is_occurrence_data=True, err=None):
         std_output = {'count': 0}
         stdrecs = []
         errmsgs = []
@@ -1173,10 +1192,16 @@ class GbifAPI(APIQuery):
                 stdrecs = []
                 for r in recs:
                     try:
-                        stdrecs.append(cls._standardize_record(r))
+                        stdrecs.append(
+                            cls._standardize_record(r, is_occurrence_data))
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
+                # TODO: standardize_record
+                if is_occurrence_data:
+                    std_output['record_format'] = 'https://www.gbif.org/developer/occurrence'
+                else:
+                    std_output['record_format'] = 'https://www.gbif.org/developer/species'
         # Only include records, errors if they exist
         if stdrecs:
             std_output['records'] = stdrecs
@@ -1604,6 +1629,8 @@ class IdigbioAPI(APIQuery):
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
+                # TODO: standardize_record and provide schema link
+                std_output['record_format'] = 'https://github.com/idigbio/idigbio-search-api/wiki'
         # Only include records, errors if they exist
         if stdrecs:
             std_output['records'] = stdrecs
@@ -1933,6 +1960,9 @@ class LifemapperAPI(APIQuery):
                 except Exception as e:
                     msg = cls._get_error_message(err=e)
                     errmsgs.append(msg)
+            # TODO: revisit record format for other map providers
+            # TODO: replace with a schema definition
+            std_output['record_format'] = 'lifemapper_layer schema TBD'
         # Only include records, errors if they exist
         if stdrecs:
             std_output['records'] = stdrecs
@@ -2280,6 +2310,8 @@ class MorphoSourceAPI(APIQuery):
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
+                # TODO: standardize_record and provide schema link
+                std_output['record_format'] = 'https://www.morphosource.org/About/API'
         # Only include records, errors if they exist
         if stdrecs:
             std_output['records'] = stdrecs
@@ -2355,9 +2387,49 @@ class SpecifyPortalAPI(APIQuery):
             url = 'http://preview.specifycloud.org/export/record'
         APIQuery.__init__(self, url, headers=JSON_HEADERS, logger=logger)
 
+
     # ...............................................
     @classmethod
-    def get_specify_record(cls, url, logger=None):
+    def _standardize_record(cls, rec):
+        # todo: standardize gbif output to DWC, DSO, etc
+        return rec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(cls, output, count_only, err=None):
+        std_output = {'count': 0}
+        stdrecs = []
+        errmsgs = []
+        if err is not None:
+            errmsgs.append(err)
+        # Count
+        try:
+            recs = [output]
+        except Exception as e:
+            msg = cls._get_error_message(err=e)
+            errmsgs.append(msg)
+        else:
+            std_output['count'] = len(recs)
+        # Records
+        if count_only is False:
+            for r in recs:
+                try:
+                    stdrecs.append(cls._standardize_record(r))
+                except Exception as e:
+                    msg = cls._get_error_message(err=e)
+                    errmsgs.append(msg)
+            # TODO: standardize_record and provide link to schema
+            std_output['record_format'] = 'Specify DWC'
+            # Only include records, errors if they exist
+            if stdrecs:
+                std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['error'] = errmsgs
+        return std_output
+
+    # ...............................................
+    @classmethod
+    def get_specify_record(cls, url, count_only, logger=None):
         """Return Specify record published at this url.  
         
         Args:
@@ -2368,20 +2440,23 @@ class SpecifyPortalAPI(APIQuery):
             in the Solr Specify Resolver but are not resolvable to the host 
             database.  URLs returned for these records begin with 'unknown_url'.
         """
-        output = {}
+        std_output = {}
+        qry_meta = {'provider_query': url}
         if url.startswith('http'):
             api = APIQuery(url, headers=JSON_HEADERS, logger=logger)
     
             try:
                 api.query_by_get()
-            except Exception as err:
-                msg = cls._get_error_message(msg='Url: {}'.format(url), err=err)
-                output['error'] = msg
+            except Exception as e:
+                msg = cls._get_error_message(msg=url, err=e)
+                std_output = {'error': msg}
                 log_error(msg, logger=logger)
             else:
-                output['records'] = [api.output]
-                output['count'] = len(output['records'])
-        return output
+                std_output = cls._standardize_output(api.output, count_only)
+        # Add query metadata to output
+        for key, val in qry_meta.items():
+            std_output[key] = val                
+        return std_output
 
 
 
