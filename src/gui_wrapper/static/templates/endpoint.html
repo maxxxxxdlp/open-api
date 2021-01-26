@@ -12,9 +12,8 @@
 			{% for parameter in path_detailed_info.parameters %}
 				<div class="parameter">
 					<div class="parameter_info">
-						<div class="tag_name">{{ parameter.name }}</div>
-						<div class="tag_description">
-							{{ parameter.type }}
+						<div class="tag_name">
+							{{ parameter.name }}
 							{% if parameter.required %}
 								<span class="parameter_required">(required)</span>
 							{% endif %}
@@ -22,23 +21,48 @@
 						<div class="tag_description_long">{{ parameter.description }}</div>
 					</div>
 					<div class="parameter_example">
-						<label>
-							<span>Select an example value:</span>
-							<select class="parameter_examples">
-								<option value="0" disabled selected>Example values:</option>
-								{% for example_name, example_value in parameter.examples.items() %}
-									<option value="{{ example_value }}">{{ example_name }}</option>
-								{% endfor %}
-							</select>
-						</label>
-						<label>
-							<span>Or try your own value:</span>
-							<input type="text">
-						</label>
+						{% if parameter.type == 'string' %}
+							{% if parameter.examples %}
+								<label>
+									<span>Select an example value:</span>
+									<select class="parameter_examples">
+										<option value="0" disabled selected>Example values:</option>
+										{% for example_name, example_value in parameter.examples.items() %}
+											<option value="{{ example_value }}">{{ example_name }}</option>
+										{% endfor %}
+									</select>
+								</label>
+							{% endif %}
+							<label>
+								<span>Or try your own value:</span>
+								<input type="text">
+							</label>
+						{% elif parameter.type == 'boolean' %}
+							<label class="checkbox_with_indicator">
+								<input
+										type="checkbox"
+										{%- if parameter.default -%}
+										checked="checked"
+										{% endif %}
+								>
+								<span></span>
+							</label>
+						{% endif %}
 					</div>
 				</div>
 			{% endfor %}
 		</div>
 		<button type="button" class="execute_button">Try it out!</button>
+		<label class="request_url hidden">
+			Request URL:
+			<input type="text" readonly>
+		</label>
+		<div id="response" class="hidden">
+			<h3>Response:</h3>
+			<div class="response_content"></div>
+		</div>
 	</div>
+	<script>
+		const path_detailed_info = JSON.parse(`{{ path_detailed_info_json }}`.replace('\\`','`'));
+	</script>
 {% endblock %}
