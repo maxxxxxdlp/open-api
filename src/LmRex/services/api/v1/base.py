@@ -157,7 +157,7 @@ class _S2nService:
 #     @cherrypy.tools.json_out()
     def _standardize_params(
             self, namestr=None, gbif_accepted=False, gbif_parse=False,  
-            gbif_count=False, itis_match=False, status=None, kingdom=None, 
+            gbif_count=False, itis_match=False, itis_accepted=False, kingdom=None, 
             occid=None, dataset_key=None, count_only=True, url=None,
             scenariocode=None, bbox=None, color=None, exceptions=None, height=None, 
             layers=None, request=None, frmat=None, srs=None, transparent=None, 
@@ -183,7 +183,8 @@ class _S2nService:
             itis_match: flag to indicate whether to first use the ITIS solr 
                 service to match a scientific name to an ITIS accepted name,
                 used with BISON
-            status: filter for ITIS records with this status
+            itis_accepted: flag to indicate whether to limit to 'valid' or 
+                'accepted' taxa in the ITIS Taxonomy
             kingdom: filter for ITIS records from this kingdom
             occid: a Specify occurrence GUID, mapped to the 
                 dwc:occurrenceId field
@@ -227,7 +228,7 @@ class _S2nService:
             'gbif_parse': False, 
             'gbif_count': False, 
             'itis_match': False, 
-            'status': (None, empty_str), 
+            'itis_accepted': False, 
             'kingdom': (None, empty_str),
             # For occurrence services
             'occid': (None, empty_str), 
@@ -258,7 +259,7 @@ class _S2nService:
             'gbif_parse': gbif_parse, 
             'gbif_count': gbif_count, 
             'itis_match': itis_match, 
-            'status': status, 
+            'itis_accepted': itis_accepted, 
             'kingdom': kingdom, 
             'occid': occid, 
             'dataset_key': dataset_key, 
@@ -278,6 +279,8 @@ class _S2nService:
             'do_match': do_match}
         usr_params = self._process_params(kwarg_defaults, user_kwargs)
         # Remove 'gbif_accepted' flag and replace with 'gbif_status' filter for GBIF
+        # GBIF Taxonomic Constants at:
+        # https://gbif.github.io/gbif-api/apidocs/org/gbif/api/vocabulary/TaxonomicStatus.html
         gbif_accepted = usr_params.pop('gbif_accepted')
         if gbif_accepted is True:
             usr_params['gbif_status'] = 'accepted'

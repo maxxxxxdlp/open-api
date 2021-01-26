@@ -396,23 +396,6 @@ class BisonAPI(APIQuery):
                 other_filters=all_other_filters, filter_string=filter_string,
                 headers=headers, logger=logger)
 
- 
-# 
-#     # ...............................................
-#     @classmethod
-#     def init_from_url(cls, url, headers=None, logger=None):
-#         """Instantiate from url"""
-#         if headers is None:
-#             headers = {'Content-Type': 'application/json'}
-#         base, filters = url.split('?')
-#         if base.strip().startswith(BISON.SOLR_URL):
-#             qry = BisonAPI(filter_string=filters, logger=logger)
-#         else:
-#             raise Exception(
-#                 'Bison occurrence API must start with {}'.format(
-#                     BISON.SOLR_URL))
-#         return qry
-
     # ...............................................
     def query(self):
         """Queries the API and sets 'output' attribute to a JSON object"""
@@ -460,114 +443,12 @@ class BisonAPI(APIQuery):
                         errmsgs.append(msg)
         # Only include records, errors if they exist
         if stdrecs:
+            # TODO: standardize_record
+            std_output['record_format'] = 'BISON Solr API at https://bison.usgs.gov/doc/api.jsp'
             std_output['records'] = stdrecs
         if errmsgs:
             std_output['error'] = errmsgs
         return std_output
-        # Check for api failure
-#         if curr_error is not None:
-#             err_msgs.append(curr_error)
-#         # Find records
-#         recs = None
-#         try:
-#             recs = curr_output['data']
-#         except:
-#             err_msgs.append('Failed to access \"data\" element')
-#         else:
-#             if count_only is False:
-#                 recs = output['records']
-#         # Find total
-#         try:
-#             total = curr_output['total']
-#         except:
-#             err_msgs.append('Failed to access \"total\" element')
-    # ...............................................
-    @classmethod
-    def get_occurrences_page1_by_occid(
-            cls, namestr, limit, count_only=False, logger=None):
-        """Returns a list of occurrence records for this name
-        
-        Args:
-            namestr: A scientific namestring possibly including author, year, 
-                rank marker or other name information.
-            limit: Limit imposed by provider on number or records to return 
-                in a single query
-            logger: optional logger for info and error messages.  If None, 
-                prints to stdout    
-
-        Return: 
-            a dictionary containing one or more keys: 
-                count, records, error, warning, info
-        """
-        ofilters = {
-            'species': namestr, 'type': 'scientific_name', 'start': 0, 
-            'count': limit}
-        api = BisonAPI(
-            url=BISON.OPEN_SEARCH_URL, other_filters=ofilters, logger=logger)
-        qry_meta = {
-            'provider': ServiceProvider.iDigBio['name'], 'occurrenceid': occid,
-            'query': api.url}
-
-        try:
-            api.query_by_get()
-        except Exception as e:
-            msg = cls._get_error_message(msg=api.url, err=e)
-            std_output = {'error': msg}
-            log_error(msg, logger=logger)
-        else:
-            std_output = cls._standardize_output(api.output, count_only)
-        # Add query metadata to output
-        for key, val in qry_meta.items():
-            std_output[key] = val                
-
-        
-    # ...............................................
-    @classmethod
-    def get_occurrences_by_name_old(cls, namestr, count_only, logger=None):
-        """
-        Get or count records for the given namestr.
-        
-        Args:
-            dataset_key: unique identifier for the dataset, assigned by GBIF
-                and retained by Specify
-            count_only: boolean flag signaling to return records or only count
-            logger: optional logger for info and error messages.  If None, 
-                prints to stdout    
-
-        Return: 
-            a dictionary containing one or more keys: 
-                count, records, error, warning, info
-        
-        Todo: 
-            handle large queries asynchronously
-        """
-        start = 0
-        output = {}
-        all_recs = []
-        if count_only is True:
-            limit = 1
-        else:
-            limit = BISON.LIMIT
-
-        curr_output, curr_err = BisonAPI._page_occurrences_by_name(
-            namestr, start, limit, logger=logger)
-        # Total found
-        output['count'] = curr_output['total']
-        # Check for api failure
-        try:
-            curr_output['error']
-        except:
-            pass
-        else:
-            output['error'] = curr_output['error']
-            all_recs.extend(curr_output['data'])
-            if len(all_recs) >= output['count']:
-                is_end = True
-                
-            start += BISON.LIMIT
-        if count_only is False:
-            output['records'] = all_recs
-        return output
         
     # ...............................................
     @classmethod
@@ -589,23 +470,29 @@ class BisonAPI(APIQuery):
         Todo: 
             handle large queries asynchronously
         """
-        start = 0
         if count_only is True:
             limit = 1
         else:
             limit = BISON.LIMIT
+        ofilters = {
+            'species': namestr, 'type': 'scientific_name', 'start': 0, 
+            'count': limit}
 
-        curr_output, curr_error = BisonAPI._page_occurrences_by_name(
-            namestr, start, limit, logger=logger)
-        qry_meta = {
-            'provider': ServiceProvider.BISON['name'], 'name': namestr}
-        # Standardize output from provider response
-        std_output = cls._standardize_output(
-            curr_output, count_only, err=curr_error)
-        # Add query parameters to output
-        for k, v in qry_meta.items():
-            std_output[k] = v
-            
+        api = BisonAPI(
+            url=BISON.OPEN_SEARCH_URL, other_filters=ofilters, logger=logger)
+        qry_meta = {'name': namestr, 'provider_query': api.url}
+
+        try:
+            api.query_by_get()
+        except Exception as e:
+            msg = cls._get_error_message(msg=api.url, err=e)
+            std_output = {'error': msg}
+            log_error(msg, logger=logger)
+        else:
+            std_output = cls._standardize_output(api.output, count_only)
+        # Add query metadata to output
+        for key, val in qry_meta.items():
+            std_output[key] = val                
         return std_output                
         
 #     # ...............................................
@@ -831,10 +718,54 @@ class ItisAPI(APIQuery):
                     cls.__class__.__name__)
         return output
             
-            
+    # ...............................................
+    @classmethod
+    def _standardize_record(cls, rec):
+        # todo: standardize gbif output to DWC, DSO, etc
+        return rec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(cls, output, itis_accepted, err=None):
+        std_output = {'count': 0}
+        stdrecs = []
+        errmsgs = []
+        if err is not None:
+            std_output['error'].append(err)
+
+        try:
+            data = output['response']
+        except Exception as e:
+            errmsgs.append(cls._get_error_message(err=e))
+        else:
+            try:
+                std_output['count'] = data['numFound']
+            except Exception as e:
+                errmsgs.append(cls._get_error_message(err=e))
+            try:
+                docs = data['docs']
+            except:
+                errmsgs.append(cls._get_error_message(err=e))
+            else:
+                for doc in docs:
+                    if itis_accepted is False:
+                        stdrecs.append(cls._standardize_record(doc))
+                    else:
+                        usage = doc['usage'].lower()
+                        if usage in ('accepted', 'valid'):
+                            stdrecs.append(cls._standardize_record(doc))
+        # Only include records, errors if they exist
+        if stdrecs:
+            # TODO: standardize_record and provide schema here
+            std_output['record_format'] = 'https://www.itis.gov/solr_documentation.html'
+            std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['error'] = errmsgs
+        return std_output
+    
 # ...............................................
     @classmethod
-    def match_name(cls, sciname, status=None, kingdom=None, logger=None):
+    def match_name(cls, sciname, itis_accepted=None, kingdom=None, logger=None):
         """Return an ITIS record for a scientific name using the 
         ITIS Solr service.
         
@@ -853,38 +784,32 @@ class ItisAPI(APIQuery):
         Example URL: 
             http://services.itis.gov/?q=nameWOInd:Spinus\%20tristis&wt=json
         """
-        output = {}
-        matches = []
         q_filters = {Itis.NAME_KEY: sciname}
         if kingdom is not None:
             q_filters['kingdom'] = kingdom
-        apiq = ItisAPI(Itis.SOLR_URL, q_filters=q_filters, logger=logger)
-        apiq.query()
-        itis_output = apiq._get_itis_solr_recs(apiq.output)
+        api = ItisAPI(Itis.SOLR_URL, q_filters=q_filters, logger=logger)
+        qry_meta = {'name': sciname, 'provider_query': api.url}
         
-        try: 
-            docs = itis_output['records']
-        except:
-            output['error'] = itis_output['error']
+        try:
+            api.query()
+        except Exception as e:
+            msg = cls._get_error_message(msg=api.url, err=e)
+            std_output = {'error': msg}
+            log_error(msg, logger=logger)
         else:
-            for doc in docs:
-                if status is None:
-                    matches.append(doc)
-                else:
-                    usage = doc['usage'].lower()
-                    if (status in ('accepted', 'valid') and 
-                        usage in ('accepted', 'valid')):
-                        matches.append(doc)
-                    elif status == usage:
-                        matches.append(doc)
-        output['count'] = len(matches)
-        output['records'] = matches
+            # Standardize output from provider response
+            std_output = cls._standardize_output(
+                api.output, itis_accepted, err=api.error)
+
+        # Add query parameters to output
+        for k, v in qry_meta.items():
+            std_output[k] = v
 #             else:
 #                 accepted_tsn_list = apiq._get_fld_value(doc, 'acceptedTSN')
 #                 for tsn in accepted_tsn_list:
 #                     acc_recs = ItisAPI.get_name(tsn)
 #                     matches.extend(acc_recs)
-        return output
+        return std_output
     
 # ...............................................
     @classmethod
@@ -1188,9 +1113,7 @@ class GbifAPI(APIQuery):
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'occurrenceID': occid}, logger=logger)
-        qry_meta = {
-            'provider': ServiceProvider.GBIF['name'], 'occurrenceid': occid,
-            'query': api.url}
+        qry_meta = {'occurrenceid': occid, 'provider_query': api.url}
 
         try:
             api.query()
@@ -1220,13 +1143,86 @@ class GbifAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def _standardize_record(cls, rec):
+    def _standardize_gbif_occurrence(cls, rec):
         # todo: standardize gbif output to DWC, DSO, etc
         return rec
     
     # ...............................................
     @classmethod
-    def _standardize_output(cls, output, count_only, err=None):
+    def _standardize_gbif_name(cls, rec):
+        # todo: standardize gbif output
+        return rec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_match_output(cls, output, status):
+            # Pull alternatives out of record
+        std_output = {}
+        stdrecs = []
+        errmsgs = []
+        try:
+            alternatives = output.pop('alternatives')
+        except:
+            alternatives = []
+            
+        is_match = True
+        try:
+            if output['matchType'].lower() == 'none':
+                is_match = False
+        except AttributeError:
+            errmsgs.append(cls._get_error_message(msg='No matchType'))
+        else:
+            if is_match:
+                if status is None:
+                    # No filter by status
+                    stdrecs.append(output)
+                    for alt in alternatives:
+                        stdrecs.append(alt)
+                else:
+                    # Check status of upper level result
+                    outstatus = None
+                    try:
+                        outstatus = output['status'].lower()
+                    except AttributeError:
+                        errmsgs.append(cls._get_error_message(
+                            msg='No status returned for primary record'))
+                    else:
+                        if outstatus == status:
+                            stdrecs.append(cls._standardize_gbif_name(output))
+                    # Check status of alternative results result            
+                    for alt in alternatives:
+                        outstatus = None
+                        try:
+                            outstatus = alt['status'].lower()
+                        except AttributeError:
+                            msg = cls._get_error_message(
+                                'No status returned for alt record')
+                            std_output['error'] = msg
+                        else:
+                            if outstatus == status:
+                                stdrecs.append(cls._standardize_gbif_name(alt))
+        std_output['count'] = len(stdrecs)
+        if stdrecs:
+            # TODO: standardize_record and provide schema link
+            std_output['record_format'] = 'https://www.gbif.org/developer/species'
+            std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['errors'] = errmsgs
+        return std_output
+    
+    # ...............................................
+    @classmethod
+    def _standardize_record(cls, rec, is_occurrence_data):
+        # todo: standardize gbif output to DWC, DSO, etc
+        if is_occurrence_data is True:
+            return cls._standardize_gbif_occurrence(rec)
+        else:
+            return cls._standardize_gbif_name(rec)
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(
+            cls, output, count_only, is_occurrence_data=True, err=None):
         std_output = {'count': 0}
         stdrecs = []
         errmsgs = []
@@ -1254,10 +1250,17 @@ class GbifAPI(APIQuery):
                 stdrecs = []
                 for r in recs:
                     try:
-                        stdrecs.append(cls._standardize_record(r))
+                        stdrecs.append(
+                            cls._standardize_record(r, is_occurrence_data))
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
+        # TODO: standardize_record
+        if len(stdrecs) > 0:
+            if is_occurrence_data:
+                std_output['record_format'] = 'https://www.gbif.org/developer/occurrence'
+            else:
+                std_output['record_format'] = 'https://www.gbif.org/developer/species'
         # Only include records, errors if they exist
         if stdrecs:
             std_output['records'] = stdrecs
@@ -1296,10 +1299,7 @@ class GbifAPI(APIQuery):
             other_filters={
                 'dataset_key': dataset_key, 'offset': 0, 
                 'limit': limit}, logger=logger)
-        qry_meta = {
-            'provider': ServiceProvider.GBIF['name'], 
-            'dataset_key': dataset_key, 
-            'query': api.url}
+        qry_meta = {'dataset_key': dataset_key, 'provider_query': api.url}
         try:
             api.query()
         except Exception as e:
@@ -1307,7 +1307,6 @@ class GbifAPI(APIQuery):
             std_output = {'error': msg}
             log_error(msg, logger=logger)
         else:
-#             is_end = bool(api.output['endOfRecords'])
             # Standardize output from provider response
             std_output = cls._standardize_output(
                 api.output, count_only, err=api.error)
@@ -1326,9 +1325,8 @@ class GbifAPI(APIQuery):
         Args:
             name_str: A scientific namestring possibly including author, year, 
                 rank marker or other name information.
-            kingdom: optional kingdom of the desired results, helps to 
-                narrow down results in the event of duplicate names in different
-                kingdoms.
+            status: optional constant to match the TaxonomicStatus in the GBIF
+                record
                 
         Returns:
             Either a dictionary containing a matching record with status 
@@ -1339,76 +1337,86 @@ class GbifAPI(APIQuery):
         Note:
             This function uses the name search API, 
         """
-        results = {}
-        matches = []
         name_clean = name_str.strip()
-
         other_filters = {'name': name_clean, 'verbose': 'true'}
 #         if rank:
 #             other_filters['rank'] = rank
 #         if kingdom:
 #             other_filters['kingdom'] = kingdom
-        name_api = GbifAPI(
+        api = GbifAPI(
             service=GBIF.SPECIES_SERVICE, key='match',
             other_filters=other_filters, logger=logger)
         try:
-            name_api.query()
-            output = name_api.output
+            api.query()
         except Exception as e:
-            msg = 'Failed to get a response for {} ({})'.format(name_api.url, e)
+            msg = cls._get_error_message(msg=api.url, err=e)
+            std_output = {'error': msg}
             log_error(msg, logger=logger)
-            results['error'] = msg
         else:
-            # Pull alternatives out of record
-            try:
-                alternatives = output.pop('alternatives')
-            except Exception as e:
-                alternatives = []
-                
-            is_match = True
-            try:
-                if output['matchType'].lower() == 'none':
-                    is_match = False
-            except AttributeError:
-                msg = 'No matchType returned from {}'.format(name_api.url)
-                log_error(msg, logger=logger)
-                results['error'] = msg
-            else:
-                if is_match:
-                    if status is None:
-                        # No filter by status
-                        matches.append(output)
-                        for alt in alternatives:
-                            matches.append(alt)
-                    else:
-                        # Check status of upper level result
-                        outstatus = None
-                        try:
-                            outstatus = output['status'].lower()
-                        except AttributeError:
-                            msg = ('No status returned for primary record from {}'
-                                   .format(name_api.url))
-                            results['error'] = msg
-                            log_error(msg, logger=logger)
-                        else:
-                            if outstatus == status:
-                                matches.append(output)
-                        # Check status of alternative results result            
-                        for alt in alternatives:
-                            outstatus = None
-                            try:
-                                outstatus = alt['status'].lower()
-                            except AttributeError:
-                                msg = ('No status returned for alt record from {}'
-                                       .format(name_api.url))
-                                results['error'] = msg
-                                log_error(msg, logger=logger)
-                            else:
-                                if outstatus == status:
-                                    matches.append(alt)
-            results['count'] = len(matches)
-            results['records'] = matches
-            return results
+            qry_meta = {'name': name_clean, 'provider_query': api.url}
+            # Standardize output from provider response
+            std_output = cls._standardize_match_output(api.output, status)
+        # Add query parameters to output
+        for k, v in qry_meta.items():
+            std_output[k] = v
+        return std_output
+
+#             output = name_api.output
+#         except Exception as e:
+#             msg = 'Failed to get a response for {} ({})'.format(name_api.url, e)
+#             log_error(msg, logger=logger)
+#             results['error'] = msg
+#         else:
+#             # Pull alternatives out of record
+#             try:
+#                 alternatives = output.pop('alternatives')
+#             except Exception as e:
+#                 alternatives = []
+#                 
+#             is_match = True
+#             try:
+#                 if output['matchType'].lower() == 'none':
+#                     is_match = False
+#             except AttributeError:
+#                 msg = 'No matchType returned from {}'.format(name_api.url)
+#                 log_error(msg, logger=logger)
+#                 results['error'] = msg
+#             else:
+#                 if is_match:
+#                     if status is None:
+#                         # No filter by status
+#                         matches.append(output)
+#                         for alt in alternatives:
+#                             matches.append(alt)
+#                     else:
+#                         # Check status of upper level result
+#                         outstatus = None
+#                         try:
+#                             outstatus = output['status'].lower()
+#                         except AttributeError:
+#                             msg = ('No status returned for primary record from {}'
+#                                    .format(name_api.url))
+#                             results['error'] = msg
+#                             log_error(msg, logger=logger)
+#                         else:
+#                             if outstatus == status:
+#                                 matches.append(output)
+#                         # Check status of alternative results result            
+#                         for alt in alternatives:
+#                             outstatus = None
+#                             try:
+#                                 outstatus = alt['status'].lower()
+#                             except AttributeError:
+#                                 msg = ('No status returned for alt record from {}'
+#                                        .format(name_api.url))
+#                                 results['error'] = msg
+#                                 log_error(msg, logger=logger)
+#                             else:
+#                                 if outstatus == status:
+#                                     matches.append(alt)
+#             results['count'] = len(matches)
+#             results['records'] = matches
+#             return results
 
     # ...............................................
     @classmethod
@@ -1689,8 +1697,11 @@ class IdigbioAPI(APIQuery):
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
+            
         # Only include records, errors if they exist
         if stdrecs:
+            # TODO: standardize_record and provide schema link
+            std_output['record_format'] = 'https://github.com/idigbio/idigbio-search-api/wiki'
             std_output['records'] = stdrecs
         if errmsgs:
             std_output['error'] = errmsgs
@@ -1728,9 +1739,7 @@ class IdigbioAPI(APIQuery):
         qf = {Idigbio.QKEY: 
               '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + occid + '"}'}
         api = IdigbioAPI(other_filters=qf, logger=logger)
-        qry_meta = {
-            'provider': ServiceProvider.iDigBio['name'], 'occurrenceid': occid,
-            'query': api.url}
+        qry_meta = {'occurrenceid': occid, 'provider_query': api.url}
 
         try:
             api.query()
@@ -2022,6 +2031,9 @@ class LifemapperAPI(APIQuery):
                     errmsgs.append(msg)
         # Only include records, errors if they exist
         if stdrecs:
+            # TODO: revisit record format for other map providers
+            # TODO: replace with a schema definition
+            std_output['record_format'] = 'lifemapper_layer schema TBD'
             std_output['records'] = stdrecs
         if errmsgs:
             std_output['error'] = errmsgs
@@ -2198,9 +2210,7 @@ class LifemapperAPI(APIQuery):
             other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
             resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
-        qry_meta = {
-            'provider': ServiceProvider.Lifemapper['name'], 'name': name,
-            'query': api.url}
+        qry_meta = {'name': name, 'provider_query': api.url}
         try:
             api.query_by_get()
         except Exception as e:
@@ -2371,6 +2381,8 @@ class MorphoSourceAPI(APIQuery):
                         errmsgs.append(msg)
         # Only include records, errors if they exist
         if stdrecs:
+            # TODO: standardize_record and provide schema link
+            std_output['record_format'] = 'https://www.morphosource.org/About/API'
             std_output['records'] = stdrecs
         if errmsgs:
             std_output['error'] = errmsgs
@@ -2385,9 +2397,7 @@ class MorphoSourceAPI(APIQuery):
             resource=MorphoSource.OCC_RESOURCE, 
             q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
             other_filters={'start': start, 'limit': MorphoSource.LIMIT})
-        qry_meta = {
-            'provider': ServiceProvider.MorphoSource['name'], 
-            'occurrenceid': occid, 'query': api.url}
+        qry_meta = {'occurrenceid': occid, 'provider_query': api.url}
         try:
             api.query_by_get()
         except Exception as e:
@@ -2446,9 +2456,49 @@ class SpecifyPortalAPI(APIQuery):
             url = 'http://preview.specifycloud.org/export/record'
         APIQuery.__init__(self, url, headers=JSON_HEADERS, logger=logger)
 
+
     # ...............................................
     @classmethod
-    def get_specify_record(cls, url, logger=None):
+    def _standardize_record(cls, rec):
+        # todo: standardize gbif output to DWC, DSO, etc
+        return rec
+    
+    # ...............................................
+    @classmethod
+    def _standardize_output(cls, output, count_only, err=None):
+        std_output = {'count': 0}
+        stdrecs = []
+        errmsgs = []
+        if err is not None:
+            errmsgs.append(err)
+        # Count
+        try:
+            recs = [output]
+        except Exception as e:
+            msg = cls._get_error_message(err=e)
+            errmsgs.append(msg)
+        else:
+            std_output['count'] = len(recs)
+        # Records
+        if count_only is False:
+            for r in recs:
+                try:
+                    stdrecs.append(cls._standardize_record(r))
+                except Exception as e:
+                    msg = cls._get_error_message(err=e)
+                    errmsgs.append(msg)
+        # Only include records, errors if they exist
+        if stdrecs:
+            # TODO: standardize_record and provide link to schema
+            std_output['record_format'] = 'Specify DWC'
+            std_output['records'] = stdrecs
+        if errmsgs:
+            std_output['error'] = errmsgs
+        return std_output
+
+    # ...............................................
+    @classmethod
+    def get_specify_record(cls, url, count_only, logger=None):
         """Return Specify record published at this url.  
         
         Args:
@@ -2459,20 +2509,23 @@ class SpecifyPortalAPI(APIQuery):
             in the Solr Specify Resolver but are not resolvable to the host 
             database.  URLs returned for these records begin with 'unknown_url'.
         """
-        output = {}
+        std_output = {}
+        qry_meta = {'provider_query': url}
         if url.startswith('http'):
             api = APIQuery(url, headers=JSON_HEADERS, logger=logger)
     
             try:
                 api.query_by_get()
-            except Exception as err:
-                msg = cls._get_error_message(msg='Url: {}'.format(url), err=err)
-                output['error'] = msg
+            except Exception as e:
+                msg = cls._get_error_message(msg=url, err=e)
+                std_output = {'error': msg}
                 log_error(msg, logger=logger)
             else:
-                output['records'] = [api.output]
-                output['count'] = len(output['records'])
-        return output
+                std_output = cls._standardize_output(api.output, count_only)
+        # Add query metadata to output
+        for key, val in qry_meta.items():
+            std_output[key] = val                
+        return std_output
 
 
 

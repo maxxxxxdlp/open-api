@@ -35,7 +35,7 @@ class SpecifyResolve(_ResolveSvc):
             else:
                 if not url.startswith('http'):
                     msg = (
-                        'Invalid URL {} returned from Specify Resolver for record access'
+                        'Invalid URL {} returned from Specify Resolver, no direct record access'
                         .format(url))
                     url = None
         return (url, msg)

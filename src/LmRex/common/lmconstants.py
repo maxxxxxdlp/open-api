@@ -26,19 +26,20 @@ VALID_MAP_REQUESTS = ['getmap', 'getlegendgraphic']
 
 # .............................................................................
 class TST_VALUES:
-    FISH_DS_GUIDS = ['56caf05f-1364-4f24-85f6-0c82520c2792', 
-                     '8f79c802-a58c-447f-99aa-1d6a0790825a']
-    FISH_OCC_GUIDS = [
+    DS_GUIDS_W_SPECIFY_ACCESS_RECS = [
+        '56caf05f-1364-4f24-85f6-0c82520c2792', 
+        '8f79c802-a58c-447f-99aa-1d6a0790825a']
+    GUIDS_W_SPECIFY_ACCESS = [
         '2c1becd5-e641-4e83-b3f5-76a55206539a', 
         'a413b456-0bff-47da-ab26-f074d9be5219',
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
         '21ac6644-5c55-44fd-b258-67eb66ea231d']
-    BIRD_OCC_GUIDS = [
+    GUIDS_WO_SPECIFY_ACCESS = [
         'ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5',
         'f5725a56-7b47-11e4-8ef3-782bcb9cd5b5',
         'f69696a8-7b47-11e4-8ef3-782bcb9cd5b5',
         '5e7ec91c-4d20-42c4-ad98-8854800e82f7']
-    BIRD_DS_GUID = 'e635240a-3cb1-4d26-ab87-57d8c7afdfdb'
+    DS_GUIDS_WO_SPECIFY_ACCESS_RECS = ['e635240a-3cb1-4d26-ab87-57d8c7afdfdb']
     BAD_GUIDS = [
         'KU :KUIZ:2200', 'KU :KUIZ:1663', 'KU :KUIZ:1569', 'KU :KUIZ:2462', 
         'KU :KUIZ:1743', 'KU :KUIZ:3019', 'KU :KUIZ:1816', 'KU :KUIZ:2542', 
@@ -106,66 +107,8 @@ class ServiceProvider:
 #             APIService.Resolver]}
 
 
-# # .............................................................................
-# class APIMount:
-#     # root, APIService, ServiceProvider['endpoint']
-#     # Specify ARK resolver service
-#     SpecifyArk = '{}/{}'.format(APIService.Root, APIService.SpecifyArk)
-#     
-#     # occurrence services
-#     Occurrence = '{}/{}'.format(APIService.Root, APIService.Occurrence)
-#     GBIF_Occurrence = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Occurrence, 
-#         ServiceProvider.GBIF['endpoint'])
-#     IDB_Occurrence = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Occurrence, 
-#         ServiceProvider.iDigBio['endpoint'])
-#     MorphoSource_Occurrence = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Occurrence, 
-#         ServiceProvider.MorphoSource['endpoint'])
-#     Specify_Occurrence = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Occurrence, 
-#         ServiceProvider.Specify['endpoint'])
-#     
-#     # occurrence dataset service
-#     GCollSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Dataset)
-#     BCollSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Dataset, ServiceProvider.BISON['endpoint'])
-#     
-#     # name services
-#     NameTentaclesSvc = '{}/{}'.format(APIService.Root, APIService.Name)
-#     GAcNameSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Name, ServiceProvider.GBIF['endpoint'])
-#     ITISSolrNameSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Name, ServiceProvider.ITISSolr['endpoint'])
-# #     ITISNameSvc = '{}/{}/{}'.format(
-# #         APIService.Root, APIService.Name, S2NEndpoint.ITISName)
-#     
-#     # map services
-#     LmMapSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Map, ServiceProvider.Lifemapper['endpoint'])
-#     BisonMapSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Map, ServiceProvider.BISON['endpoint'])
-#     
-#     # Service testing
-#     HeartbeatSvc = '{}/{}'.format(APIService.Root, APIService.Heartbeat)
-#     HeartbeatGbifSvc = '{}/{}/{}'.format(
-#         APIService.Root, APIService.Heartbeat, ServiceProvider.Gbif['endpoint'])
-# 
-#     @staticmethod
-#     def occurrence_services():
-#         return [
-#             APIMount.SpecifyArkSvc, APIMount.OccurrenceSvc, APIMount.GOccSvc, 
-#             APIMount.IDBOccSvc, APIMount.SPOccSvc]
-#     @staticmethod
-#     def name_services():
-#         return [
-#             APIMount.NameSvc, APIMount.GAcNameSvc, APIMount.ITISNameSvc, 
-#             APIMount.ITISSolrNameSvc]
-#     @staticmethod
-#     def dataset_services():
-#         return [APIMount.GCollSvc]
+ # .............................................................................
+
 
 # .............................................................................
 class DWCA:
