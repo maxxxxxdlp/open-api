@@ -1,4 +1,4 @@
-from typing import Dict, List, NamedTuple
+from typing import Dict, List, NamedTuple, Union
 from openapi3 import OpenAPI
 import yaml
 import settings
@@ -30,12 +30,15 @@ class RouteParameter(NamedTuple):
 	name: str
 	description: str
 	required: bool
+	default: Union[str, bool, int]
 	examples: Dict[str,str]
 	type: str
+	location: str
 
 
 class RouteDetailedInfo(NamedTuple):
 	path: str
+	server: str
 	summary: str
 	description: str
 	parameters: List[RouteParameter]
@@ -45,6 +48,7 @@ def get_data_for_route(tag:str, route_index:int)->RouteDetailedInfo:
 	route:RouteInfo = get_routes_for_tag(tag)[route_index]
 	return RouteDetailedInfo(
 		route.path,
+		api.servers[0].url,
 		route.summary,
 		route.description,
 		[
@@ -52,15 +56,17 @@ def get_data_for_route(tag:str, route_index:int)->RouteDetailedInfo:
 				parameter.name,
 				parameter.description,
 				parameter.required,
+				parameter.schema.default,
 				{
 					name:list(value.values())[0]
 					for name, value in parameter.examples.items()
 				} if parameter.examples
 				else { parameter.example:parameter.example } if parameter.example
 				else {},
-				parameter.schema.type
+				parameter.schema.type,
+				parameter.in_,
 			) for parameter in api.paths[route.path].get.parameters
-		]
+		],
 	)
 
 """
