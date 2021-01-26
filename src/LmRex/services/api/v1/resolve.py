@@ -82,3 +82,4 @@ if __name__ == '__main__':
         # Specify ARK Record
         spark = SpecifyResolve()
         solr_output = spark.GET(occid)
+        print (solr_output)
