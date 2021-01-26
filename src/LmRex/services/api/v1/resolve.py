@@ -77,7 +77,7 @@ if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TST_VALUES
     
-    for occid in TST_VALUES.BIRD_OCC_GUIDS[:1]:
+    for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
         print(occid)
         # Specify ARK Record
         spark = SpecifyResolve()

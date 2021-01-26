@@ -38,7 +38,7 @@ class _S2nService:
     # ...............................................
     def _show_online(self):
         msg = 'S^n {} {} service is online'.format(
-            self.SER, self.provider)
+            self.SERVICE_TYPE, self.provider)
         return {'info': msg}
 
     # ...............................................
@@ -223,7 +223,7 @@ class _S2nService:
             # Sequences denote value options, the first is the default, 
             #    other values are of the required type
             # For name services
-            'namestr': (None, empty_str),
+#             'namestr': (None, empty_str),
             'gbif_accepted': False, 
             'gbif_parse': False, 
             'gbif_count': False, 
@@ -254,7 +254,7 @@ class _S2nService:
             'width': 600,
             'do_match': True}
         user_kwargs = {
-            'namestr': namestr, 
+#             'namestr': namestr, 
             'gbif_accepted': gbif_accepted, 
             'gbif_parse': gbif_parse, 
             'gbif_count': gbif_count, 
@@ -278,6 +278,8 @@ class _S2nService:
             'width': width, 
             'do_match': do_match}
         usr_params = self._process_params(kwarg_defaults, user_kwargs)
+        # Do not edit namestr, maintain capitalization
+        usr_params['namestr'] = namestr
         # Remove 'gbif_accepted' flag and replace with 'gbif_status' filter for GBIF
         # GBIF Taxonomic Constants at:
         # https://gbif.github.io/gbif-api/apidocs/org/gbif/api/vocabulary/TaxonomicStatus.html
@@ -289,7 +291,7 @@ class _S2nService:
         # Remove 'gbif_parse' and itis_match flags
         gbif_parse = usr_params.pop('gbif_parse')
         itis_match = usr_params.pop('itis_match')
-        namestr = usr_params['namestr']
+#         namestr = usr_params['namestr']
         # Replace namestr with GBIF-parsed namestr
         if namestr:
             if gbif_parse: 

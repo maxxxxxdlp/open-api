@@ -46,6 +46,8 @@ class TST_VALUES:
         'KU :KUIZ:2396']
     NAMES = [
         'Plagioecia patina',
+        'Plagiloecia patina Lamarck, 1816',
+        'Plagiloecia patana Lemarck',
         'Phlox longifolia Nutt.',
         'Tulipa sylvestris L.',
         'Medinilla speciosa Blume',

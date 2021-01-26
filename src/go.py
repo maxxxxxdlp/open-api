@@ -13,10 +13,9 @@ import LmRex.tools.solr as SpSolr
 from LmRex.common.lmconstants import (
     SPECIFY_ARK_PREFIX, GBIF, DWCA, ENCODING, TEST_SPECIFY7_SERVER, 
     SPECIFY7_RECORD_ENDPOINT, SPECIFY7_SERVER_KEY, SPCOCO_FIELDS, 
-    ICH_RSS_URL, KU_IPT_RSS_URL, TEST_VALUES)
+    ICH_RSS_URL, KU_IPT_RSS_URL, TST_VALUES)
 
 from LmRex.tools.api import SpecifyPortalAPI
-from LmRex.api.sparks import SpecifyArk
 
 # .............................................................................
 # Test post
