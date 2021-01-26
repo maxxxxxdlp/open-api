@@ -1,0 +1,13 @@
+{% extends "menu.html" %}
+
+{% block back_arrow %}<a href="/">&#5130;</a>{% endblock %}
+{% block header %}<span>{{ tag_name }}</span>{% endblock %}
+{% block content %}
+	{% for path in paths %}
+		<a class="tag" href="/endpoint/?tag={{ tag_name }}&route={{ loop.index }}">
+			<div class="tag_name">{{ path.path }}</div>
+			<div class="tag_description">{{ path.summary }}</div>
+			<div class="tag_description_long">{{ path.description }}</div>
+		</a>
+	{% endfor %}
+{% endblock %}

@@ -20,7 +20,7 @@ tags:
   - name: occ
     description: Get species occurences
   - name: dataset
-    description: '**description_needed_here**'
+    description: Get occurrences in a dataset
   - name: resolve
     description: '**description_needed_here**'
   - name: map
@@ -290,7 +290,7 @@ components:
       description: 'whether to parse the scientific name (removing author and date information)'
       required: false
       schema:
-        type: string
+        type: boolean
     gbif_count:
       name: gbif_count
       in: query
