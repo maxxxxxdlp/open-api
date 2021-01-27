@@ -17,14 +17,14 @@ class Root(object):
 		return main_template(title=tag, content=ui.tag(tag))
 
 	@cherrypy.expose
-	def endpoint(self, tag: str, route: int) -> str:
-		return main_template(title=tag, content=ui.endpoint(tag, route))
+	def endpoint(self, tag: str, route: str) -> str:
+		return main_template(title=tag, content=ui.endpoint(tag, int(route)-1))
 
 
 class API(object):
 	@cherrypy.expose
-	def fetch_response(self, url: str) -> str:
-		return api.fetch_response(url)
+	def fetch_response(self, endpoint: str, url: str) -> str:
+		return api.fetch_response(endpoint, url)
 
 
 config = {
