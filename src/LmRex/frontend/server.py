@@ -1,8 +1,8 @@
 import cherrypy
-import settings
-from src import ui
-from src import templates
-from src import api
+from LmRex.config import frontend_config as settings
+from LmRex.frontend.src import ui
+from LmRex.frontend.src import templates
+from LmRex.frontend.src import api
 
 main_template = templates.load('index.html')
 
@@ -30,7 +30,7 @@ class API(object):
 config = {
 	'/': {
 		'tools.staticdir.on':    True,
-		'tools.staticdir.dir':   settings.BASE_DIR,
+		'tools.staticdir.dir':   settings.FRONTEND_BASE_DIR,
 		'tools.staticdir.index': 'index.html',
 	},
 }
