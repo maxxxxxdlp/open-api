@@ -27,10 +27,10 @@ const show_loading_animation = (response_container) =>
 	response_container.classList.remove('hidden') ||
 	response_container.classList.add('loading');
 
-const show_response = (response_container, response)=>
+const show_response = (response_container, response) =>
 	response_container.classList.remove('loading') ||
-	response.text().then(response_html=>(
-		response_container.getElementsByClassName('response_content')[0].innerHTML=response_html
+	response.text().then(response_html => (
+		response_container.getElementsByClassName('response_content')[0].innerHTML = response_html
 	));
 
 (
@@ -49,9 +49,9 @@ const show_response = (response_container, response)=>
 
 		});
 
-		document.body.addEventListener('click',(event)=>{
+		document.body.addEventListener('click', (event) => {
 
-			if(event.target.closest('.execute_button')){
+			if (event.target.closest('.execute_button')) {
 				fetch_parameters_data(parameters);
 				const request_url = create_request_url();
 				expose_request_url(request_url_element, request_url);
@@ -59,17 +59,18 @@ const show_response = (response_container, response)=>
 				fetch(
 					`/api/fetch_response/?endpoint=${
 						encodeURIComponent(path_detailed_info[0])
-					}&url=${encodeURIComponent(request_url)}`
+					}&url=${encodeURIComponent(request_url)}`,
 				).then(show_response.bind(null, response_container));
 			}
 
 			const dictionary_label = event.target.closest('.dictionary_label');
-			if(dictionary_label !== null)
-				dictionary_label.nextElementSibling.classList.toggle('collapsed');
-
-			const collapsed = event.target.closest('.collapsed');
-			if(collapsed !== null)
-				collapsed.classList.toggle('collapsed');
+			if (dictionary_label !== null)
+				dictionary_label.parentElement.classList.toggle('collapsed');
+			else {
+				const collapsed = event.target.closest('.collapsed');
+				if (collapsed !== null)
+					collapsed.classList.toggle('collapsed');
+			}
 
 		});
 
