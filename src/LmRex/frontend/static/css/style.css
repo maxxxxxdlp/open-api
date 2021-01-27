@@ -66,9 +66,6 @@ header a {
 	padding-right: 1rem;
 }
 
-header span {
-}
-
 .tag {
 	background: var(--b2);
 	padding: 1rem;
@@ -101,7 +98,7 @@ header span {
 
 .content {
 	width: 80vw;
-	max-width: 1000px;
+	/*max-width: 1000px;*/
 	margin: 0 6vw;
 	height: 92vh;
 	background: var(--b2);
@@ -116,7 +113,7 @@ header span {
 
 .parameters {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: auto 1fr;
 	grid-auto-rows: auto;
 	row-gap: 1rem;
 }
@@ -139,6 +136,7 @@ header span {
 	display: flex;
 	flex-direction: column;
 	row-gap: 1rem;
+	padding-left: 1rem;
 }
 
 .execute_button {
@@ -159,12 +157,12 @@ header span {
 	color: var(--red);
 }
 
-.checkbox_with_indicator input:checked ~ span:before {
+.checkbox_with_indicator input:checked ~ span::before {
 	content: "True";
 	color: var(--green);
 }
 
-.checkbox_with_indicator input:not(:checked) ~ span:before {
+.checkbox_with_indicator input:not(:checked) ~ span::before {
 	content: "False";
 	color: var(--red);
 }
@@ -189,7 +187,7 @@ header span {
 	padding-bottom: 3rem;
 }
 
-.loading::after {
+.loading::before {
 	content: "Loading...";
 	background: repeating-linear-gradient(to right, var(--b2) 0%, var(--b3) 50%, var(--b2) 100%);
 	width: 100%;
@@ -208,7 +206,92 @@ header span {
 	0% {
 		background-position: 0 0;
 	}
+
 	100% {
 		background-position: -200% 0;
 	}
+}
+
+.loading > * {
+	display: none;
+}
+
+.collapsed {
+	cursor: pointer;
+}
+
+.collapsed .value::after {
+	content: "{...}";
+}
+
+.collapsed:hover > .value::after {
+	color: var(--t1);
+}
+
+.collapsed > .value > * {
+	display: none !important;
+}
+
+.error_iframe {
+	height: 500px;
+	width: 100%;
+}
+
+.list_of_fields {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-auto-rows: auto;
+	row-gap: 1rem;
+}
+
+.list_of_values > .field:not(:last-child) > * {
+	border-bottom: 1px solid var(--b3);
+	padding-bottom: 1rem;
+}
+
+.response_content .field {
+	display: contents;
+}
+
+.response_content .label {
+	line-height: 2rem;
+	padding-right: 1rem;
+}
+
+.response_content .string,
+.response_content .text {
+	width: 100%;
+	padding: 0.5rem;
+	border: 1px solid var(--b3);
+	border-radius: 3px;
+}
+
+.response_content .text {
+	resize: vertical;
+}
+
+.response_content .value {
+	display: flex;
+	align-items: center;
+}
+
+.response_content .value > * {
+	flex: 1;
+}
+
+.dictionary_label {
+	cursor: pointer;
+}
+
+.dictionary_label::after {
+	content: "\25BC";
+	padding-left: 0.5rem;
+}
+
+.collapsed > .dictionary_label::after {
+	content: "\25BA";
+}
+
+.dictionary_label:hover::after {
+	color: var(--t1);
 }
