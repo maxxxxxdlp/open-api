@@ -49,15 +49,27 @@ const show_response = (response_container, response)=>
 
 		});
 
-		document.body.getElementsByClassName('execute_button')[0].addEventListener('click', () => {
+		document.body.addEventListener('click',(event)=>{
 
-			fetch_parameters_data(parameters);
-			const request_url = create_request_url();
-			expose_request_url(request_url_element, request_url);
-			show_loading_animation(response_container);
-			fetch(
-				`/api/fetch_response/?url=${encodeURIComponent(request_url)}`
-			).then(show_response.bind(null, response_container));
+			if(event.target.closest('.execute_button')){
+				fetch_parameters_data(parameters);
+				const request_url = create_request_url();
+				expose_request_url(request_url_element, request_url);
+				show_loading_animation(response_container);
+				fetch(
+					`/api/fetch_response/?endpoint=${
+						encodeURIComponent(path_detailed_info[0])
+					}&url=${encodeURIComponent(request_url)}`
+				).then(show_response.bind(null, response_container));
+			}
+
+			const dictionary_label = event.target.closest('.dictionary_label');
+			if(dictionary_label !== null)
+				dictionary_label.nextElementSibling.classList.toggle('collapsed');
+
+			const collapsed = event.target.closest('.collapsed');
+			if(collapsed !== null)
+				collapsed.classList.toggle('collapsed');
 
 		});
 
