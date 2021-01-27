@@ -234,7 +234,7 @@ header a {
 
 .error_iframe {
 	height: 500px;
-	grid-column: 1 / span 2;
+	width: 100%;
 }
 
 .list_of_fields {

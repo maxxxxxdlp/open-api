@@ -1,6 +1,5 @@
-import json
 from typing import Dict, List
-from src import templates
+from LmRex.frontend.src import templates
 
 
 field = templates.load('field.html')
@@ -54,5 +53,5 @@ def format_dict(fields: Dict[str,any], is_list_of_values:bool = False)->str:
 		)
 
 
-def format_response(endpoint:str, response:Dict[str,any])->str :
+def format_response(_endpoint:str, response:Dict[str,any])->str :
 	return format_dict(response)

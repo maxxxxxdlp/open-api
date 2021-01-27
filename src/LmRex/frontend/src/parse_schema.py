@@ -1,7 +1,7 @@
 from typing import Dict, List, NamedTuple, Union
 from openapi3 import OpenAPI
 import yaml
-import settings
+from LmRex.config import frontend_config as settings
 
 with open(settings.OPEN_API_LOCATION) as file:
 	spec = yaml.safe_load(file.read())

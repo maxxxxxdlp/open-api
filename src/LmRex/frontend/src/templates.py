@@ -1,5 +1,5 @@
-import settings
-from jinja2 import FileSystemLoader, Environment, select_autoescape
+from LmRex.config import frontend_config as settings
+from jinja2 import FileSystemLoader, Environment
 
 env = Environment(
 	loader=FileSystemLoader(settings.TEMPLATES_DIR),
