@@ -1,0 +1,2 @@
+APIFuzzer==0.9.8
+pycurl
