@@ -93,8 +93,7 @@ class APIQuery:
     # .........................................
     @property
     def url(self):
-        """Retrieve a url for the query
-        """
+        """Retrieve a url for the query"""
         # All filters added to url
         if self.filter_string and len(self.filter_string) > 1:
             return '{}?{}'.format(self.base_url, self.filter_string)
@@ -239,13 +238,13 @@ class APIQuery:
         Note:
             Sets a single error message, not a list, to error attribute
         """
-        self.output = None
+        self.output = {}
         self.error = None
+        msg = None
         try:
             response = requests.get(self.url, headers=self.headers)
         except Exception as e:
-            msg = 'Failed on URL {}, ({})'.format(self.url, str(e))
-            self.error = msg
+            msg = self._get_error_message(err=e)
             log_error(msg, logger=self.logger)
         else:
             if response.status_code == HTTPStatus.OK:
@@ -254,7 +253,11 @@ class APIQuery:
                         self.output = response.json()
                     except Exception as e:
                         output = response.content
-                        self.output = deserialize(fromstring(output))
+                        try:
+                            self.output = deserialize(fromstring(output))
+                        except:
+                            msg = self._get_error_message(
+                                msg='Provider error', err=e)
                 elif output_type == 'xml':
                     try:
                         output = fromstring(response.text)
@@ -264,13 +267,13 @@ class APIQuery:
                 else:
                     msg = self._get_error_message(
                         msg='Unrecognized output type {}'.format(output_type))
-                    log_error(msg, logger=self.logger)
             else:
                 msg = self._get_error_message(
-                        msg='URL {}, code = {}, reason = {}'.format(
-                            self.url, response.status_code, response.reason))
-                self.error = msg
-                log_error(msg, logger=self.logger)
+                    msg='code = {}, reason = {}'.format(
+                        response.status_code, response.reason))
+        if msg:
+            self.error = msg
+            log_error(msg, logger=self.logger)
 
     # ...........    ....................................
     def query_by_post(self, output_type='json', file=None):
@@ -291,8 +294,8 @@ class APIQuery:
                     ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
                 msg = self._get_error_message(
-                    msg='URL {}, file {}, code = {}, reason = {}'.format(
-                        self.url, file, ret_code, reason),
+                    msg='file {}, code = {}, reason = {}'.format(
+                        file, ret_code, reason),
                     err=e)
                 self.error = msg
                 log_error(msg, logger=self.logger)
@@ -313,9 +316,8 @@ class APIQuery:
                     ret_code = HTTPStatus.INTERNAL_SERVER_ERROR
                     reason = 'Unknown Error'
                 msg = self._get_error_message(
-                    msg='URL {}, code = {}, reason = {}'.format(
-                            self.url, ret_code, reason),
-                        err=e)
+                    msg='code = {}, reason = {}'.format(ret_code, reason), 
+                    err=e)
                 self.error = msg
                 log_error(msg, logger=self.logger)
 
@@ -727,16 +729,17 @@ class ItisAPI(APIQuery):
     # ...............................................
     @classmethod
     def _standardize_output(cls, output, itis_accepted, err=None):
-        std_output = {'count': 0}
+        std_output = {'count': 0, 'error': []}
         stdrecs = []
         errmsgs = []
         if err is not None:
-            std_output['error'].append(err)
+            errmsgs.append(err)
 
         try:
             data = output['response']
         except Exception as e:
-            errmsgs.append(cls._get_error_message(err=e))
+            if err is None:
+                errmsgs.append(cls._get_error_message(err=e))
         else:
             try:
                 std_output['count'] = data['numFound']

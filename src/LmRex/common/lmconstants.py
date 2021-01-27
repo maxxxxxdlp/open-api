@@ -47,6 +47,7 @@ class TST_VALUES:
     NAMES = [
         'Plagioecia patina',
         'Plagiloecia patina Lamarck, 1816',
+        'Plagioecia patina (Lamarck, 1816)',
         'Plagiloecia patana Lemarck',
         'Phlox longifolia Nutt.',
         'Tulipa sylvestris L.',
@@ -402,7 +403,7 @@ class Itis:
     SEARCH_KEY = 'srchKey'
     # JSON return tags
     TSN_KEY = 'tsn'
-    NAME_KEY = 'nameWOInd'
+    NAME_KEY = 'nameWInd'
     HIERARCHY_KEY = 'hierarchySoFarWRanks'
     HIERARCHY_TAG = 'hierarchyList'
     RANK_TAG = 'rankName'

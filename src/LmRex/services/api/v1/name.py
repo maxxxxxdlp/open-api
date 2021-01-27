@@ -205,11 +205,12 @@ class NameTentacles(_NameSvc):
 # .............................................................................
 if __name__ == '__main__':
     # test    
-    for namestr in TST_VALUES.NAMES[:3]:
-        print('Name = {}'.format(namestr))
-        
-        for gparse in (True, False):
-            print('  GBIF parse = {}'.format(gparse))
+#     for namestr in TST_VALUES.NAMES[:3]:
+#         for gparse in (True, False):
+    for namestr in ['Plagioecia patina (Lamarck, 1816)']:
+        print('Name = {}'.format(namestr))        
+        for gparse in [False]:
+            print('Name = {}  GBIF parse = {}'.format(namestr, gparse))
 #             s2napi = NameTentacles()
 #             all_output  = s2napi.GET(
 #                 namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
@@ -219,20 +220,21 @@ if __name__ == '__main__':
 #                 for k, v in one_output.items():
 #                     print('  {}: {}'.format(k, v))
 #                 print('')
-            api = NameGBIF()
-            std_output  = api.GET(
-                namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
-                gbif_count=True)
-             
-            for k, v in std_output.items():
-                print('  {}: {}'.format(k, v))
-            print('')
-
-        
-#             iapi = NameITISSolr()
-#             iout = iapi.GET(
-#                 namestr=namestr, gbif_parse=gparse, itis_accepted=True, kingdom=None)
-#             print('  S2n ITIS Solr GET')
-#             for k, v in iout.items():
+#
+#             api = NameGBIF()
+#             std_output  = api.GET(
+#                 namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
+#                 gbif_count=True)
+#              
+#             for k, v in std_output.items():
 #                 print('  {}: {}'.format(k, v))
 #             print('')
+
+        
+            iapi = NameITISSolr()
+            iout = iapi.GET(
+                namestr=namestr, gbif_parse=gparse, itis_accepted=True, kingdom=None)
+            print('  S2n ITIS Solr GET')
+            for k, v in iout.items():
+                print('  {}: {}'.format(k, v))
+            print('')
