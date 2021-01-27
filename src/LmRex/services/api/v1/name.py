@@ -18,8 +18,11 @@ class NameGBIF(_NameSvc):
     def get_gbif_matching_taxon(self, namestr, gbif_status, gbif_count):
         output = {}
         # Get name from Gbif        
-        moutput = GbifAPI.match_name(namestr, status=gbif_status)        
-        good_names = moutput['records']
+        moutput = GbifAPI.match_name(namestr, status=gbif_status)
+        try:        
+            good_names = moutput['records']
+        except:
+            good_names = []
         # Add occurrence count to name records
         if gbif_count is True:
             for namerec in good_names:
@@ -44,16 +47,13 @@ class NameGBIF(_NameSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None, gbif_accepted=True, gbif_parse=True, 
-            gbif_count=True, **kwargs):
+    def GET(self, namestr=None, gbif_accepted=True, gbif_count=True, **kwargs):
         """Get GBIF taxon records for a scientific name string
         
         Args:
             namestr: a scientific name
             gbif_accepted: flag to indicate whether to filter by 
                 status='accepted' 
-            gbif_parse: flag to indicate whether to first use the GBIF parser 
-                to parse a scientific name into canonical name 
             gbif_count: flag to indicate whether to count GBIF occurrences of 
                 this taxon
             kwargs: additional keyword arguments - to be ignored
@@ -61,10 +61,13 @@ class NameGBIF(_NameSvc):
             a dictionary containing a count and list of dictionaries of 
                 GBIF records corresponding to names in the GBIF backbone 
                 taxonomy
+        Note: gbif_parse flag to parse a scientific name into canonical name is 
+            unnecessary for this method, as the match service finds the closest
+            match regardless of whether author and date are included
+
         """
         usr_params = self._standardize_params(
-            namestr=namestr, gbif_accepted=gbif_accepted, gbif_parse=gbif_parse, 
-            gbif_count=gbif_count)
+            namestr=namestr, gbif_accepted=gbif_accepted, gbif_count=gbif_count)
         namestr = usr_params['namestr']
         if not namestr:
             return self._show_online()
@@ -206,15 +209,25 @@ if __name__ == '__main__':
         print('Name = {}'.format(namestr))
         
         for gparse in (True, False):
-            s2napi = NameTentacles()
-            all_output  = s2napi.GET(
+            print('  GBIF parse = {}'.format(gparse))
+#             s2napi = NameTentacles()
+#             all_output  = s2napi.GET(
+#                 namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
+#                 gbif_count=True, itis_accepted=True, kingdom=None)
+#              
+#             for svc, one_output in all_output.items():
+#                 for k, v in one_output.items():
+#                     print('  {}: {}'.format(k, v))
+#                 print('')
+            api = NameGBIF()
+            std_output  = api.GET(
                 namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
-                gbif_count=True, itis_accepted=True, kingdom=None)
+                gbif_count=True)
              
-            for svc, one_output in all_output.items():
-                for k, v in one_output.items():
-                    print('  {}: {}'.format(k, v))
-                print('')
+            for k, v in std_output.items():
+                print('  {}: {}'.format(k, v))
+            print('')
+
         
 #             iapi = NameITISSolr()
 #             iout = iapi.GET(

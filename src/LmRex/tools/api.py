@@ -1155,6 +1155,24 @@ class GbifAPI(APIQuery):
     
     # ...............................................
     @classmethod
+    def _test_record(cls, status, rec):
+        is_good = False
+        # No filter by status, take original
+        if status is None:
+            is_good = True
+        else:
+            outstatus = None
+            try:
+                outstatus = rec['status'].lower()
+            except AttributeError:
+                print(cls._get_error_message(msg='No status in record'))
+            else:
+                if outstatus == status:
+                    is_good = True
+        return is_good
+        
+    # ...............................................
+    @classmethod
     def _standardize_match_output(cls, output, status):
             # Pull alternatives out of record
         std_output = {}
@@ -1172,35 +1190,17 @@ class GbifAPI(APIQuery):
         except AttributeError:
             errmsgs.append(cls._get_error_message(msg='No matchType'))
         else:
+            goodrecs = []
+            # take primary output if matched
             if is_match:
-                if status is None:
-                    # No filter by status
-                    stdrecs.append(output)
-                    for alt in alternatives:
-                        stdrecs.append(alt)
-                else:
-                    # Check status of upper level result
-                    outstatus = None
-                    try:
-                        outstatus = output['status'].lower()
-                    except AttributeError:
-                        errmsgs.append(cls._get_error_message(
-                            msg='No status returned for primary record'))
-                    else:
-                        if outstatus == status:
-                            stdrecs.append(cls._standardize_gbif_name(output))
-                    # Check status of alternative results result            
-                    for alt in alternatives:
-                        outstatus = None
-                        try:
-                            outstatus = alt['status'].lower()
-                        except AttributeError:
-                            msg = cls._get_error_message(
-                                'No status returned for alt record')
-                            std_output['error'] = msg
-                        else:
-                            if outstatus == status:
-                                stdrecs.append(cls._standardize_gbif_name(alt))
+                if cls._test_record(status, output):
+                    goodrecs.append(output)
+            for alt in alternatives:
+                if cls._test_record(status, alt):
+                    goodrecs.append(alt)
+            # Standardize name output
+            for r in goodrecs:
+                stdrecs.append(cls._standardize_gbif_name(r))
         std_output['count'] = len(stdrecs)
         if stdrecs:
             # TODO: standardize_record and provide schema link
@@ -2625,7 +2625,7 @@ if __name__ == '__main__':
     # test
     
     log_info('Mopho records:')
-    for guid in TST_VALUES.BIRD_OCC_GUIDS:
+    for guid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS:
         moutput = MorphoSourceAPI.get_occurrences_page1_by_occid(guid)
         for r in moutput['records']:
             occid = notes = None
