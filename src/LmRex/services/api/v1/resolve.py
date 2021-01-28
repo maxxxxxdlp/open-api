@@ -1,6 +1,6 @@
 import cherrypy
 
-from LmRex.common.lmconstants import (ServiceProvider, APIService)
+from LmRex.common.lmconstants import (ServiceProvider, APIService, S2N, SPECIFY)
 import LmRex.tools.solr as SpSolr
 from LmRex.services.api.v1.base import _S2nService
 
@@ -16,14 +16,13 @@ class _ResolveSvc(_S2nService):
 @cherrypy.expose
 class SpecifyResolve(_ResolveSvc):
     """Query the Specify Resolver with a UUID for a resolvable GUID and URL"""
-    PROVIDER = ServiceProvider.Specify
 
     # ...............................................
     @staticmethod
     def get_url_from_meta(solr_output):
         url = msg = None
         try:
-            solr_doc = solr_output['docs'][0]
+            solr_doc = solr_output[S2N.RECORDS_KEY][0]
         except:
             pass
         else:
@@ -35,37 +34,46 @@ class SpecifyResolve(_ResolveSvc):
             else:
                 if not url.startswith('http'):
                     msg = (
-                        'Invalid URL {} returned from Specify Resolver, no direct record access'
-                        .format(url))
+                        'No direct record access to {} returned from collection {}'
+                        .format(url, SPECIFY.RESOLVER_COLLECTION))
                     url = None
         return (url, msg)
     
     # ...............................................
     def get_specify_guid_meta(self, occid):
-        output = SpSolr.query_guid(collection, occid, solr_location=solr_location)
+        output = SpSolr.query_guid(
+            occid, SPECIFY.RESOLVER_COLLECTION, SPECIFY.RESOLVER_LOCATION)
         try:
-            output['count']
+            output[S2N.COUNT_KEY]
         except:
-            output['error'] = 'Failed to return count from Specify Resolve'
+            output[S2N.ERRORS_KEY] = [
+                'Failed to return count from collection {} at {}'.format(
+                    SPECIFY.RESOLVER_COLLECTION, SPECIFY.RESOLVER_LOCATION)]
         return output
 
     # ...............................................
     def count_specify_guid_recs(self):
-        return SpSolr.count_docs(collection, solr_location)
+        return SpSolr.count_docs(
+            SPECIFY.RESOLVER_COLLECTION, SPECIFY.RESOLVER_LOCATION)
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None):
-        """
-        Count all or get a single record with metadata for resolving a Specify 
-        Collection Object Record (COR) from a GUID
+    def GET(self, occid=None, **kwargs):
+        """Get zero or one record for a Specify identifier from the resolution
+        service du jour (DOI, ARK, etc) or get a count of all records indexed
+        by this resolution service.
         
         Args:
-            occid: a Specify occurrence GUID, from the occurrenceId field
+            occid: an occurrenceID, a DarwinCore field intended for a globally 
+                unique identifier (https://dwc.tdwg.org/list/#dwc_occurrenceID)
+            kwargs: any additional keyword arguments are ignored
+
         Return:
-            a single dictionary with a
-             * count of records in the resolver or a
-             * Specify Resolution (DOI) metadata
+            A dictionary of metadata and a count of records found in GBIF and 
+            an optional list of records.
+                
+        Note: 
+            There will never be more than one record returned.
         """
         if occid is None:
             return self.count_specify_guid_recs()

@@ -1,6 +1,6 @@
 import cherrypy
 
-from LmRex.common.lmconstants import (ServiceProvider, APIService, Lifemapper, 
+from LmRex.common.lmconstants import (S2N, ServiceProvider, APIService, Lifemapper, 
                                       TST_VALUES)
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.name import NameGBIF
@@ -16,7 +16,6 @@ class _MapSvc(_S2nService):
 # .............................................................................
 @cherrypy.expose
 class MapLM(_MapSvc):
-    PROVIDER = ServiceProvider.Lifemapper
 #     # ...............................................
 #     def get_map_info(
 #             self, namestr, scenariocode, bbox, color, height, 
@@ -93,7 +92,7 @@ class MapLM(_MapSvc):
                               .format(namerec, namestr))
         # 2-step until LM returns full objects
         records = []
-        msgs = []
+        errmsgs = []
         for sname in scinames:
             # Step 1, get projections
             prj_output = LifemapperAPI.find_map_layers_by_name(
@@ -101,13 +100,12 @@ class MapLM(_MapSvc):
             records.extend(prj_output['records'])
             for key in ['warning', 'error']:
                 try:
-                    msgs.append(prj_output[key])
+                    errmsgs.append(prj_output[key])
                 except:
                     pass
-        if len(msgs) > 0:
-            output['error'] = msgs
-        output['records'] = records
         output['count'] = len(records)
+        output['records'] = records
+        output['error'] = errmsgs
         return output
 
 #     # ...............................................
@@ -194,7 +192,6 @@ class MapBISON(_MapSvc):
     """
     Note: unfinished
     """
-    PROVIDER = ServiceProvider.BISON
     # ...............................................
     def get_itis_taxon(self, namestr):
         ioutput = ItisAPI.match_name(namestr)

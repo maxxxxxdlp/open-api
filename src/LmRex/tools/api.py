@@ -86,7 +86,7 @@ class APIQuery:
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)            
-            std_output['record_format'] = record_format
+            std_output[S2N.RECORD_FORMAT_KEY] = record_format
             std_output[S2N.RECORDS_KEY] = stdrecs
         # Errors
         std_output[S2N.ERRORS_KEY] = errmsgs
@@ -389,7 +389,7 @@ class BisonAPI(APIQuery):
     WMS map
     https://bison.usgs.gov/api/wms?LAYERS=species&species=Bison%20bison&type=scientific_name&TRANSPARENT=true&FORMAT=image%2Fpng&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=&SRS=EPSG%3A3857&BBOX=-20037508.34,-1.862645149231e-9,-5009377.085,15028131.255&WIDTH=512&HEIGHT=512    
     """
-    
+    PROVIDER = ServiceProvider.BISON['name']
     # ...............................................
     def __init__(
             self, url=BISON.SOLR_URL, q_filters=None, other_filters=None, 
@@ -464,7 +464,9 @@ class BisonAPI(APIQuery):
 
         api = BisonAPI(
             url=BISON.OPEN_SEARCH_URL, other_filters=ofilters, logger=logger)
-        qry_meta = {S2N.NAME_KEY: namestr, S2N.PROVIDER_QUERY_KEY: api.url}
+        qry_meta = {
+            S2N.NAME_KEY: namestr, S2N.PROVIDER_KEY: cls.PROVIDER, 
+            S2N.PROVIDER_QUERY_KEY: api.url}
 
         try:
             api.query_by_get()
@@ -551,7 +553,7 @@ class ItisAPI(APIQuery):
         https://www.itis.gov/solr_documentation.html and 
         https://www.itis.gov/web_service.html
     """
-
+    PROVIDER = ServiceProvider.ITISSolr['name']
     # ...............................................
     def __init__(
             self, base_url, service=None, q_filters={}, other_filters={}, 
@@ -737,7 +739,7 @@ class ItisAPI(APIQuery):
                     usage = doc['usage'].lower()
                     if usage in ('accepted', 'valid'):
                         stdrecs.append(cls._standardize_record(doc))
-        std_output['record_format'] = record_format
+        std_output[S2N.RECORD_FORMAT_KEY] = record_format
         std_output[S2N.RECORDS_KEY] = stdrecs
         std_output[S2N.ERRORS_KEY] = errmsgs
         return std_output
@@ -767,7 +769,9 @@ class ItisAPI(APIQuery):
         if kingdom is not None:
             q_filters['kingdom'] = kingdom
         api = ItisAPI(Itis.SOLR_URL, q_filters=q_filters, logger=logger)
-        qry_meta = {S2N.NAME_KEY: sciname, S2N.PROVIDER_QUERY_KEY: api.url}
+        qry_meta = {
+            S2N.NAME_KEY: sciname, S2N.PROVIDER_KEY: cls.PROVIDER, 
+            S2N.PROVIDER_QUERY_KEY: api.url}
         
         try:
             api.query()
@@ -778,10 +782,12 @@ class ItisAPI(APIQuery):
                 output = api.output['response']
             except Exception as e:
                 if api.error is not None:
-                    std_output = {S2N.ERRORS_KEY: [api.error]}
+                    std_output = {S2N.COUNT_KEY: 0, S2N.ERRORS_KEY: [api.error]}
                 else:
-                    std_output = {S2N.ERRORS_KEY: [cls._get_error_message(
-                        msg='Missing `response` element')]}
+                    std_output = {
+                        S2N.COUNT_KEY: 0, 
+                        S2N.ERRORS_KEY: [cls._get_error_message(
+                            msg='Missing `response` element')]}
             else:
                 # Standardize output from provider response
                 std_output = cls._standardize_output(
@@ -839,7 +845,7 @@ class ItisAPI(APIQuery):
         output[S2N.COUNT_KEY] = len(recs)
         if not count_only:
             output[S2N.RECORDS_KEY] = recs
-            output['record_format'] = 'tbd'
+            output[S2N.RECORD_FORMAT_KEY] = 'tbd'
         output[S2N.ERRORS_KEY] = errmsgs
         return output
 
@@ -916,6 +922,7 @@ class ItisAPI(APIQuery):
 # .............................................................................
 class GbifAPI(APIQuery):
     """Class to query GBIF APIs and return results"""
+    PROVIDER = ServiceProvider.GBIF['name']
     # ...............................................
     def __init__(self, service=GBIF.SPECIES_SERVICE, key=None,
                  other_filters=None, logger=None):
@@ -1018,7 +1025,8 @@ class GbifAPI(APIQuery):
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'occurrenceID': occid}, logger=logger)
         qry_meta = {
-            S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: cls.PROVIDER,
+            S2N.PROVIDER_QUERY_KEY: api.url}
         try:
             api.query()
         except Exception as e:
@@ -1077,11 +1085,13 @@ class GbifAPI(APIQuery):
         
     # ...............................................
     @classmethod
-    def _standardize_match_output(cls, output, status):
+    def _standardize_match_output(cls, output, status, err=None):
             # Pull alternatives out of record
         std_output = {}
         stdrecs = []
         errmsgs = []
+        if err:
+            errmsgs.append(err)
         try:
             alternatives = output.pop('alternatives')
         except:
@@ -1106,14 +1116,12 @@ class GbifAPI(APIQuery):
             for r in goodrecs:
                 stdrecs.append(cls._standardize_gbif_name(r))
         std_output[S2N.COUNT_KEY] = len(stdrecs)
-        if stdrecs:
-            # TODO: standardize_record and provide schema link
-            std_output['record_format'] = 'https://www.gbif.org/developer/species'
-            std_output[S2N.RECORDS_KEY] = stdrecs
-        if errmsgs:
-            std_output['errors'] = errmsgs
+        # TODO: standardize_record and provide schema link
+        std_output[S2N.RECORD_FORMAT_KEY] = GBIF.RECORD_FORMAT_NAME
+        std_output[S2N.RECORDS_KEY] = stdrecs
+        std_output[S2N.ERRORS_KEY] = errmsgs
         return std_output
-    
+        
     # ...............................................
     @classmethod
     def _standardize_record(cls, rec, record_format):
@@ -1159,7 +1167,7 @@ class GbifAPI(APIQuery):
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
             std_output[S2N.RECORDS_KEY] = stdrecs
-            std_output['record_format'] = record_format
+            std_output[S2N.RECORD_FORMAT_KEY] = record_format
         std_output[S2N.ERRORS_KEY] = errmsgs
         return std_output
     
@@ -1195,7 +1203,8 @@ class GbifAPI(APIQuery):
                 'dataset_key': dataset_key, 'offset': 0, 
                 'limit': limit}, logger=logger)
         qry_meta = {
-            S2N.DATASET_ID_KEY: dataset_key, S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.DATASET_ID_KEY: dataset_key, S2N.PROVIDER_KEY: cls.PROVIDER,
+            S2N.PROVIDER_QUERY_KEY: api.url}
         try:
             api.query()
         except Exception as e:
@@ -1242,7 +1251,10 @@ class GbifAPI(APIQuery):
         api = GbifAPI(
             service=GBIF.SPECIES_SERVICE, key='match',
             other_filters=other_filters, logger=logger)
-        qry_meta = {S2N.NAME_KEY: name_clean, S2N.PROVIDER_QUERY_KEY: api.url}
+        qry_meta = {
+            S2N.NAME_KEY: name_clean, S2N.PROVIDER_KEY: cls.PROVIDER,
+            S2N.PROVIDER_QUERY_KEY: api.url}
+        
         try:
             api.query()
         except Exception as e:
@@ -1251,7 +1263,8 @@ class GbifAPI(APIQuery):
                 S2N.ERRORS_KEY: [cls._get_error_message(err=e)]}
         else:
             # Standardize output from provider response
-            std_output = cls._standardize_match_output(api.output, status)
+            std_output = cls._standardize_match_output(
+                api.output, status, err=api.error)
         # Add query parameters to output
         for k, v in qry_meta.items():
             std_output[k] = v
@@ -1270,23 +1283,37 @@ class GbifAPI(APIQuery):
             A record as a dictionary containing the record count of occurrences
             with this accepted taxon, and a URL to retrieve these records.            
         """
-        output = {S2N.COUNT_KEY: -1, 'taxon_key': taxon_key}
+        std_output = {S2N.COUNT_KEY: 0}
         errmsgs = []
         # Query GBIF
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'taxonKey': taxon_key}, logger=logger)
-        api.query_by_get()
-        # Parse results (should be only one)
-        if api.output is not None:
+        qry_meta = {
+            'taxon_key': taxon_key, S2N.PROVIDER_KEY: cls.PROVIDER,
+            S2N.PROVIDER_QUERY_KEY: api.url}
+        
+        try:
+            api.query_by_get()
+        except Exception as e:
+            errmsgs.append(cls._get_error_message(err=e))
+        else:
             try:
-                output[S2N.COUNT_KEY] = api.output[S2N.COUNT_KEY]
-            except:
-                errmsgs.append(
-                    cls._get_error_message(msg='Missing `count` element'))
-        output['occurrence_url'] = '{}/{}'.format(GBIF.SPECIES_URL, taxon_key)
-        output['provider_query'] = api.url
-        return output
+                std_output[S2N.COUNT_KEY] = api.output['count']
+            except Exception as e:
+                errmsgs.append(cls._get_error_message(
+                    msg='Missing `count` element'))
+            else:
+                if std_output[S2N.COUNT_KEY] < 1:
+                    errmsgs.append(cls._get_error_message(msg='No match'))
+                else:
+                    std_output['occurrence_url'] = '{}/{}'.format(
+                        GBIF.SPECIES_URL, taxon_key)
+        # Add query parameters to output
+        for k, v in qry_meta.items():
+            std_output[k] = v
+        std_output[S2N.ERRORS_KEY] = errmsgs
+        return std_output
 
     # ......................................
     @classmethod
@@ -1450,6 +1477,7 @@ class GbifAPI(APIQuery):
 # .............................................................................
 class IdigbioAPI(APIQuery):
     """Class to query iDigBio APIs and return results"""
+    PROVIDER = ServiceProvider.iDigBio['name']
     # ...............................................
     def __init__(self, q_filters=None, other_filters=None, filter_string=None,
                  headers=None, logger=None):
@@ -1531,7 +1559,8 @@ class IdigbioAPI(APIQuery):
               '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + occid + '"}'}
         api = IdigbioAPI(other_filters=qf, logger=logger)
         qry_meta = {
-            S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: cls.PROVIDER,
+            S2N.PROVIDER_QUERY_KEY: api.url}
 
         try:
             api.query()
@@ -1706,6 +1735,7 @@ class IdigbioAPI(APIQuery):
 # .............................................................................
 class LifemapperAPI(APIQuery):
     """Class to query Lifemapper portal APIs and return results"""
+    PROVIDER = ServiceProvider.Lifemapper['name']
     # ...............................................
     def __init__(
             self, resource=Lifemapper.PROJ_RESOURCE, ident=None, command=None,  
@@ -1819,7 +1849,7 @@ class LifemapperAPI(APIQuery):
                 except Exception as e:
                     errmsgs.append(cls._get_error_message(err=e))
             # TODO: revisit record format for other map providers
-            std_output['record_format'] = Lifemapper.RECORD_FORMAT_MAP
+            std_output[S2N.RECORD_FORMAT_KEY] = Lifemapper.RECORD_FORMAT_MAP
             std_output[S2N.RECORDS_KEY] = stdrecs
         std_output[S2N.ERRORS_KEY] = errmsgs
         return std_output
@@ -1994,7 +2024,10 @@ class LifemapperAPI(APIQuery):
             other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
             resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
-        qry_meta = {S2N.NAME_KEY: name, S2N.PROVIDER_QUERY_KEY: api.url}
+        qry_meta = {
+            S2N.NAME_KEY: name, S2N.PROVIDER_KEY: cls.PROVIDER,
+            S2N.PROVIDER_QUERY_KEY: api.url}
+        
         try:
             api.query_by_get()
         except Exception as e:
@@ -2052,6 +2085,7 @@ http://client.lifemapper.org/api/v2/occurrence?displayname=Conibiosoma%20elongat
 # .............................................................................
 class MorphoSourceAPI(APIQuery):
     """Class to query Specify portal APIs and return results"""
+    PROVIDER = ServiceProvider.MorphoSource['name']
     # ...............................................
     def __init__(
             self, resource=MorphoSource.OCC_RESOURCE, q_filters={}, 
@@ -2100,7 +2134,9 @@ class MorphoSourceAPI(APIQuery):
             q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
             other_filters={'start': start, 'limit': MorphoSource.LIMIT})
         qry_meta = {
-            S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: cls.PROVIDER,
+            S2N.PROVIDER_QUERY_KEY: api.url}
+        
         try:
             api.query_by_get()
         except Exception as e:
@@ -2120,6 +2156,7 @@ class MorphoSourceAPI(APIQuery):
 # .............................................................................
 class SpecifyPortalAPI(APIQuery):
     """Class to query Specify portal APIs and return results"""
+    PROVIDER = ServiceProvider.Specify['name']
     # ...............................................
     def __init__(self, url=None, logger=None):
         """Constructor for SpecifyPortalAPI class"""
@@ -2159,7 +2196,7 @@ class SpecifyPortalAPI(APIQuery):
                     msg = cls._get_error_message(err=e)
                     errmsgs.append(msg)
             # TODO: make sure Specify is using full DWC
-            std_output['record_format'] = DWC.SCHEMA
+            std_output[S2N.RECORD_FORMAT_KEY] = DWC.SCHEMA
             std_output[S2N.RECORDS_KEY] = stdrecs
         std_output[S2N.ERRORS_KEY] = errmsgs
         return std_output
@@ -2178,7 +2215,8 @@ class SpecifyPortalAPI(APIQuery):
             database.  URLs returned for these records begin with 'unknown_url'.
         """
         std_output = {S2N.COUNT_KEY: 0}
-        qry_meta = {S2N.PROVIDER_QUERY_KEY: url}
+        qry_meta = {S2N.PROVIDER_KEY: cls.PROVIDER, S2N.PROVIDER_QUERY_KEY: url}
+        
         if url.startswith('http'):
             api = APIQuery(url, headers=JSON_HEADERS, logger=logger)
     

@@ -1,6 +1,6 @@
 import cherrypy
 
-from LmRex.common.lmconstants import ServiceProvider, APIService
+from LmRex.common.lmconstants import (S2N, ServiceProvider, APIService)
 from LmRex.tools.api import (
     GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI, BisonAPI)
 from LmRex.services.api.v1.base import _S2nService
@@ -15,18 +15,31 @@ class _OccurrenceSvc(_S2nService):
 # .............................................................................
 @cherrypy.expose
 class OccGBIF(_OccurrenceSvc):
-    PROVIDER = ServiceProvider.GBIF
     # ...............................................
     def get_records(self, occid, count_only):
         output = GbifAPI.get_occurrences_by_occid(
             occid, count_only=count_only)
-        output['service'] = self.SERVICE_TYPE
-        output['provider'] = self.PROVIDER['name']
+        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
         return output
 
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None, count_only=None, **kwargs):
+        """Get one or more occurrence records for a dwc:occurrenceID from the 
+        GBIF occurrence record service.
+        
+        Args:
+            occid: an occurrenceID, a DarwinCore field intended for a globally 
+                unique identifier (https://dwc.tdwg.org/list/#dwc_occurrenceID)
+            count_only: flag to indicate whether to return only a count, or 
+                a count and records
+            kwargs: any additional keyword arguments are ignored
+
+        Return:
+            a dictionary with keys for each service queried.  Values contain 
+                either a list of dictionaries/records returned for that service 
+                or a count.
+        """
         usr_params = self._standardize_params(occid=occid, count_only=count_only)
         occurrence_id = usr_params['occid']
         if occurrence_id is None:
@@ -38,17 +51,29 @@ class OccGBIF(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccIDB(_OccurrenceSvc):
-    PROVIDER = ServiceProvider.iDigBio
-    # ...............................................
     def get_records(self, occid, count_only):
         output = IdigbioAPI.get_occurrences_by_occid(occid, count_only=count_only)
-        output['service'] = self.SERVICE_TYPE
-        output['provider'] = self.PROVIDER['name']
+        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
         return output
 
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None, count_only=None, **kwargs):
+        """Get one or more occurrence records for a dwc:occurrenceID from the
+        iDigBio occurrence record service.
+        
+        Args:
+            occid: an occurrenceID, a DarwinCore field intended for a globally 
+                unique identifier (https://dwc.tdwg.org/list/#dwc_occurrenceID)
+            count_only: flag to indicate whether to return only a count, or 
+                a count and records
+            kwargs: any additional keyword arguments are ignored
+
+        Return:
+            a dictionary with keys for each service queried.  Values contain 
+                either a list of dictionaries/records returned for that service 
+                or a count.
+        """
         usr_params = self._standardize_params(occid=occid, count_only=count_only)
         occurrence_id = usr_params['occid']
         if occurrence_id is None:
@@ -59,13 +84,11 @@ class OccIDB(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccMopho(_OccurrenceSvc):
-    PROVIDER = ServiceProvider.MorphoSource
     # ...............................................
     def get_records(self, occid, count_only):
         output = MorphoSourceAPI.get_occurrences_by_occid_page1(
             occid, count_only=count_only)
-        output['service'] = self.SERVICE_TYPE
-        output['provider'] = self.PROVIDER['name']
+        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -81,7 +104,6 @@ class OccMopho(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccSpecify(_OccurrenceSvc):
-    PROVIDER = ServiceProvider.Specify
     # ...............................................
     def get_records(self, url, occid, count_only):
         msg = 'Spocc failed: url = {}, occid = {}'.format(url, occid)
@@ -98,14 +120,29 @@ class OccSpecify(_OccurrenceSvc):
         if url is not None:
             output = SpecifyPortalAPI.get_specify_record(url, count_only)
         else:
-            output = {'count': 0, 'info': msg}
-        output['service'] = self.SERVICE_TYPE
-        output['provider'] = self.PROVIDER['name']
+            output = {S2N.COUNT_KEY: 0, S2N.ERRORS_KEY: [msg]}
+        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
         return output 
     
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None, url=None, count_only=False, **kwargs):
+        """Get one or more occurrence records for a dwc:occurrenceID from the
+        Specify occurrence record service.
+        
+        Args:
+            occid: an occurrenceID, a DarwinCore field intended for a globally 
+                unique identifier (https://dwc.tdwg.org/list/#dwc_occurrenceID)
+            url: a URL to directly access the Specify record
+            count_only: flag to indicate whether to return only a count, or 
+                a count and records
+            kwargs: any additional keyword arguments are ignored
+
+        Return:
+            a dictionary with keys for each service queried.  Values contain 
+                either a list of dictionaries/records returned for that service 
+                or a count.
+        """
         usr_params = self._standardize_params(occid=occid, url=url)
         if usr_params['url'] is None and usr_params['occid'] is None:
             return self._show_online()
@@ -141,7 +178,7 @@ class OccTentacles(_OccurrenceSvc):
             except:
                 pass
         else:
-            sp_output = {'count': 0, 'error': msg}
+            sp_output = {S2N.COUNT_KEY: 0, S2N.ERRORS_KEY: [msg]}
         all_output['records'].append(
             {ServiceProvider.Specify['name']: sp_output})
         
@@ -181,6 +218,21 @@ class OccTentacles(_OccurrenceSvc):
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None, count_only=None, **kwargs):
+        """Get one or more occurrence records for a dwc:occurrenceID from each
+        available occurrence record service.
+        
+        Args:
+            occid: an occurrenceID, a DarwinCore field intended for a globally 
+                unique identifier (https://dwc.tdwg.org/list/#dwc_occurrenceID)
+            count_only: flag to indicate whether to return only a count, or 
+                a count and records
+            kwargs: any additional keyword arguments are ignored
+
+        Return:
+            a dictionary with keys for each service queried.  Values contain 
+                either a list of dictionaries/records returned for that service 
+                or a count.
+        """
         usr_params = self._standardize_params(occid=occid, count_only=count_only)
         return self.get_records(usr_params)
         
@@ -189,10 +241,6 @@ if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TST_VALUES   
     
-    gocc = DatasetGBIF()
-    gout = gocc.GET(TST_VALUES.DS_GUIDS_W_SPECIFY_ACCESS_RECS[0], count_only=True)
-    print(gout) 
-
     print('*** Return invalid URL')
     for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
         # Queries Specify without ARK URL
@@ -215,10 +263,23 @@ if __name__ == '__main__':
     for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
         # Queries all services
         s2napi = OccTentacles()
-        all_output = s2napi.GET(occid=occid, count_only=False)
-        
-        for svc in all_output['records']:
-            for k, v in svc.items():
-                print('  {}: {}'.format(k, v))
-            print('')
+        for count_only in [True, False]:
+            required_keys = S2N.required_for_occsvc_keys()
+            if count_only is True:
+                required_keys = S2N.required_for_occsvc_norecs_keys()
+
+            all_output = s2napi.GET(occid=occid, count_only=count_only)
+            
+            for svcdict in all_output['records']:
+                for svc, one_output in svcdict.items():
+                    for k, v in one_output.items():
+                        print('  {}: {}'.format(k, v))
+                    
+                    for key in required_keys:
+                        try:
+                            one_output[key]
+                        except:
+                            print('Missing `{}` output element'.format(key))
+    
+                print('')
 

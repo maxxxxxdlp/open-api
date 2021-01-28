@@ -25,8 +25,56 @@ class S2N:
     NAME_KEY = 'name'
     OCCURRENCE_ID_KEY = 'occurrenceid'
     DATASET_ID_KEY = 'dataset_key'
+    SERVICE_KEY = 'service'
     PROVIDER_KEY = 'provider'
     PROVIDER_QUERY_KEY = 'provider_query'
+    
+    @classmethod
+    def all_keys(cls):
+        return  [
+            cls.COUNT_KEY, cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY, 
+            cls.ERRORS_KEY, cls.NAME_KEY, cls.OCCURRENCE_ID_KEY, 
+            cls.DATASET_ID_KEY, cls.SERVICE_KEY, cls.PROVIDER_KEY, 
+            cls.PROVIDER_QUERY_KEY]
+
+    @classmethod
+    def required_keys(cls):
+        return  [
+            cls.COUNT_KEY, cls.ERRORS_KEY, cls.SERVICE_KEY, cls.PROVIDER_KEY, 
+            cls.PROVIDER_QUERY_KEY]
+
+    @classmethod
+    def required_for_namesvc_keys(cls):
+        keys = cls.required_keys()
+        keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
+        keys.append(cls.NAME_KEY)
+        return keys
+    
+    @classmethod
+    def required_for_occsvc_keys(cls):
+        keys = cls.required_keys()
+        keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
+        keys.append(cls.OCCURRENCE_ID_KEY)
+        return keys
+    
+    @classmethod
+    def required_for_occsvc_norecs_keys(cls):
+        keys = cls.required_keys()
+        keys.append(cls.OCCURRENCE_ID_KEY)
+        return keys
+    
+    @classmethod
+    def required_for_datasetsvc_keys(cls):
+        keys = cls.required_keys()
+        keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
+        keys.append(cls.DATASET_ID_KEY)
+        return keys
+    
+    @classmethod
+    def required_for_datasetsvc_norecs_keys(cls):
+        keys = cls.required_keys()
+        keys.append(cls.DATASET_ID_KEY)
+        return keys
     
 # .............................................................................
 class DWC:
@@ -342,6 +390,8 @@ class SPECIFY:
     """
     DATA_DUMP_DELIMITER = '\t'
     RECORD_FORMAT = 'http://rs.tdwg.org/dwc.json'
+    RESOLVER_COLLECTION = 'spcoco'
+    RESOLVER_LOCATION = 'notyeti-192.lifemapper.org'
     
 # ......................................................
 class GBIF:

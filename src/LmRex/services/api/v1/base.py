@@ -162,10 +162,9 @@ class _S2nService:
             scenariocode=None, bbox=None, color=None, exceptions=None, height=None, 
             layers=None, request=None, frmat=None, srs=None, transparent=None, 
             width=None, do_match=True):
-        """
-        Standardize the parameters for all Name Services into a dictionary with 
-        all keys as standardized parameter names and values as correctly-typed 
-        user values or defaults. 
+        """Standardize the parameters for all Name Services into a dictionary 
+        with all keys as standardized parameter names and values as 
+        correctly-typed user values or defaults. 
         
         Note: 
             This function sets default values, but defaults may be changed for 

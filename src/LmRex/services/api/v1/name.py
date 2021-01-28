@@ -1,6 +1,7 @@
 import cherrypy
 
-from LmRex.common.lmconstants import (ServiceProvider, APIService, TST_VALUES)
+from LmRex.common.lmconstants import (
+    S2N, ServiceProvider, APIService, TST_VALUES)
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.tools.api import (GbifAPI, ItisAPI)
 
@@ -13,14 +14,13 @@ class _NameSvc(_S2nService):
 # .............................................................................
 @cherrypy.expose
 class NameGBIF(_NameSvc):
-    PROVIDER = ServiceProvider.GBIF
     # ...............................................
     def get_gbif_matching_taxon(self, namestr, gbif_status, gbif_count):
-        output = {}
+        all_output = {}
         # Get name from Gbif        
-        moutput = GbifAPI.match_name(namestr, status=gbif_status)
+        output1 = GbifAPI.match_name(namestr, status=gbif_status)
         try:        
-            good_names = moutput['records']
+            good_names = output1[S2N.RECORDS_KEY]
         except:
             good_names = []
         # Add occurrence count to name records
@@ -37,13 +37,16 @@ class NameGBIF(_NameSvc):
                     namerec['occurrence_count'] = output2['count']
                     namerec['occurrence_url'] = output2['occurrence_url']
         # Assemble output
-        output['count'] = moutput['count']
-        output['record_format'] = moutput['record_format']
-        output['records'] = good_names
-        output['provider_query'] = moutput['provider_query']
-        output['service'] = self.SERVICE_TYPE
-        output['provider'] = self.PROVIDER['name']
-        return output
+        for key in [
+            S2N.COUNT_KEY, S2N.RECORD_FORMAT_KEY, S2N.NAME_KEY,
+            S2N.PROVIDER_KEY, S2N.ERRORS_KEY]:
+            all_output[key] = output1[key]
+            
+        all_output[S2N.PROVIDER_QUERY_KEY] = [
+            output1[S2N.PROVIDER_QUERY_KEY], output2[S2N.PROVIDER_QUERY_KEY]]
+        all_output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+        all_output[S2N.RECORDS_KEY] = good_names
+        return all_output
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -52,19 +55,20 @@ class NameGBIF(_NameSvc):
         
         Args:
             namestr: a scientific name
-            gbif_accepted: flag to indicate whether to filter by 
-                status='accepted' 
+            gbif_accepted: flag to indicate whether to limit to 'valid' or 
+                'accepted' taxa in the GBIF Backbone Taxonomy
             gbif_count: flag to indicate whether to count GBIF occurrences of 
                 this taxon
-            kwargs: additional keyword arguments - to be ignored
+            kwargs: any additional keyword arguments are ignored
+            
         Return:
             a dictionary containing a count and list of dictionaries of 
                 GBIF records corresponding to names in the GBIF backbone 
                 taxonomy
+                
         Note: gbif_parse flag to parse a scientific name into canonical name is 
-            unnecessary for this method, as the match service finds the closest
+            unnecessary for this method, as GBIF's match service finds the closest
             match regardless of whether author and date are included
-
         """
         usr_params = self._standardize_params(
             namestr=namestr, gbif_accepted=gbif_accepted, gbif_count=gbif_count)
@@ -75,53 +79,49 @@ class NameGBIF(_NameSvc):
             return self.get_gbif_matching_taxon(
                 namestr, usr_params['gbif_status'], usr_params['gbif_count'])
 
-# .............................................................................
-@cherrypy.expose
-class NameITIS(_NameSvc):
-    """
-    Note:
-        Not currently used, this is too slow.
-    """
-    PROVIDER = ServiceProvider.ITISWebService
-    # ...............................................
-    def get_itis_taxon(self, namestr):
-        output = ItisAPI.match_name(namestr)
-        output['service'] = self.SERVICE_TYPE
-        output['provider'] = self.PROVIDER['name']
-        return output
-
-    # ...............................................
-    @cherrypy.tools.json_out()
-    def GET(self, namestr=None, gbif_parse=True, **kwargs):
-        """Get ITIS accepted taxon records for a scientific name string
-        
-        Args:
-            namestr: a scientific name
-            gbif_parse: flag to indicate whether to first use the GBIF parser 
-                to parse a scientific name into canonical name 
-            kwargs: additional keyword arguments - to be ignored
-        Return:
-            a dictionary containing a count and list of dictionaries of 
-                ITIS records corresponding to names in the ITIS taxonomy
-        """
-        usr_params = self._standardize_params(
-            namestr=namestr, gbif_parse=gbif_parse)
-        namestr = usr_params['namestr']
-        if not namestr:
-            return self._show_online()
-        else:
-            return self.get_itis_taxon(namestr)
+# # .............................................................................
+# @cherrypy.expose
+# class NameITIS(_NameSvc):
+#     """
+#     Note:
+#         Not currently used, this is too slow.
+#     """
+#     # ...............................................
+#     def get_itis_taxon(self, namestr):
+#         output = ItisAPI.match_name(namestr)
+#         output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+#         return output
+# 
+#     # ...............................................
+#     @cherrypy.tools.json_out()
+#     def GET(self, namestr=None, gbif_parse=True, **kwargs):
+#         """Get ITIS accepted taxon records for a scientific name string
+#         
+#         Args:
+#             namestr: a scientific name
+#             gbif_parse: flag to indicate whether to first use the GBIF parser 
+#                 to parse a scientific name into canonical name 
+#             kwargs: any additional keyword arguments are ignored
+#         Return:
+#             a dictionary containing a count and list of dictionaries of 
+#                 ITIS records corresponding to names in the ITIS taxonomy
+#         """
+#         usr_params = self._standardize_params(
+#             namestr=namestr, gbif_parse=gbif_parse)
+#         namestr = usr_params['namestr']
+#         if not namestr:
+#             return self._show_online()
+#         else:
+#             return self.get_itis_taxon(namestr)
 
 # .............................................................................
 @cherrypy.expose
 class NameITISSolr(_NameSvc):
-    PROVIDER = ServiceProvider.ITISSolr
     # ...............................................
     def get_itis_accepted_taxon(self, namestr, itis_accepted, kingdom):
         output = ItisAPI.match_name(
             namestr, itis_accepted=itis_accepted, kingdom=kingdom)
-        output['service'] = self.SERVICE_TYPE
-        output['provider'] = self.PROVIDER['name']
+        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -136,15 +136,15 @@ class NameITISSolr(_NameSvc):
                 to parse a scientific name into canonical name 
             itis_accepted: flag to indicate whether to limit to 'valid' or 
                 'accepted' taxa in the ITIS Taxonomy
-            kingdom: filter records on kingdom (TODO)
-            kwargs: additional keyword arguments - to be ignored
+            kingdom: not yet implemented
+            kwargs: any additional keyword arguments are ignored
+            
         Return:
             a dictionary containing a count and list of dictionaries of 
                 ITIS records corresponding to names in the ITIS taxonomy
 
         Todo:
-            Find ITIS status strings
-            Test parameters/boolean
+            Filter on kingdom
         """
         usr_params = self._standardize_params(
             namestr=namestr, itis_accepted=itis_accepted, gbif_parse=gbif_parse)
@@ -186,8 +186,17 @@ class NameTentacles(_NameSvc):
         
         Args:
             namestr: a scientific name
+            gbif_accepted: flag to indicate whether to limit to 'valid' or 
+                'accepted' taxa in the GBIF Backbone Taxonomy
             gbif_parse: flag to indicate whether to first use the GBIF parser 
-                to parse a scientific name into canonical name 
+                to parse a scientific name into canonical name
+            gbif_count: flag to indicate whether to count GBIF occurrences of 
+                this taxon
+            itis_accepted: flag to indicate whether to limit to 'valid' or 
+                'accepted' taxa in the ITIS Taxonomy
+            kingdom: not yet implemented
+            kwargs: any additional keyword arguments are ignored
+
         Return:
             a dictionary with keys for each service queried.  Values contain 
                 either a list of dictionaries/records returned for that service 
@@ -216,6 +225,15 @@ if __name__ == '__main__':
             for svc, one_output in all_output.items():
                 for k, v in one_output.items():
                     print('  {}: {}'.format(k, v))
+                for key in S2N.required_for_namesvc_keys():
+                    try:
+                        one_output[key]
+                    except:
+                        if (len(one_output(S2N.ERRORS_KEY)) > 0 and 
+                            one_output(S2N.COUNT_KEY) == 0):
+                            pass
+                        else:
+                            print('Missing `{}` output element'.format(key))
                 print('')
 #
 #             api = NameGBIF()
