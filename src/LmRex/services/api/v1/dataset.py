@@ -106,7 +106,7 @@ if __name__ == '__main__':
     from LmRex.common.lmconstants import TST_VALUES
     
     count_only = False
-    dsid = TST_VALUES.FISH_DS_GUIDS[0]
+    dsid = TST_VALUES.GUIDS_W_SPECIFY_ACCESS[0]
     
     s2napi = DatasetGBIF()
     gdoutput = s2napi.GET(dataset_key=dsid, count_only=True)

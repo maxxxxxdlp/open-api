@@ -62,7 +62,7 @@ class OccMopho(_OccurrenceSvc):
     PROVIDER = ServiceProvider.MorphoSource
     # ...............................................
     def get_records(self, occid, count_only):
-        output = MorphoSourceAPI.get_occurrences_page1_by_occid(
+        output = MorphoSourceAPI.get_occurrences_by_occid_page1(
             occid, count_only=count_only)
         output['service'] = self.SERVICE_TYPE
         output['provider'] = self.PROVIDER['name']

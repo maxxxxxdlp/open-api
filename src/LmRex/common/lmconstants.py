@@ -16,8 +16,49 @@ KU_IPT_RSS_URL = 'http://ipt.nhm.ku.edu:8080/ipt/rss.do'
 ICH_RSS_URL = 'https://ichthyology.specify.ku.edu/export/rss'
 
 SPECIFY_ARK_PREFIX = 'http://spcoco.org/ark:/'
-DWC_URL = 'http://rs.tdwg.org/dwc'
-DWC_RECORD_TITLE = 'digital specimen object'
+
+class S2N:
+    COUNT_KEY = 'count'
+    RECORD_FORMAT_KEY = 'record_format'
+    RECORDS_KEY = 'records'
+    ERRORS_KEY = 'errors'
+    NAME_KEY = 'name'
+    OCCURRENCE_ID_KEY = 'occurrenceid'
+    DATASET_ID_KEY = 'dataset_key'
+    PROVIDER_KEY = 'provider'
+    PROVIDER_QUERY_KEY = 'provider_query'
+    
+# .............................................................................
+class DWC:
+    QUALIFIER = 'dwc:'
+    URL = 'http://rs.tdwg.org/dwc'
+    SCHEMA = 'http://rs.tdwg.org/dwc.json'
+    RECORD_TITLE = 'digital specimen object'
+
+# .............................................................................
+class DWCA:
+    NS = '{http://rs.tdwg.org/dwc/text/}'
+    META_FNAME = 'meta.xml'
+    DATASET_META_FNAME = 'eml.xml'
+    # Meta.xml element/attribute keys
+    DELIMITER_KEY = 'fieldsTerminatedBy'
+    LINE_DELIMITER_KEY = 'linesTerminatedBy'
+    QUOTE_CHAR_KEY = 'fieldsEnclosedBy'
+    LOCATION_KEY = 'location'
+    UUID_KEY = 'id'
+    FLDMAP_KEY = 'fieldname_index_map'
+    FLDS_KEY = 'fieldnames'
+    CORE_FIELDS_OF_INTEREST = [
+        'id',
+        'institutionCode',
+        'collectionCode',
+        'datasetName',
+        'basisOfRecord',
+        'year',
+        'month',
+        'day']
+    # Human readable
+    CORE_TYPE = '{}/terms/Occurrence'.format(DWC.URL)
 
 JSON_HEADERS = {'Content-Type': 'application/json'}
 CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, CONFIG_DIR, 'cherrypy.conf')
@@ -114,35 +155,10 @@ class ServiceProvider:
 
 
 # .............................................................................
-class DWCA:
-    NS = '{http://rs.tdwg.org/dwc/text/}'
-    META_FNAME = 'meta.xml'
-    DATASET_META_FNAME = 'eml.xml'
-    # Meta.xml element/attribute keys
-    DELIMITER_KEY = 'fieldsTerminatedBy'
-    LINE_DELIMITER_KEY = 'linesTerminatedBy'
-    QUOTE_CHAR_KEY = 'fieldsEnclosedBy'
-    LOCATION_KEY = 'location'
-    UUID_KEY = 'id'
-    FLDMAP_KEY = 'fieldname_index_map'
-    FLDS_KEY = 'fieldnames'
-    
-    CORE_TYPE = '{}/terms/Occurrence'.format(DWC_URL)
-    CORE_FIELDS_OF_INTEREST = [
-        'id',
-        'institutionCode',
-        'collectionCode',
-        'datasetName',
-        'basisOfRecord',
-        'year',
-        'month',
-        'day']
-# .............................................................................
 
 URL_ESCAPES = [[" ", "\%20"], [",", "\%2C"]]
 ENCODING = 'utf-8'
 
-DWC_QUALIFIER = 'dwc:'
 
 """  
 http://preview.specifycloud.org/static/depository/export_feed/kui-dwca.zip
@@ -185,6 +201,9 @@ class BISON:
     EXTENDED_PARAMS_KEY = 'params'
     DATASET_ID_KEY = 'resourceID'
     OCCURRENCE_ID_KEY = 'occurrenceID'
+    COUNT_KEY = 'total'
+    RECORDS_KEY = 'results'
+    
     LIMIT = 1000
     # Ends in : to allow appending unique id
     LINK_PREFIX = ('https://bison.usgs.gov/solr/occurrences/select/' +
@@ -201,6 +220,7 @@ class BISON:
     MAX_POINT_COUNT = 5000000
     BBOX = (24, -125, 50, -66)
     BINOMIAL_REGEX = '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/'
+    RECORD_FORMAT = 'BISON Solr API at https://bison.usgs.gov/doc/api.jsp'
 
 # .............................................................................
 class BisonQuery:
@@ -293,6 +313,8 @@ class Lifemapper:
     VALID_COLORS = [
         'red', 'gray', 'green', 'blue', 'safe', 'pretty', 'yellow', 
         'fuschia', 'aqua', 'bluered', 'bluegreen', 'greenred']
+    # TODO: replace with a schema definition
+    RECORD_FORMAT_MAP = 'lifemapper_layer schema TBD'
     
     @staticmethod
     def valid_scenario_codes():
@@ -312,12 +334,14 @@ class MorphoSource:
     TOTAL_KEY = 'totalResults'
     RECORDS_KEY = 'results'
     LIMIT = 1000
+    RECORD_FORMAT = 'https://www.morphosource.org/About/API'
     
 # ......................................................
 class SPECIFY:
     """Specify constants enumeration
     """
     DATA_DUMP_DELIMITER = '\t'
+    RECORD_FORMAT = 'http://rs.tdwg.org/dwc.json'
     
 # ......................................................
 class GBIF:
@@ -338,6 +362,11 @@ class GBIF:
     OCCURRENCE_SERVICE = 'occurrence'
     DATASET_SERVICE = 'dataset'
     ORGANIZATION_SERVICE = 'organization'
+    
+    COUNT_KEY = 'count'
+    RECORDS_KEY = 'results'
+    RECORD_FORMAT_NAME = 'https://www.gbif.org/developer/species'
+    RECORD_FORMAT_OCCURRENCE = 'https://www.gbif.org/developer/occurrence'
 
     TAXONKEY_FIELD = 'specieskey'
     TAXONNAME_FIELD = 'sciname'
@@ -394,6 +423,9 @@ class Itis:
     TAXONOMY_HIERARCHY_QUERY = 'getFullHierarchyFromTSN'
     VERNACULAR_QUERY = 'getCommonNamesFromTSN'    
     NAMES_FROM_TSN_QUERY = 'getAcceptedNamesFromTSN'
+    RECORD_FORMAT = 'https://www.itis.gov/solr_documentation.html'
+    COUNT_KEY = 'numFound'
+    RECORDS_KEY = 'docs'
     # ...........
     # Web Services
     WEBSVC_URL = 'http://www.itis.gov/ITISWebService/services/ITISService'
@@ -435,7 +467,6 @@ class Idigbio:
     LINK_FIELD = 'idigbiourl'
     GBIFID_FIELD = 'taxonid'
     BINOMIAL_REGEX = "(^[^ ]*) ([^ ]*)$"
-    OCCURRENCE_ITEMS_KEY = 'items'
     RECORD_CONTENT_KEY = 'data'
     RECORD_INDEX_KEY = 'indexTerms'
     QUALIFIER = 'idigbio:'
@@ -444,6 +475,9 @@ class Idigbio:
     FILTERS = {'limit': 5000,
                'offset': 0,
                'no_attribution': False}
+    COUNT_KEY = 'itemCount'
+    RECORDS_KEY = 'items'
+    RECORD_FORMAT = 'https://github.com/idigbio/idigbio-search-api/wiki'
     
 
 # .............................................................................

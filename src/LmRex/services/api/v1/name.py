@@ -35,7 +35,7 @@ class NameGBIF(_NameSvc):
                     # Add more info to each record
                     output2 = GbifAPI.count_occurrences_for_taxon(taxon_key)
                     namerec['occurrence_count'] = output2['count']
-                    namerec['occurrences_url'] = output2['url']
+                    namerec['occurrence_url'] = output2['occurrence_url']
         # Assemble output
         output['count'] = moutput['count']
         output['record_format'] = moutput['record_format']
@@ -205,21 +205,18 @@ class NameTentacles(_NameSvc):
 # .............................................................................
 if __name__ == '__main__':
     # test    
-#     for namestr in TST_VALUES.NAMES[:3]:
-#         for gparse in (True, False):
-    for namestr in ['Plagioecia patina (Lamarck, 1816)']:
-        print('Name = {}'.format(namestr))        
+    for namestr in TST_VALUES.NAMES[:3]:
         for gparse in [False]:
             print('Name = {}  GBIF parse = {}'.format(namestr, gparse))
-#             s2napi = NameTentacles()
-#             all_output  = s2napi.GET(
-#                 namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
-#                 gbif_count=True, itis_accepted=True, kingdom=None)
-#              
-#             for svc, one_output in all_output.items():
-#                 for k, v in one_output.items():
-#                     print('  {}: {}'.format(k, v))
-#                 print('')
+            s2napi = NameTentacles()
+            all_output  = s2napi.GET(
+                namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
+                gbif_count=True, itis_accepted=True, kingdom=None)
+              
+            for svc, one_output in all_output.items():
+                for k, v in one_output.items():
+                    print('  {}: {}'.format(k, v))
+                print('')
 #
 #             api = NameGBIF()
 #             std_output  = api.GET(
@@ -231,10 +228,10 @@ if __name__ == '__main__':
 #             print('')
 
         
-            iapi = NameITISSolr()
-            iout = iapi.GET(
-                namestr=namestr, gbif_parse=gparse, itis_accepted=True, kingdom=None)
-            print('  S2n ITIS Solr GET')
-            for k, v in iout.items():
-                print('  {}: {}'.format(k, v))
-            print('')
+#             iapi = NameITISSolr()
+#             iout = iapi.GET(
+#                 namestr=namestr, gbif_parse=gparse, itis_accepted=True, kingdom=None)
+#             print('  S2n ITIS Solr GET')
+#             for k, v in iout.items():
+#                 print('  {}: {}'.format(k, v))
+#             print('')

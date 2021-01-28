@@ -147,21 +147,6 @@ def main(zname, dwca_url, outpath, solr_location, testguids=[]):
         meta = datasets.pop(new_obsolete_pair[1])
         # Add value back with updated key
         datasets[new_obsolete_pair[0]] = meta
-        
-#     # Test 
-#     for oguid in testguids:
-#         doc = spsolr.query_guid(collection, oguid, solr_location=solr_location)
-#         print('{}: {}'.format(oguid, doc))logger
-#         grecs = GbifAPI.get_occurrences_by_occid(oguid)
-#         for r in grecs:
-#             print('  Returned {} with {} issues from collection {}'.format(
-#                 r['acceptedScientificName'], len(r['issues']), r['collectionCode'], oguid))
-#         irecs = IdigbioAPI.get_records_by_occid(oguid)
-#         for r in irecs:
-#             print('  Returned {} with {} flags from collection {}'.format(
-#                 r['data']['dwc:scientificName'], len(r['indexTerms']['flags']), 
-#                 r['data']['dwc:collectionCode'], oguid))
-#         print()
 
         
 
