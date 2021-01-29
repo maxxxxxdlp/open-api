@@ -37,8 +37,12 @@ class _S2nService:
 
     # ...............................................
     def _show_online(self):
-        msg = 'S^n {} {} service is online'.format(
-            self.SERVICE_TYPE, self.PROVIDER['name'])
+        try:
+            msg = 'S^n {} {} service is online'.format(
+                self.SERVICE_TYPE, self.PROVIDER['name'])
+        except:
+            msg = 'S^n {} service is online'.format(
+                self.SERVICE_TYPE)
         return {'info': msg}
 
     # ...............................................
