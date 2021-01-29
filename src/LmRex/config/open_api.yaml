@@ -2,7 +2,7 @@
 openapi: 3.0.0
 info:
   title: S^N services
-  description: '**description_needed_here**'
+  description: 'API services for returning biological metadata from available data providers'
   version: 0.0.1 pre-release buggy alpha beta 
   termsOfService: 'https://lifemapper.ku.edu/?page_id=1096'
   contact:
@@ -19,13 +19,13 @@ tags:
   - name: name
     description: Get species determination information
   - name: occ
-    description: Get species occurences
+    description: Get species occurrences
   - name: dataset
     description: Get occurrences in a dataset
   - name: resolve
-    description: '**description_needed_here**'
+    description: Get resolution metadata for a digital specimen object
   - name: map
-    description: Get URL to a projection map of a species
+    description: Get URL to map of species points and predicted distributions
 externalDocs:
   description: Lifemapper
   url: 'http://www.lifemapper.org/'
@@ -35,7 +35,7 @@ paths:
       tags:
         - name
       summary: 'Tentacles : Get species determination information'
-      description: '**description_needed_here**'
+      description: 'Get species determination information from available providers'
       operationId: nameTentacles
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -54,7 +54,7 @@ paths:
       tags:
         - name
       summary: 'GBIF : Get species determination information'
-      description: '**description_needed_here**'
+      description: 'Get species determination information from the Global Biodiversity Information Facility (GBIF) Backbone Taxonomy'
       operationId: nameGBIF
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -81,7 +81,7 @@ paths:
       tags:
         - name
       summary: 'ITIS : Get species determination information'
-      description: '**description_needed_here**'
+      description: 'Get species determination information from the Integrated Taxonomic Information System (ITIS)'
       operationId: nameITIS
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -101,8 +101,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'Tentacles : Get occurence information'
-      description: '**description_needed_here**'
+      summary: 'Tentacles : Get occurrence information'
+      description: 'Get occurrence information from available services'
       operationId: occTentacles
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -117,7 +117,7 @@ paths:
                   - $ref: '#/components/schemas/occ_tentacles'
                   - $ref: '#/components/schemas/occ_tentacles_with_records'
               examples:
-                KU Bird occurence:
+                KU Bird occurrence:
                   $ref: '#/components/examples/occ_tentacles'
                 KU Bird Occurence (count only):
                   $ref: '#/components/examples/occ_tentacles_count_only'
@@ -125,8 +125,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'ITIS : Get occurence information'
-      description: '**description_needed_here**'
+      summary: 'ITIS : Get occurrence information'
+      description: 'Get occurrence information from the Global Biodiversity Information Facility (GBIF)'
       operationId: occGBIF
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -149,8 +149,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'iDigBio : Get occurence information'
-      description: '**description_needed_here**'
+      summary: 'iDigBio : Get occurrence information'
+      description: 'Get occurrence information from the Integrated Digitized Biocollections (iDigBio)'
       operationId: occIdb
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -165,16 +165,16 @@ paths:
                   - $ref: '#/components/schemas/occ_idb'
                   - $ref: '#/components/schemas/occ_idb_with_records'
               examples:
-                KU Birds occurence:
+                KU Birds occurrence:
                   $ref: '#/components/examples/occ_idb'
-                KU Birds occurence (count only):
+                KU Birds occurrence (count only):
                   $ref: '#/components/examples/occ_idb_count_only'
   '/occ/mopho/{occurrenceid}':
     get:
       tags:
         - occ
-      summary: 'MorphoSource : Get occurence information'
-      description: '**description_needed_here**'
+      summary: 'MorphoSource : Get occurrence information'
+      description: 'Get information related to specimen occurrences from MorphoSource'
       operationId: occMopho
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -189,7 +189,7 @@ paths:
                   - $ref: '#/components/schemas/occ_mopho'
                   - $ref: '#/components/schemas/occ_mopho_with_records'
               examples:
-                KU Bird occurence:
+                KU Bird occurrence:
                   $ref: '#/components/examples/occ_mopho'
                 KU Bird Occurence (count only):
                   $ref: '#/components/examples/occ_mopho_count_only'
@@ -197,8 +197,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'Specify : Get dataset occurences information'
-      description: '**description_needed_here**'
+      summary: 'Specify : Get occurrence information'
+      description: 'Get occurrence information from Specify'
       operationId: occSpecify
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -217,8 +217,8 @@ paths:
     get:
       tags:
         - dataset
-      summary: 'ITIS : Get a list of occurences in a dataset'
-      description: '**description_needed_here**'
+      summary: 'GBIF : Get a list of occurrences for a dataset'
+      description: 'Get a list of occurrences in GBIF for a dataset'
       operationId: datasetGBIF
       parameters:
         - $ref: '#/components/parameters/datasetguid'
@@ -333,21 +333,21 @@ components:
       schema:
         $ref: '#/components/schemas/guid'
       examples:
-        Fish occurence 1:
+        Fish occurrence 1:
           value: 2c1becd5-e641-4e83-b3f5-76a55206539a
-        Fish occurence 2:
+        Fish occurrence 2:
           value: a413b456-0bff-47da-ab26-f074d9be5219
-        Fish occurence 3:
+        Fish occurrence 3:
           value: dc92869c-1ed3-11e3-bfac-90b11c41863e
-        Fish occurence 4:
+        Fish occurrence 4:
           value: 21ac6644-5c55-44fd-b258-67eb66ea231d
-        Bird occurence 1:
+        Bird occurrence 1:
           value: ed8cfa5a-7b47-11e4-8ef3-782bcb9cd5b5
-        Bird occurence 2:
+        Bird occurrence 2:
           value: f5725a56-7b47-11e4-8ef3-782bcb9cd5b5
-        Bird occurence 3:
+        Bird occurrence 3:
           value: f69696a8-7b47-11e4-8ef3-782bcb9cd5b5
-        Bird occurence 4:
+        Bird occurrence 4:
           value: 5e7ec91c-4d20-42c4-ad98-8854800e82f7
     count_only:
       name: count_only
