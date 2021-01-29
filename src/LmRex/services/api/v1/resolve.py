@@ -16,7 +16,7 @@ class _ResolveSvc(_S2nService):
 @cherrypy.expose
 class SpecifyResolve(_ResolveSvc):
     """Query the Specify Resolver with a UUID for a resolvable GUID and URL"""
-
+    PROVIDER = ServiceProvider.Specify
     # ...............................................
     @staticmethod
     def get_url_from_meta(solr_output):

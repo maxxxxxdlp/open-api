@@ -1,7 +1,7 @@
 import cherrypy
 
-from LmRex.common.lmconstants import (S2N, ServiceProvider, APIService, Lifemapper, 
-                                      TST_VALUES)
+from LmRex.common.lmconstants import (
+    S2N, ServiceProvider, APIService, Lifemapper, TST_VALUES)
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.name import NameGBIF
 from LmRex.tools.api import (LifemapperAPI, ItisAPI)
@@ -16,6 +16,7 @@ class _MapSvc(_S2nService):
 # .............................................................................
 @cherrypy.expose
 class MapLM(_MapSvc):
+    PROVIDER = ServiceProvider.Lifemapper
 #     # ...............................................
 #     def get_map_info(
 #             self, namestr, scenariocode, bbox, color, height, 
@@ -192,6 +193,7 @@ class MapBISON(_MapSvc):
     """
     Note: unfinished
     """
+    PROVIDER = ServiceProvider.BISON
     # ...............................................
     def get_itis_taxon(self, namestr):
         ioutput = ItisAPI.match_name(namestr)
@@ -223,6 +225,7 @@ class MapBISON(_MapSvc):
 # .............................................................................
 @cherrypy.expose
 class MapTentacles(_MapSvc):
+    PROVIDER = None
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
         all_output = {}

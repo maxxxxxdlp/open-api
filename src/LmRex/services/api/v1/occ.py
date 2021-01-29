@@ -15,6 +15,7 @@ class _OccurrenceSvc(_S2nService):
 # .............................................................................
 @cherrypy.expose
 class OccGBIF(_OccurrenceSvc):
+    PROVIDER = ServiceProvider.GBIF
     # ...............................................
     def get_records(self, occid, count_only):
         output = GbifAPI.get_occurrences_by_occid(
@@ -24,7 +25,7 @@ class OccGBIF(_OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=None, **kwargs):
+    def GET(self, occid=None, count_only=False, **kwargs):
         """Get one or more occurrence records for a dwc:occurrenceID from the 
         GBIF occurrence record service.
         
@@ -51,6 +52,7 @@ class OccGBIF(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccIDB(_OccurrenceSvc):
+    PROVIDER = ServiceProvider.iDigBio
     def get_records(self, occid, count_only):
         output = IdigbioAPI.get_occurrences_by_occid(occid, count_only=count_only)
         output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
@@ -58,7 +60,7 @@ class OccIDB(_OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=None, **kwargs):
+    def GET(self, occid=None, count_only=False, **kwargs):
         """Get one or more occurrence records for a dwc:occurrenceID from the
         iDigBio occurrence record service.
         
@@ -84,6 +86,7 @@ class OccIDB(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccMopho(_OccurrenceSvc):
+    PROVIDER = ServiceProvider.MorphoSource
     # ...............................................
     def get_records(self, occid, count_only):
         output = MorphoSourceAPI.get_occurrences_by_occid_page1(
@@ -93,7 +96,7 @@ class OccMopho(_OccurrenceSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=None, **kwargs):
+    def GET(self, occid=None, count_only=False, **kwargs):
         usr_params = self._standardize_params(occid=occid, count_only=count_only)
         occurrence_id = usr_params['occid']
         if occurrence_id is None:
@@ -104,6 +107,7 @@ class OccMopho(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccSpecify(_OccurrenceSvc):
+    PROVIDER = ServiceProvider.Specify
     # ...............................................
     def get_records(self, url, occid, count_only):
         msg = 'Spocc failed: url = {}, occid = {}'.format(url, occid)
@@ -153,7 +157,7 @@ class OccSpecify(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccTentacles(_OccurrenceSvc):
-    
+    PROVIDER = None
     # ...............................................
     def get_records(self, usr_params):
         all_output = {'count': 0, 'records': []}
@@ -217,7 +221,7 @@ class OccTentacles(_OccurrenceSvc):
     # ...............................................
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, occid=None, count_only=None, **kwargs):
+    def GET(self, occid=None, count_only=False, **kwargs):
         """Get one or more occurrence records for a dwc:occurrenceID from each
         available occurrence record service.
         
@@ -243,43 +247,57 @@ if __name__ == '__main__':
     
     print('*** Return invalid URL')
     for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
-        # Queries Specify without ARK URL
-        spocc = OccSpecify()
-        sp_output = spocc.GET(url=None, occid=occid, count_only=False)
-        for k, v in sp_output.items():
+#         # Queries Specify without ARK URL
+#         spocc = OccSpecify()
+#         sp_output = spocc.GET(url=None, occid=occid, count_only=False)
+#         for k, v in sp_output.items():
+#             print('  {}: {}'.format(k, v))
+#         print('')
+
+        # Queries GBIF
+        api = OccGBIF()
+        output = api.GET(occid=occid, count_only=False)
+        for k, v in output.items():
             print('  {}: {}'.format(k, v))
         print('')
 
     print('*** Return valid URL')
     for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS[:1]:
-        # Queries Specify without ARK URL
-        spocc = OccSpecify()
-        sp_output = spocc.GET(url=None, occid=occid, count_only=False)
-        for k, v in sp_output.items():
+#         # Queries Specify without ARK URL
+#         spocc = OccSpecify()
+#         sp_output = spocc.GET(url=None, occid=occid, count_only=False)
+#         for k, v in sp_output.items():
+#             print('  {}: {}'.format(k, v))
+#         print('')
+# 
+        # Queries GBIF
+        api = OccGBIF()
+        output = api.GET(occid=occid, count_only=False)
+        for k, v in output.items():
             print('  {}: {}'.format(k, v))
         print('')
 
-    print('*** Return invalid URL for Specify, ok for rest')
-    for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
-        # Queries all services
-        s2napi = OccTentacles()
-        for count_only in [True, False]:
-            required_keys = S2N.required_for_occsvc_keys()
-            if count_only is True:
-                required_keys = S2N.required_for_occsvc_norecs_keys()
-
-            all_output = s2napi.GET(occid=occid, count_only=count_only)
-            
-            for svcdict in all_output['records']:
-                for svc, one_output in svcdict.items():
-                    for k, v in one_output.items():
-                        print('  {}: {}'.format(k, v))
-                    
-                    for key in required_keys:
-                        try:
-                            one_output[key]
-                        except:
-                            print('Missing `{}` output element'.format(key))
-    
-                print('')
+#     print('*** Return invalid URL for Specify, ok for rest')
+#     for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
+#         # Queries all services
+#         s2napi = OccTentacles()
+#         for count_only in [True, False]:
+#             required_keys = S2N.required_for_occsvc_keys()
+#             if count_only is True:
+#                 required_keys = S2N.required_for_occsvc_norecs_keys()
+# 
+#             all_output = s2napi.GET(occid=occid, count_only=count_only)
+#             
+#             for svcdict in all_output['records']:
+#                 for svc, one_output in svcdict.items():
+#                     for k, v in one_output.items():
+#                         print('  {}: {}'.format(k, v))
+#                     
+#                     for key in required_keys:
+#                         try:
+#                             one_output[key]
+#                         except:
+#                             print('Missing `{}` output element'.format(key))
+#     
+#                 print('')
 

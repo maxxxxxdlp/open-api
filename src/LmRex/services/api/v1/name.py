@@ -14,6 +14,7 @@ class _NameSvc(_S2nService):
 # .............................................................................
 @cherrypy.expose
 class NameGBIF(_NameSvc):
+    PROVIDER = ServiceProvider.GBIF
     # ...............................................
     def get_gbif_matching_taxon(self, namestr, gbif_status, gbif_count):
         all_output = {}
@@ -117,6 +118,7 @@ class NameGBIF(_NameSvc):
 # .............................................................................
 @cherrypy.expose
 class NameITISSolr(_NameSvc):
+    PROVIDER = ServiceProvider.ITISSolr
     # ...............................................
     def get_itis_accepted_taxon(self, namestr, itis_accepted, kingdom):
         output = ItisAPI.match_name(
@@ -126,7 +128,7 @@ class NameITISSolr(_NameSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None, gbif_parse=False, itis_accepted=None, 
+    def GET(self, namestr=None, gbif_parse=True, itis_accepted=None, 
             kingdom=None, **kwargs):
         """Get ITIS accepted taxon records for a scientific name string
         
@@ -158,6 +160,7 @@ class NameITISSolr(_NameSvc):
 # .............................................................................
 @cherrypy.expose
 class NameTentacles(_NameSvc):
+    PROVIDER = None
     # ...............................................
     def get_records(self, usr_params):
         all_output = {}

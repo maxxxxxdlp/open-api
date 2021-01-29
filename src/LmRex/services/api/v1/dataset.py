@@ -1,6 +1,6 @@
 import cherrypy
 
-from LmRex.common.lmconstants import S2N, APIService
+from LmRex.common.lmconstants import S2N, ServiceProvider, APIService
 from LmRex.tools.api import (
     GbifAPI, BisonAPI)
 from LmRex.services.api.v1.base import _S2nService
@@ -13,6 +13,7 @@ class _DatasetSvc(_S2nService):
 # .............................................................................
 @cherrypy.expose
 class DatasetGBIF(_DatasetSvc):
+    PROVIDER = ServiceProvider.GBIF
     # ...............................................
     def _get_records(self, dataset_key, count_only):
         # 'do_limit' limits the number of records returned to the GBIF limit
@@ -55,6 +56,7 @@ class DatasetGBIF(_DatasetSvc):
 # .............................................................................
 @cherrypy.expose
 class DatasetBISON(_DatasetSvc):
+    PROVIDER = ServiceProvider.BISON
     # ...............................................
     def _get_records(self, namestr, count_only):
         # 'do_limit' limits the number of records returned to the GBIF limit
@@ -97,7 +99,7 @@ class DatasetBISON(_DatasetSvc):
 # .............................................................................
 @cherrypy.expose
 class DatasetTentacles(_DatasetSvc):
-    
+    PROVIDER = None
     # ...............................................
     def _get_records(self, dsid, count_only):
         all_output = {}
