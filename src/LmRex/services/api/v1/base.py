@@ -21,20 +21,7 @@ class _S2nService:
         if param is None:
             param = default
         return param
-
     
-#     # ...............................................
-#     def _combine_messages(self, error_level, msg, messages={}):
-#         try:
-#             all_count += solr_output['count']
-#         except:
-#             msg = 'Failed to return count from Specify Resolve'
-#             try:
-#                 msgs['error'].append(msg)
-#             except:
-#                 msgs['error'] = msg
-
-
     # ...............................................
     def _show_online(self):
         try:

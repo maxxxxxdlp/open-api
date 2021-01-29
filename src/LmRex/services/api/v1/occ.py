@@ -122,10 +122,13 @@ class OccSpecify(_OccurrenceSvc):
                 (url, msg) = spark.get_url_from_meta(solr_output)
                 
         if url is not None:
-            output = SpecifyPortalAPI.get_specify_record(url, count_only)
+            output = SpecifyPortalAPI.get_specify_record(occid, url, count_only)
+            output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
         else:
-            output = {S2N.COUNT_KEY: 0, S2N.ERRORS_KEY: [msg]}
-        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+            output = {
+                S2N.COUNT_KEY: 0, S2N.ERRORS_KEY: [msg], 
+                S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: self.PROVIDER, 
+                S2N.PROVIDER_QUERY_KEY: url, S2N.SERVICE_KEY: self.SERVICE_TYPE}
         return output 
     
     # ...............................................
@@ -246,36 +249,76 @@ if __name__ == '__main__':
     
     print('*** Return invalid URL')
     for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
-#         # Queries Specify without ARK URL
-#         spocc = OccSpecify()
-#         sp_output = spocc.GET(url=None, occid=occid, count_only=False)
-#         for k, v in sp_output.items():
-#             print('  {}: {}'.format(k, v))
-#         print('')
+        # Queries Specify without ARK URL
+        spocc = OccSpecify()
+        output = spocc.GET(url=None, occid=occid, count_only=False)
+        # print results
+        for k, v in output.items():
+            print('  {}: {}'.format(k, v))
+        print('')
+        # print missing elements
+        count = 0
+        for key in S2N.required_for_occsvc_keys():
+            try:
+                output[key]
+            except:
+                count += 1
+                print('Missing `{}` output element'.format(key))
+        print('Missing {} elements\n'.format(count))
 
         # Queries GBIF
         api = OccGBIF()
         output = api.GET(occid=occid, count_only=False)
+        # print results
         for k, v in output.items():
             print('  {}: {}'.format(k, v))
         print('')
-
+        # print missing elements
+        count = 0
+        for key in S2N.required_for_occsvc_keys():
+            try:
+                output[key]
+            except:
+                count += 1
+                print('Missing `{}` output element'.format(key))
+        print('Missing {} elements\n'.format(count))
+            
     print('*** Return valid URL')
     for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS[:1]:
-#         # Queries Specify without ARK URL
-#         spocc = OccSpecify()
-#         sp_output = spocc.GET(url=None, occid=occid, count_only=False)
-#         for k, v in sp_output.items():
-#             print('  {}: {}'.format(k, v))
-#         print('')
-# 
-        # Queries GBIF
-        api = OccGBIF()
-        output = api.GET(occid=occid, count_only=False)
+        # Queries Specify without ARK URL
+        spocc = OccSpecify()
+        output = spocc.GET(url=None, occid=occid, count_only=False)
+        # print results
         for k, v in output.items():
             print('  {}: {}'.format(k, v))
         print('')
-
+        # print missing elements
+        count = 0
+        for key in S2N.required_for_occsvc_keys():
+            try:
+                output[key]
+            except:
+                count += 1
+                print('Missing `{}` output element'.format(key))
+        print('Missing {} elements\n'.format(count))
+ 
+        # Queries GBIF
+        api = OccGBIF()
+        output = api.GET(occid=occid, count_only=False)
+        # print results
+        for k, v in output.items():
+            print('  {}: {}'.format(k, v))
+        print('')
+        # print missing elements
+        for k, v in output.items():
+            print('  {}: {}'.format(k, v))
+         
+        for key in S2N.required_for_occsvc_keys():
+            try:
+                output[key]
+            except:
+                print('Missing `{}` output element'.format(key))
+        print('')
 #     print('*** Return invalid URL for Specify, ok for rest')
 #     for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
 #         # Queries all services
@@ -291,12 +334,12 @@ if __name__ == '__main__':
 #                 for svc, one_output in svcdict.items():
 #                     for k, v in one_output.items():
 #                         print('  {}: {}'.format(k, v))
-#                     
+#                      
 #                     for key in required_keys:
 #                         try:
 #                             one_output[key]
 #                         except:
 #                             print('Missing `{}` output element'.format(key))
-#     
+#      
 #                 print('')
 

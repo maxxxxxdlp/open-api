@@ -2203,7 +2203,7 @@ class SpecifyPortalAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def get_specify_record(cls, url, count_only, logger=None):
+    def get_specify_record(cls, occid, url, count_only, logger=None):
         """Return Specify record published at this url.  
         
         Args:
@@ -2215,7 +2215,9 @@ class SpecifyPortalAPI(APIQuery):
             database.  URLs returned for these records begin with 'unknown_url'.
         """
         std_output = {S2N.COUNT_KEY: 0}
-        qry_meta = {S2N.PROVIDER_KEY: cls.PROVIDER, S2N.PROVIDER_QUERY_KEY: url}
+        qry_meta = {
+            S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: cls.PROVIDER,
+            S2N.PROVIDER_QUERY_KEY: url}
         
         if url.startswith('http'):
             api = APIQuery(url, headers=JSON_HEADERS, logger=logger)

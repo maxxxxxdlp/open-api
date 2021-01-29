@@ -24,27 +24,34 @@ class NameGBIF(_NameSvc):
             good_names = output1[S2N.RECORDS_KEY]
         except:
             good_names = []
-        # Add occurrence count to name records
-        if gbif_count is True:
-            for namerec in good_names:
-                try:
-                    taxon_key = namerec['usageKey']
-                except Exception as e:
-                    print('Exception on {}: {}'.format(namestr, e))
-                    print('name = {}'.format(namerec))
-                else:
-                    # Add more info to each record
-                    output2 = GbifAPI.count_occurrences_for_taxon(taxon_key)
-                    namerec['occurrence_count'] = output2['count']
-                    namerec['occurrence_url'] = output2['occurrence_url']
+        else:
+            prov_query = output1[S2N.PROVIDER_QUERY_KEY]
+            # Add occurrence count to name records
+            if gbif_count is True:
+                for namerec in good_names:
+                    try:
+                        taxon_key = namerec['usageKey']
+                    except Exception as e:
+                        print('Exception on {}: {}'.format(namestr, e))
+                        print('name = {}'.format(namerec))
+                    else:
+                        # Add more info to each record
+                        output2 = GbifAPI.count_occurrences_for_taxon(taxon_key)
+                        namerec['occurrence_count'] = output2['count']
+                        namerec['occurrence_url'] = output2['occurrence_url']
+                        query2 = output2[S2N.PROVIDER_QUERY_KEY]
+                        try:
+                            prov_query.append(query2)
+                        except:
+                            prov_query = [prov_query, query2]
+                        
         # Assemble output
         for key in [
             S2N.COUNT_KEY, S2N.RECORD_FORMAT_KEY, S2N.NAME_KEY,
             S2N.PROVIDER_KEY, S2N.ERRORS_KEY]:
             all_output[key] = output1[key]
             
-        all_output[S2N.PROVIDER_QUERY_KEY] = [
-            output1[S2N.PROVIDER_QUERY_KEY], output2[S2N.PROVIDER_QUERY_KEY]]
+        all_output[S2N.PROVIDER_QUERY_KEY] = prov_query
         all_output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
         all_output[S2N.RECORDS_KEY] = good_names
         return all_output
@@ -215,8 +222,11 @@ class NameTentacles(_NameSvc):
 
 # .............................................................................
 if __name__ == '__main__':
-    # test    
-    for namestr in TST_VALUES.NAMES[:3]:
+    # test
+    test_names = TST_VALUES.NAMES[:3]
+    test_names.append(TST_VALUES.GUIDS_W_SPECIFY_ACCESS[0])
+    
+    for namestr in test_names:
         for gparse in [False]:
             print('Name = {}  GBIF parse = {}'.format(namestr, gparse))
             s2napi = NameTentacles()
@@ -231,11 +241,7 @@ if __name__ == '__main__':
                     try:
                         one_output[key]
                     except:
-                        if (len(one_output(S2N.ERRORS_KEY)) > 0 and 
-                            one_output(S2N.COUNT_KEY) == 0):
-                            pass
-                        else:
-                            print('Missing `{}` output element'.format(key))
+                        print('Missing `{}` output element'.format(key))
                 print('')
 #
 #             api = NameGBIF()
