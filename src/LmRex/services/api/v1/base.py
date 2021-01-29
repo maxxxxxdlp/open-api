@@ -1,6 +1,34 @@
-from LmRex.common.lmconstants import (APIService, Lifemapper, VALID_MAP_REQUESTS)
+import typing
+
+from LmRex.common.lmconstants import (
+    APIService, Lifemapper, S2N, VALID_MAP_REQUESTS)
 from LmRex.tools.api import (GbifAPI, ItisAPI)
 
+RecordsList = typing.List[typing.Dict]
+
+# Changed to TypedDict on update to Python 3.8+
+class ProviderQuery(typing.NamedTuple):
+    S2N.COUNT_KEY: int
+    S2N.RECORD_FORMAT_KEY: str
+    S2N.RECORDS_KEY: typing.List[typing.Dict]
+    S2N.PROVIDER_KEY: str
+    S2N.ERRORS_KEY: typing.List[str]
+    S2N.PROVIDER_QUERY_KEY: typing.List[str]
+    S2N.SERVICE_KEY: str
+    label: str
+    
+"""
+count    0
+record_format    "https://www.gbif.org/developer/species"
+name    "2c1becd5-e641-4e83-b3f5-76a55206539a"
+provider    "GBIF"
+errors    []
+provider_query    
+0    "http://api.gbif.org/v1/species/match?name=2c1becd5-e641-4e83-b3f5-76a55206539a&verbose=true"
+service    "name"
+records
+"""
+S2nOutput = typing.NewType
 # .............................................................................
 class _S2nService:
     """Base S-to-the-N service, handles parameter names and acceptable values"""
