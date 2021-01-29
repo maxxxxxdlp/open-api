@@ -38,7 +38,7 @@ def prepare_request(request_url:str, log_errors: bool = False):
 	request_url_validator = request_validator.validate(openapi_request)
 
 	if request_url_validator.errors:
-		error_message = json.dumps(request_url_validator.errors, indent=4, default=str)
+		error_message = request_url_validator.errors
 		error_response = {
 			'type':         'invalid_request_url',
 			'title':        'Invalid Request URL',
@@ -94,7 +94,7 @@ def file_request(request, openapi_request, request_url:str):
 	response_content_validator = response_validator.validate(openapi_request, formatted_response)
 
 	if response_content_validator.errors:
-		error_message = json.dumps(response_content_validator.errors, indent=4, default=str)
+		error_message = list(map(lambda e: e.schema_errors, response_content_validator.errors))
 		error_response = {
 			'type':            'invalid_response_schema',
 			'title':           'Invalid response schema',
