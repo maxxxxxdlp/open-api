@@ -139,3 +139,5 @@ src/web/.DS_Store
 # MacOS
 .DS_Store
 
+# Error logs
+src/LmRex/automated_testing/error_logs
