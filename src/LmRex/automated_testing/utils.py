@@ -12,7 +12,7 @@ def report_error(content:Dict[str,any]) -> None:
 
 	date_time_now = datetime.now().strftime("%d_%m_%Y__%H_%M_%S.json")
 
-	formatted_error = json.dumps(content, indent=4)
+	formatted_error = json.dumps(content, indent=4, default=str)
 
 	with open(os.path.join(settings.ERROR_LOGS_LOCATION, date_time_now) ,'w') as file:
 		file.write(formatted_error)

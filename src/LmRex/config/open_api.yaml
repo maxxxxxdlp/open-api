@@ -393,7 +393,7 @@ components:
           type: array
           items:
             type: string
-            format: uri
+            # format: uri
         errors:
           type: array
           items: {}
@@ -519,7 +519,7 @@ components:
               example: 926
             occurrences_url:
               type: string
-              format: uri
+              # format: uri
               example: 'https://www.gbif.org/species/1004151'
         - $ref: '#/components/schemas/names_gbif_record'
     names_itis:
@@ -804,11 +804,11 @@ components:
           example: 2021-01-13T13:39:04.411Z
         references:
           type: string
-          format: uri
+          # format: uri
           example: 'http://portal.vertnet.org/o/ku/birds?id=127237'
         license:
           type: string
-          format: uri
+          # format: uri
           example: 'http://creativecommons.org/licenses/by/4.0/legalcode'
         identifiers:
           type: array
@@ -878,7 +878,7 @@ components:
           example: ICZN
         institutionID:
           type: string
-          format: uri
+          # format: uri
           example: 'http://grbio.org/cool/iakn-125z'
         higherGeography:
           type: string
@@ -936,12 +936,12 @@ components:
           example: KU
         accessRights:
           type: string
-          format: uri
+          # format: uri
           example: >-
             http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
         collectionID:
           type: string
-          format: uri
+          # format: uri
           example: 'http://grbio.org/cool/v9yz-imvc'
         higherClassification:
           type: string
@@ -1000,11 +1000,11 @@ components:
               example: Passeriformes
             'dcterms:references':
               type: string
-              format: uri
+              # format: uri
               example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
             'dcterms:accessRights':
               type: string
-              format: uri
+              # format: uri
               example: >-
                 http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
             'dwc:occurrenceID':
@@ -1026,7 +1026,7 @@ components:
               example: 1972-06-11T00:00:00.000Z
             'dwc:collectionID':
               type: string
-              format: uri
+              # format: uri
               example: 'http://grbio.org/cool/v9yz-imvc'
             'dwc:country':
               type: string
@@ -1062,7 +1062,7 @@ components:
                 Perisoreus
             'dcterms:license':
               type: string
-              format: uri
+              # format: uri
               example: 'http://creativecommons.org/licenses/by/4.0/'
             'dwc:phylum':
               type: string
@@ -1072,7 +1072,7 @@ components:
               example: 'Ward, 2.5 mi. W'
             'dwc:institutionID':
               type: string
-              format: uri
+              # format: uri
               example: 'http://grbio.org/cool/iakn-125z'
             'dwc:institutionCode':
               type: string
@@ -1231,7 +1231,7 @@ components:
                 perisoreus
             collectionid:
               type: string
-              format: uri
+              # format: uri
               example: 'http://grbio.org/cool/v9yz-imvc'
             taxonid:
               type: string
@@ -1274,14 +1274,14 @@ components:
                   example: Passeriformes
                 'dcterms:references':
                   type: string
-                  format: uri
+                  # format: uri
                   example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
                 flag_gbif_reference_added:
                   type: boolean
                   example: true
                 'dcterms:accessRights':
                   type: string
-                  format: uri
+                  # format: uri
                   example: >-
                     http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
                 'idigbio:recordIds':
@@ -1500,7 +1500,7 @@ components:
                   example: 1972-06-11T00:00:00.000Z
                 'dwc:collectionID':
                   type: string
-                  format: uri
+                  # format: uri
                   example: 'http://grbio.org/cool/v9yz-imvc'
                 'dwc:country':
                   type: string
@@ -1516,7 +1516,7 @@ components:
                             example: gnu free documentation license
                           'dcterms:references':
                             type: string
-                            format: uri
+                            # format: uri
                             example: >-
                               http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
                           coreid:
@@ -1524,7 +1524,7 @@ components:
                             example: 2482436
                           'dcterms:identifier':
                             type: string
-                            format: uri
+                            # format: uri
                             example: >-
                               http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
                           'dcterms:source':
@@ -1668,7 +1668,7 @@ components:
                   example: usa
                 'dcterms:license':
                   type: string
-                  format: uri
+                  # format: uri
                   example: 'http://creativecommons.org/licenses/by/4.0/'
                 'idigbio:siblings':
                   type: object
@@ -1692,7 +1692,7 @@ components:
                   example: 'Ward, 2.5 mi. W'
                 'dwc:institutionID':
                   type: string
-                  format: uri
+                  # format: uri
                   example: 'http://grbio.org/cool/iakn-125z'
                 flag_gbif_vernacularname_added:
                   type: boolean
@@ -1791,7 +1791,7 @@ components:
               $ref: '#/components/schemas/guid'
             institutionid:
               type: string
-              format: uri
+              # format: uri
               example: 'http://grbio.org/cool/iakn-125z'
             country:
               type: string
@@ -1954,7 +1954,7 @@ components:
           example: 'Yes'
         specimen.url:
           type: string
-          format: uri
+          # format: uri
           example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
         specimen.uuid:
           $ref: '#/components/schemas/guid'
@@ -2070,7 +2070,7 @@ components:
             properties:
               class:
                 type: string
-                format: uri
+                # format: uri
                 example: http://data.ggbn.org/schemas/ggbn/terms/Amplification
               records:
                 type: array
@@ -2116,11 +2116,11 @@ components:
           example: 6-20
         where:
           type: string
-          format: uri
+          # format: uri
           example: http://spcoco.org/ark:/2c1becd5-e641-4e83-b3f5-76a55206539a
         url:
           type: string
-          format: uri
+          # format: uri
           example: http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a
         _version_:
           type: integer
