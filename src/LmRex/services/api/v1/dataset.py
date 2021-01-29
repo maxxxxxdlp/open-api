@@ -102,12 +102,14 @@ class DatasetTentacles(_DatasetSvc):
     PROVIDER = None
     # ...............................................
     def _get_records(self, dsid, count_only):
-        all_output = {}
+        all_output = {S2N.COUNT_KEY: 0, S2N.RECORDS_KEY: []}
         
         # GBIF copy/s of Specify Record
         dg = DatasetGBIF()
         gbif_output = dg.GET(dataset_key=dsid, count_only=count_only)
         all_output['GBIF Records'] = gbif_output
+        all_output[S2N.RECORDS_KEY].append(
+            {ServiceProvider.GBIF[S2N.NAME_KEY]: gbif_output})
         
         return all_output
 

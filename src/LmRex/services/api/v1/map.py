@@ -227,12 +227,13 @@ class MapBISON(_MapSvc):
 class MapTentacles(_MapSvc):
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
-        all_output = {}
+        all_output = {S2N.COUNT_KEY: 0, S2N.RECORDS_KEY: []}
             
         # Lifemapper
-        gacc = MapLM()
-        goutput = gacc.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
-        all_output['Lifemapper'] = goutput
+        api = MapLM()
+        lmoutput = api.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
+        all_output[S2N.RECORDS_KEY].append(
+            {ServiceProvider.Lifemapper[S2N.NAME_KEY]: lmoutput})
         
         # BISON
         return all_output

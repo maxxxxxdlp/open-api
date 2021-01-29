@@ -25,7 +25,7 @@ class NameGBIF(_NameSvc):
         except:
             good_names = []
         else:
-            prov_query = output1[S2N.PROVIDER_QUERY_KEY]
+            prov_query_list = output1[S2N.PROVIDER_QUERY_KEY]
             # Add occurrence count to name records
             if gbif_count is True:
                 for namerec in good_names:
@@ -37,13 +37,10 @@ class NameGBIF(_NameSvc):
                     else:
                         # Add more info to each record
                         output2 = GbifAPI.count_occurrences_for_taxon(taxon_key)
-                        namerec['occurrence_count'] = output2['count']
+                        namerec['occurrence_count'] = output2[S2N.COUNT_KEY]
                         namerec['occurrence_url'] = output2['occurrence_url']
-                        query2 = output2[S2N.PROVIDER_QUERY_KEY]
-                        try:
-                            prov_query.append(query2)
-                        except:
-                            prov_query = [prov_query, query2]
+                        query2_list = output2[S2N.PROVIDER_QUERY_KEY]
+                        prov_query_list.extend(query2_list)
                         
         # Assemble output
         for key in [
@@ -51,7 +48,7 @@ class NameGBIF(_NameSvc):
             S2N.PROVIDER_KEY, S2N.ERRORS_KEY]:
             all_output[key] = output1[key]
             
-        all_output[S2N.PROVIDER_QUERY_KEY] = prov_query
+        all_output[S2N.PROVIDER_QUERY_KEY] = prov_query_list
         all_output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
         all_output[S2N.RECORDS_KEY] = good_names
         return all_output
@@ -169,21 +166,24 @@ class NameITISSolr(_NameSvc):
 class NameTentacles(_NameSvc):
     # ...............................................
     def get_records(self, usr_params):
-        all_output = {}
+        all_output = {S2N.COUNT_KEY: 0, S2N.RECORDS_KEY: []}
         # GBIF Taxon Record
         gacc = NameGBIF()
         goutput = gacc.get_gbif_matching_taxon(
             usr_params['namestr'], usr_params['gbif_status'], 
             usr_params['gbif_count'])
-        all_output[ServiceProvider.GBIF['name']] = goutput
+        all_output[S2N.RECORDS_KEY].append(
+            {ServiceProvider.GBIF[S2N.NAME_KEY]: goutput})
         
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(
             usr_params['namestr'], usr_params['itis_accepted'], 
             usr_params['kingdom'])
-        all_output[ServiceProvider.ITISSolr['name']] = isoutput
+        all_output[S2N.RECORDS_KEY].append(
+            {ServiceProvider.ITISSolr[S2N.NAME_KEY]: isoutput})
         
+        all_output[S2N.COUNT_KEY] = len(all_output[S2N.RECORDS_KEY])
         return all_output
 
     # ...............................................
@@ -231,17 +231,18 @@ if __name__ == '__main__':
             print('Name = {}  GBIF parse = {}'.format(namestr, gparse))
             s2napi = NameTentacles()
             all_output  = s2napi.GET(
-                namestr=namestr, gbif_accepted=True, gbif_parse=gparse, 
+                namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
                 gbif_count=True, itis_accepted=True, kingdom=None)
               
-            for svc, one_output in all_output.items():
-                for k, v in one_output.items():
-                    print('  {}: {}'.format(k, v))
-                for key in S2N.required_for_namesvc_keys():
-                    try:
-                        one_output[key]
-                    except:
-                        print('Missing `{}` output element'.format(key))
+            for svcdict in all_output['records']:
+                for one_output in svcdict.values():
+                    for k, v in one_output.items():
+                        print('  {}: {}'.format(k, v))
+                    for key in S2N.required_for_namesvc_keys():
+                        try:
+                            one_output[key]
+                        except:
+                            print('Missing `{}` output element'.format(key))
                 print('')
 #
 #             api = NameGBIF()

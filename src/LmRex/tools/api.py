@@ -466,7 +466,7 @@ class BisonAPI(APIQuery):
             url=BISON.OPEN_SEARCH_URL, other_filters=ofilters, logger=logger)
         qry_meta = {
             S2N.NAME_KEY: namestr, S2N.PROVIDER_KEY: cls.PROVIDER, 
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
 
         try:
             api.query_by_get()
@@ -771,7 +771,7 @@ class ItisAPI(APIQuery):
         api = ItisAPI(Itis.SOLR_URL, q_filters=q_filters, logger=logger)
         qry_meta = {
             S2N.NAME_KEY: sciname, S2N.PROVIDER_KEY: cls.PROVIDER, 
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
         
         try:
             api.query()
@@ -1026,7 +1026,7 @@ class GbifAPI(APIQuery):
             other_filters={'occurrenceID': occid}, logger=logger)
         qry_meta = {
             S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: cls.PROVIDER,
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
         try:
             api.query()
         except Exception as e:
@@ -1204,7 +1204,7 @@ class GbifAPI(APIQuery):
                 'limit': limit}, logger=logger)
         qry_meta = {
             S2N.DATASET_ID_KEY: dataset_key, S2N.PROVIDER_KEY: cls.PROVIDER,
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
         try:
             api.query()
         except Exception as e:
@@ -1253,7 +1253,7 @@ class GbifAPI(APIQuery):
             other_filters=other_filters, logger=logger)
         qry_meta = {
             S2N.NAME_KEY: name_clean, S2N.PROVIDER_KEY: cls.PROVIDER,
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
         
         try:
             api.query()
@@ -1291,7 +1291,7 @@ class GbifAPI(APIQuery):
             other_filters={'taxonKey': taxon_key}, logger=logger)
         qry_meta = {
             'taxon_key': taxon_key, S2N.PROVIDER_KEY: cls.PROVIDER,
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
         
         try:
             api.query_by_get()
@@ -1306,9 +1306,8 @@ class GbifAPI(APIQuery):
             else:
                 if std_output[S2N.COUNT_KEY] < 1:
                     errmsgs.append(cls._get_error_message(msg='No match'))
-                else:
-                    std_output['occurrence_url'] = '{}/{}'.format(
-                        GBIF.SPECIES_URL, taxon_key)
+                std_output['occurrence_url'] = '{}/{}'.format(
+                    GBIF.SPECIES_URL, taxon_key)
         # Add query parameters to output
         for k, v in qry_meta.items():
             std_output[k] = v
@@ -1560,7 +1559,7 @@ class IdigbioAPI(APIQuery):
         api = IdigbioAPI(other_filters=qf, logger=logger)
         qry_meta = {
             S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: cls.PROVIDER,
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
 
         try:
             api.query()
@@ -2026,7 +2025,7 @@ class LifemapperAPI(APIQuery):
             resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
         qry_meta = {
             S2N.NAME_KEY: name, S2N.PROVIDER_KEY: cls.PROVIDER,
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
         
         try:
             api.query_by_get()
@@ -2135,7 +2134,7 @@ class MorphoSourceAPI(APIQuery):
             other_filters={'start': start, 'limit': MorphoSource.LIMIT})
         qry_meta = {
             S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: cls.PROVIDER,
-            S2N.PROVIDER_QUERY_KEY: api.url}
+            S2N.PROVIDER_QUERY_KEY: [api.url]}
         
         try:
             api.query_by_get()
@@ -2217,7 +2216,7 @@ class SpecifyPortalAPI(APIQuery):
         std_output = {S2N.COUNT_KEY: 0}
         qry_meta = {
             S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: cls.PROVIDER,
-            S2N.PROVIDER_QUERY_KEY: url}
+            S2N.PROVIDER_QUERY_KEY: [url]}
         
         if url.startswith('http'):
             api = APIQuery(url, headers=JSON_HEADERS, logger=logger)

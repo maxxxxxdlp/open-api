@@ -172,27 +172,27 @@ class APIService:
 # .............................................................................
 class ServiceProvider:
     BISON = {
-        'name': 'BISON', 'endpoint': 'bison', 'services': [APIService.Dataset]}
+        S2N.NAME_KEY: 'BISON', 'endpoint': 'bison', 'services': [APIService.Dataset]}
     GBIF = {
-        'name': 'GBIF', 'endpoint': 'gbif', 'service': [
+        S2N.NAME_KEY: 'GBIF', 'endpoint': 'gbif', 'service': [
             APIService.Occurrence, APIService.Name, APIService.Dataset]}
     iDigBio = {
-        'name': 'iDigBio', 'endpoint': 'idb', 'services': [
+        S2N.NAME_KEY: 'iDigBio', 'endpoint': 'idb', 'services': [
             APIService.Occurrence]}
     ITISSolr = {
-        'name': 'ITIS Solr Web Services', 'endpoint': 'itis', 'services': [
+        S2N.NAME_KEY: 'ITIS Solr Web Services', 'endpoint': 'itis', 'services': [
             APIService.Name]}
     ITISWebService = {
-        'name': 'ITIS Web Services', 'endpoint': 'itis2', 'services': [
+        S2N.NAME_KEY: 'ITIS Web Services', 'endpoint': 'itis2', 'services': [
             APIService.Name]}
     Lifemapper = {
-        'name': 'Lifemapper', 'endpoint': 'lm', 'services': [
+        S2N.NAME_KEY: 'Lifemapper', 'endpoint': 'lm', 'services': [
             APIService.Map]}
     MorphoSource = {
-        'name': 'MorphoSource', 'endpoint': 'mopho', 'services': [
+        S2N.NAME_KEY: 'MorphoSource', 'endpoint': 'mopho', 'services': [
             APIService.Occurrence]}
     Specify = {
-        'name': 'Specify', 'endpoint': 'specify', 'services': [
+        S2N.NAME_KEY: 'Specify', 'endpoint': 'specify', 'services': [
             APIService.Occurrence, APIService.Resolve]}
 #     SpecifyArk = {
 #         'name': 'Specify Resolver', 'endpoint': 'sparks', 'services': [
