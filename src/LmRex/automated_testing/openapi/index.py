@@ -12,6 +12,7 @@ from openapi_core.contrib.requests import RequestsOpenAPIResponseFactory
 import urllib.parse as urlparse
 from urllib.parse import parse_qs
 from LmRex.automated_testing.utils import report_error
+from operator import itemgetter
 
 
 # load the schema
@@ -27,7 +28,7 @@ response_validator = ResponseValidator(spec)
 session = Session()
 
 
-def make_request(request_url:str):
+def prepare_request(request_url:str, log_errors: bool = False):
 	parsed_url = urlparse.urlparse(request_url)
 	base_url = request_url.split('?')[0]
 	query_params_dict = parse_qs(parsed_url.query)
@@ -39,22 +40,33 @@ def make_request(request_url:str):
 	if request_url_validator.errors:
 		error_message = json.dumps(request_url_validator.errors, indent=4, default=str)
 		error_response = {
-			'type': 'invalid_request_url',
+			'type':         'invalid_request_url',
+			'title':        'Invalid Request URL',
 			'error_status': 'Request URL does not meet the OpenAPI Schema requirements',
 			'url':          request_url,
 			'text':         error_message,
 		}
-		report_error(error_response)
+		if log_errors:
+			report_error(error_response)
 		return error_response
 
+	return {
+		'type': 'success',
+		'request': request,
+		'openapi_request': openapi_request,
+	}
+
+
+def file_request(request, openapi_request, request_url:str):
 	prepared_request = request.prepare()
 	response = session.send(prepared_request)
 
 	# make sure that the server did not return an error
 	if response.status_code != 200:
 		error_response = {
-			'type': 'invalid_response_code',
-			'error_status': 'Response status code is not 200',
+			'type':         'invalid_response_code',
+			'title':        'Invalid Response',
+			'error_status': 'Response status code indicates an error has occurred',
 			'status_code':  response.status_code,
 			'url':          request_url,
 			'text':         response.text,
@@ -67,8 +79,9 @@ def make_request(request_url:str):
 		parsed_response = json.loads(response.text)
 	except JSONDecodeError:
 		error_response = {
-			'type': 'invalid_response_mime_type',
-			'error_status': 'Failure parsing JSON response',
+			'type':         'invalid_response_mime_type',
+			'title':        'Invalid response',
+			'error_status': 'Unable to parse JSON response',
 			'status_code':  response.status_code,
 			'url':          request_url,
 			'text':         response.text,
@@ -83,16 +96,29 @@ def make_request(request_url:str):
 	if response_content_validator.errors:
 		error_message = json.dumps(response_content_validator.errors, indent=4, default=str)
 		error_response = {
-			'type': 'invalid_response_schema',
-			'error_status': 'Response content does not meet the OpenAPI Schema requirements',
-			'status_code':  response.status_code,
-			'url':          request_url,
-			'text':         error_message,
+			'type':            'invalid_response_schema',
+			'title':           'Invalid response schema',
+			'error_status':    'Response content does not meet the OpenAPI Schema requirements',
+			'status_code':     response.status_code,
+			'url':             request_url,
+			'text':            error_message,
+			'parsed_response': parsed_response,
 		}
 		report_error(error_response)
 		return error_response
 
 	return {
-		'type': 'success',
+		'type':            'success',
 		'parsed_response': parsed_response
 	}
+
+
+def make_request(request_url:str, log_client_error=False):
+	response = prepare_request(request_url, log_client_error)
+
+	if response['type'] != 'success':
+		return response
+	else:
+		request, openapi_request = itemgetter('request','openapi_request')(response)
+
+	return file_request(request, openapi_request, request_url)

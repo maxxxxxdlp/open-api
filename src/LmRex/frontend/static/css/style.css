@@ -139,6 +139,12 @@ header a {
 	padding-left: 1rem;
 }
 
+.parameter_example select,
+.parameter_example input[type="text"] {
+	width: 100%;
+	padding: 0.3rem;
+}
+
 .execute_button {
 	margin-top: 2rem;
 	border: none;
@@ -294,4 +300,10 @@ header a {
 
 .dictionary_label:hover::after {
 	color: var(--t1);
+}
+
+.error_message {
+	background: var(--red);
+	padding: 1rem;
+	margin-bottom: 1rem;
 }

@@ -6,16 +6,16 @@ const get_parameter_value = (parameter_element, parameter_type) =>
 		).toString();
 
 const fetch_parameters_data = (parameters) =>
-	path_detailed_info[4].forEach((parameter, index) => (
-		path_detailed_info[4][index][7] = get_parameter_value(parameters[index], parameter[5])
+	path_detailed_info.parameters.forEach((parameter, index) => (
+		path_detailed_info.parameters[index].value = get_parameter_value(parameters[index], parameter.type)
 	));
 
 const create_request_url = () =>
-	path_detailed_info[4].reduce((request_url, parameter_data) =>
-			parameter_data[6] === 'path' ?
-				request_url.replace(`{${parameter_data[0]}}`, encodeURIComponent(parameter_data[7])) :
-				`${request_url}${parameter_data[0]}=${parameter_data[7]}&`,
-		`${path_detailed_info[1]}${path_detailed_info[0]}?`);
+	path_detailed_info.parameters.reduce((request_url, parameter_data) =>
+			parameter_data.location === 'path' ?
+				request_url.replace(`{${parameter_data.name}}`, encodeURIComponent(parameter_data.value)) :
+				`${request_url}${parameter_data.name}=${encodeURIComponent(parameter_data.value)}&`,
+		`${path_detailed_info.server}${path_detailed_info.path}?`);
 
 const expose_request_url = (request_url_element, request_url) =>
 	request_url_element.classList.remove('hidden') ||
@@ -58,7 +58,7 @@ const show_response = (response_container, response) =>
 				show_loading_animation(response_container);
 				fetch(
 					`/api/fetch_response/?endpoint=${
-						encodeURIComponent(path_detailed_info[0])
+						encodeURIComponent(path_detailed_info.path)
 					}&url=${encodeURIComponent(request_url)}`,
 				).then(show_response.bind(null, response_container));
 			}
