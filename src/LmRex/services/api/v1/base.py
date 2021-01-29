@@ -38,7 +38,7 @@ class _S2nService:
     # ...............................................
     def _show_online(self):
         msg = 'S^n {} {} service is online'.format(
-            self.SERVICE_TYPE, self.provider)
+            self.SERVICE_TYPE, self.PROVIDER['name'])
         return {'info': msg}
 
     # ...............................................

@@ -160,7 +160,6 @@ class NameITISSolr(_NameSvc):
 # .............................................................................
 @cherrypy.expose
 class NameTentacles(_NameSvc):
-    PROVIDER = None
     # ...............................................
     def get_records(self, usr_params):
         all_output = {}

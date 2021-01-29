@@ -157,7 +157,6 @@ class OccSpecify(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccTentacles(_OccurrenceSvc):
-    PROVIDER = None
     # ...............................................
     def get_records(self, usr_params):
         all_output = {'count': 0, 'records': []}

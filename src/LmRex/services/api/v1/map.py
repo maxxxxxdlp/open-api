@@ -225,7 +225,6 @@ class MapBISON(_MapSvc):
 # .............................................................................
 @cherrypy.expose
 class MapTentacles(_MapSvc):
-    PROVIDER = None
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
         all_output = {}
