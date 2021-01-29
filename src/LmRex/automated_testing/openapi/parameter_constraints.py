@@ -3,16 +3,16 @@ from typing import Callable, List, Dict
 
 
 def get_gbif_records(path: str, response: Dict[str,any]) -> List[Dict[str,any]]:
-	return response['records'] if 'gbif' in path else response['GBIF']['records']
+	return response['records'] if 'gbif' in path else response['records'][0]['GBIF']['records']
 
 
 def gbif_count(parameter_value: bool, path: str, response: Dict[str,any]) -> bool:
 	for record in get_gbif_records(path, response):
 		if (
-				not parameter_value and ('occurrence_count' in record or 'occurrences_url' in record)
+				not parameter_value and ('occurrence_count' in record or 'occurrence_url' in record)
 		) or \
 				(
-						parameter_value and ('occurrence_count' not in record or 'occurrences_url' not in record)
+						parameter_value and ('occurrence_count' not in record or 'occurrence_url' not in record)
 				):
 			return False
 	return True

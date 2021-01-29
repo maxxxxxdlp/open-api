@@ -111,7 +111,17 @@ def test():
 
 		# if more than `max_urls_per_endpoint` urls, take a random sample
 		if len(urls) > max_urls_per_endpoint:
-			urls = random.sample(urls, max_urls_per_endpoint)
+			urls, parameter_variations = zip(
+				*random.sample(
+					list(
+						zip(
+							urls,
+							parameter_variations
+						)
+					),
+					max_urls_per_endpoint
+				)
+			)
 			print('Downsizing the sample of test URLS to %d' % max_urls_per_endpoint)
 
 		# testing all url variations for validness
@@ -128,7 +138,7 @@ def test():
 			response = make_request(request_url, log_client_error=False)
 
 			if response['type'] != 'success':
-				print(colored(json.dumps(response, indent=4),'yellow'))
+				print(colored(json.dumps(response, indent=4, default=str),'yellow'))
 				failed_requests += 1
 
 			if response['type'] == 'invalid_request_url':
@@ -150,11 +160,12 @@ def test():
 		if defined_constraints:
 			for request_index, response_data in responses.items():
 				for parameter_name, constraint_function in defined_constraints.items():
-					if not constraint_function(
-							parameter_variations[request_index][parameter_names.index(parameter_name)],
-							endpoint_name,
-							response_data,
-					):
+
+					parameter_value = parameter_variations[request_index][parameter_names.index(parameter_name)]
+					if parameter_value == '':
+						parameter_value = parameters[parameter_names.index(parameter_name)].default
+
+					if not constraint_function(parameter_value, endpoint_name, response_data):
 						error_message = {
 							'type':            'failed_test_constraint',
 							'title':           'Testing constraint failed',
@@ -166,7 +177,7 @@ def test():
 							'parsed_response': response_data,
 						}
 						report_error(error_message)
-						print(colored(json.dumps(error_message, indent=4),'yellow'))
+						print(colored(json.dumps(error_message, indent=4, default=str),'yellow'))
 
 
 test()
