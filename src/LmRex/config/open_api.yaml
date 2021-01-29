@@ -1,8 +1,9 @@
+
 openapi: 3.0.0
 info:
   title: S^N services
   description: '**description_needed_here**'
-  version: 0.0.1
+  version: 0.0.1 pre-release buggy alpha beta 
   termsOfService: 'https://lifemapper.ku.edu/?page_id=1096'
   contact:
     name: S^N
@@ -291,6 +292,7 @@ components:
       required: false
       schema:
         type: boolean
+        default: true
     gbif_count:
       name: gbif_count
       in: query
@@ -383,16 +385,34 @@ components:
       properties:
         count:
           $ref: '#/components/schemas/count'
+        record_format:
+          type: string
+        provider:
+          type: string
+        provider_query:
+          type: array
+          items:
+            type: string
+            format: uri
+        errors:
+          type: array
+          items: {}
+        service:
+          type: string
     names_tentacles:
       type: object
       properties:
-        GBIF Records:
+        GBIF:
           $ref: '#/components/schemas/names_gbif'
         ITIS Solr Taxon Records:
           $ref: '#/components/schemas/names_itis'
     names_gbif:
       allOf:
         - $ref: '#/components/schemas/base_response'
+        - type: object
+          properties:
+            name:
+              type: string
         - oneOf:
             - type: object
               properties:
@@ -2118,7 +2138,7 @@ components:
         - $ref: '#/components/schemas/occ_tentacles_base'
         - type: object
           properties:
-            GBIF Records:
+            GBIF:
               $ref: '#/components/schemas/occ_gbif'
             iDigBio Records:
               $ref: '#/components/schemas/occ_idb'
@@ -2129,7 +2149,7 @@ components:
         - $ref: '#/components/schemas/occ_tentacles_base'
         - type: object
           properties:
-            GBIF Records:
+            GBIF:
               $ref: '#/components/schemas/occ_gbif_with_records'
             iDigBio Records:
               $ref: '#/components/schemas/occ_idb_with_records'
@@ -3210,7 +3230,7 @@ components:
           count: 1
         Specify Record:
           $ref: '#/components/examples/occ_specify_count_only'
-        GBIF Records:
+        GBIF:
           $ref: '#/components/examples/occ_gbif_count_only'
         iDigBio Records:
           $ref: '#/components/examples/occ_idb_count_only'
@@ -3394,7 +3414,7 @@ components:
             - class: 'http://eol.org/schema/reference/Reference'
               records: []
           count: 1
-        GBIF Records:
+        GBIF:
           provider: GBIF
           dataset_key: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
           count: 123915
