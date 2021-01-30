@@ -7,34 +7,51 @@ from LmRex.tools.api import (GbifAPI, ItisAPI)
 RecordsList = typing.List[typing.Dict]
 
 # Changed to TypedDict on update to Python 3.8+
-class ProviderQuery(typing.NamedTuple):
-    S2N.COUNT_KEY: int
-    S2N.RECORD_FORMAT_KEY: str
-    S2N.RECORDS_KEY: typing.List[typing.Dict]
-    S2N.PROVIDER_KEY: str
-    S2N.ERRORS_KEY: typing.List[str]
-    S2N.PROVIDER_QUERY_KEY: typing.List[str]
-    S2N.SERVICE_KEY: str
+class S2nOutput(typing.NamedTuple):
+    count: int
+    record_format: str = ''
+    records: typing.List[dict] = []
+    provider: str
+    errors: typing.List[str]
+    provider_query: typing.List[str]
+    service: str
     label: str
     
-"""
-count    0
-record_format    "https://www.gbif.org/developer/species"
-name    "2c1becd5-e641-4e83-b3f5-76a55206539a"
-provider    "GBIF"
-errors    []
-provider_query    
-0    "http://api.gbif.org/v1/species/match?name=2c1becd5-e641-4e83-b3f5-76a55206539a&verbose=true"
-service    "name"
-records
-"""
-S2nOutput = typing.NewType
 # .............................................................................
 class _S2nService:
     """Base S-to-the-N service, handles parameter names and acceptable values"""
     # overridden by subclasses
     SERVICE_TYPE = None
     PROVIDER = None
+
+    def get_failure(
+        self, count: int = 0, record_format: str = '',
+        records: typing.List[dict] = [], provider: str, 
+        errors: typing.List[str] = [], provider_query: typing.List[str] = [],
+        service: str = '') -> S2nOutput:
+        """Output format for all (soon) S^n services
+        
+        Args:
+            count: number of records returned
+            record_format: schema for the records returned
+            records: list of records (dictionaries)
+            provider: original data provider
+            errors: list of errors (strings)
+            provider_query: list of queries (url strings)
+            service: type of S^n services
+            
+        Return:
+            LmRex.services.api.v1.S2nOutput object
+        """
+        if not provider:
+            provider = self.PROVIDER
+        if not service: 
+            service = self.SERVICE_TYPE
+        return S2nOutput(
+            count=count, record_format=record_format, 
+            records=records, provider=provider,
+            errors=errors, provider_query=provider_query,
+            service=service)
 
     # .............................................................................
     @classmethod

@@ -2,7 +2,7 @@ import cherrypy
 
 from LmRex.common.lmconstants import (
     S2N, ServiceProvider, APIService, TST_VALUES)
-from LmRex.services.api.v1.base import _S2nService
+from LmRex.services.api.v1.base import _S2nService, S2nOutput
 from LmRex.tools.api import (GbifAPI, ItisAPI)
 
 
@@ -67,22 +67,28 @@ class NameGBIF(_NameSvc):
             kwargs: any additional keyword arguments are ignored
             
         Return:
-            a dictionary containing a count and list of dictionaries of 
-                GBIF records corresponding to names in the GBIF backbone 
-                taxonomy
+            LmRex.services.api.v1.S2nOutput object with records as a list of 
+            dictionaries of GBIF records corresponding to names in the GBIF 
+            backbone taxonomy
                 
         Note: gbif_parse flag to parse a scientific name into canonical name is 
             unnecessary for this method, as GBIF's match service finds the closest
             match regardless of whether author and date are included
         """
-        usr_params = self._standardize_params(
-            namestr=namestr, gbif_accepted=gbif_accepted, gbif_count=gbif_count)
-        namestr = usr_params['namestr']
-        if not namestr:
-            return self._show_online()
-        else:
-            return self.get_gbif_matching_taxon(
-                namestr, usr_params['gbif_status'], usr_params['gbif_count'])
+        try:
+            usr_params = self._standardize_params(
+                namestr=namestr, gbif_accepted=gbif_accepted, gbif_count=gbif_count)
+            namestr = usr_params['namestr']
+            if not namestr:
+                return self._show_online()
+            else:
+                return self.get_gbif_matching_taxon(
+                    namestr, usr_params['gbif_status'], usr_params['gbif_count'])
+        except Exception as e:
+            return self.get_failure(
+                count=0, record_format='', records=[], provider=self.PROVIDER, 
+                errors=['{}'.format(e)], provider_query='', 
+                service=self.SERVICE_TYPE)
 
 # # .............................................................................
 # @cherrypy.expose
