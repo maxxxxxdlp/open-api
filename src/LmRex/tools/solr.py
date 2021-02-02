@@ -1,8 +1,9 @@
 import requests
 import subprocess
 
-from LmRex.common.lmconstants import (S2N, SPECIFY, TST_VALUES)
-from LmRex.tools.api import APIQuery
+from LmRex.common.lmconstants import SPECIFY, TST_VALUES
+from LmRex.tools.provider.api import APIQuery
+from LmRex.services.api.v1.s2n_type import S2nKey        
 
 SOLR_POST_COMMAND = '/opt/solr/bin/post'
 SOLR_COMMAND = '/opt/solr/bin/solr'
@@ -15,7 +16,7 @@ Defined solrcores in /var/solr/data/cores/
 # ......................................................
 def count_docs(collection, solr_location):
     output = query(collection, solr_location)
-    output.pop(S2N.RECORDS_KEY)
+    output.pop(S2nKey.RECORDS)
     return output
 
 # ...............................................
@@ -119,7 +120,7 @@ def query(collection, solr_location, filters={'*': '*'}):
     Return: 
         a dictionary containing one or more keys: count, docs, error
     """
-    output = {S2N.COUNT_KEY: 0}
+    output = {S2nKey.COUNT: 0}
     errmsgs = []
     
     solr_endpt = 'http://{}:8983/solr/{}/select'.format(solr_location, collection)
@@ -131,14 +132,14 @@ def query(collection, solr_location, filters={'*': '*'}):
         errmsgs.append('Missing `response` element')
     else:
         try:
-            output[S2N.COUNT_KEY] = response['numFound']
+            output[S2nKey.COUNT] = response['numFound']
         except:
             errmsgs.append('Failed to return numFound from solr')
         try:
-            output[S2N.RECORDS_KEY] = response['docs']
+            output[S2nKey.RECORDS] = response['docs']
         except:
             errmsgs.append('Failed to return docs from solr')
-    output[S2N.ERRORS_KEY] = errmsgs
+    output[S2nKey.ERRORS] = errmsgs
     return output
 
 # .............................................................................

@@ -1,4 +1,5 @@
 import os
+from LmRex.services.api.v1.s2n_type import S2nKey        
 
 # .............................................................................
 # hierarchySoFarWRanks <class 'list'>: ['41107:$Kingdom:Plantae$Subkingdom:Viridiplantae$Infrakingdom:Streptophyta$Superdivision:Embryophyta$Division:Tracheophyta$Subdivision:Spermatophytina$Class:Magnoliopsida$Superorder:Lilianae$Order:Poales$Family:Poaceae$Genus:Poa$Species:Poa annua$']
@@ -17,64 +18,64 @@ ICH_RSS_URL = 'https://ichthyology.specify.ku.edu/export/rss'
 
 SPECIFY_ARK_PREFIX = 'http://spcoco.org/ark:/'
 
-class S2N:
-    COUNT_KEY = 'count'
-    RECORD_FORMAT_KEY = 'record_format'
-    RECORDS_KEY = 'records'
-    ERRORS_KEY = 'errors'
-    NAME_KEY = 'name'
-    OCCURRENCE_ID_KEY = 'occurrenceid'
-    DATASET_ID_KEY = 'dataset_key'
-    SERVICE_KEY = 'service'
-    PROVIDER_KEY = 'provider'
-    PROVIDER_QUERY_KEY = 'provider_query'
-    
-    @classmethod
-    def all_keys(cls):
-        return  [
-            cls.COUNT_KEY, cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY, 
-            cls.ERRORS_KEY, cls.NAME_KEY, cls.OCCURRENCE_ID_KEY, 
-            cls.DATASET_ID_KEY, cls.SERVICE_KEY, cls.PROVIDER_KEY, 
-            cls.PROVIDER_QUERY_KEY]
-
-    @classmethod
-    def required_keys(cls):
-        return  [
-            cls.COUNT_KEY, cls.ERRORS_KEY, cls.SERVICE_KEY, cls.PROVIDER_KEY, 
-            cls.PROVIDER_QUERY_KEY]
-
-    @classmethod
-    def required_for_namesvc_keys(cls):
-        keys = cls.required_keys()
-        keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
-        keys.append(cls.NAME_KEY)
-        return keys
-    
-    @classmethod
-    def required_for_occsvc_keys(cls):
-        keys = cls.required_keys()
-        keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
-        keys.append(cls.OCCURRENCE_ID_KEY)
-        return keys
-    
-    @classmethod
-    def required_for_occsvc_norecs_keys(cls):
-        keys = cls.required_keys()
-        keys.append(cls.OCCURRENCE_ID_KEY)
-        return keys
-    
-    @classmethod
-    def required_for_datasetsvc_keys(cls):
-        keys = cls.required_keys()
-        keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
-        keys.append(cls.DATASET_ID_KEY)
-        return keys
-    
-    @classmethod
-    def required_for_datasetsvc_norecs_keys(cls):
-        keys = cls.required_keys()
-        keys.append(cls.DATASET_ID_KEY)
-        return keys
+# class S2N:
+#     COUNT_KEY = 'count'
+#     RECORD_FORMAT_KEY = 'record_format'
+#     RECORDS_KEY = 'records'
+#     ERRORS_KEY = 'errors'
+#     NAME_KEY = 'name'
+#     OCCURRENCE_ID_KEY = 'occurrenceid'
+#     DATASET_ID_KEY = 'dataset_key'
+#     SERVICE_KEY = 'service'
+#     PROVIDER_KEY = 'provider'
+#     PROVIDER_QUERY_KEY = 'provider_query'
+#     
+#     @classmethod
+#     def all_keys(cls):
+#         return  [
+#             cls.COUNT_KEY, cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY, 
+#             cls.ERRORS_KEY, cls.NAME_KEY, cls.OCCURRENCE_ID_KEY, 
+#             cls.DATASET_ID_KEY, cls.SERVICE_KEY, cls.PROVIDER_KEY, 
+#             cls.PROVIDER_QUERY_KEY]
+# 
+#     @classmethod
+#     def required_keys(cls):
+#         return  [
+#             cls.COUNT_KEY, cls.ERRORS_KEY, cls.SERVICE_KEY, cls.PROVIDER_KEY, 
+#             cls.PROVIDER_QUERY_KEY]
+# 
+#     @classmethod
+#     def required_for_namesvc_keys(cls):
+#         keys = cls.required_keys()
+#         keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
+#         keys.append(cls.NAME_KEY)
+#         return keys
+#     
+#     @classmethod
+#     def required_for_occsvc_keys(cls):
+#         keys = cls.required_keys()
+#         keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
+#         keys.append(cls.OCCURRENCE_ID_KEY)
+#         return keys
+#     
+#     @classmethod
+#     def required_for_occsvc_norecs_keys(cls):
+#         keys = cls.required_keys()
+#         keys.append(cls.OCCURRENCE_ID_KEY)
+#         return keys
+#     
+#     @classmethod
+#     def required_for_datasetsvc_keys(cls):
+#         keys = cls.required_keys()
+#         keys.extend([cls.RECORD_FORMAT_KEY, cls.RECORDS_KEY])
+#         keys.append(cls.DATASET_ID_KEY)
+#         return keys
+#     
+#     @classmethod
+#     def required_for_datasetsvc_norecs_keys(cls):
+#         keys = cls.required_keys()
+#         keys.append(cls.DATASET_ID_KEY)
+#         return keys
     
 # .............................................................................
 class DWC:
@@ -172,27 +173,27 @@ class APIService:
 # .............................................................................
 class ServiceProvider:
     BISON = {
-        S2N.NAME_KEY: 'BISON', 'endpoint': 'bison', 'services': [APIService.Dataset]}
+        S2nKey.NAME: 'BISON', 'endpoint': 'bison', 'services': [APIService.Dataset]}
     GBIF = {
-        S2N.NAME_KEY: 'GBIF', 'endpoint': 'gbif', 'service': [
+        S2nKey.NAME: 'GBIF', 'endpoint': 'gbif', 'service': [
             APIService.Occurrence, APIService.Name, APIService.Dataset]}
     iDigBio = {
-        S2N.NAME_KEY: 'iDigBio', 'endpoint': 'idb', 'services': [
+        S2nKey.NAME: 'iDigBio', 'endpoint': 'idb', 'services': [
             APIService.Occurrence]}
     ITISSolr = {
-        S2N.NAME_KEY: 'ITIS Solr Web Services', 'endpoint': 'itis', 'services': [
+        S2nKey.NAME: 'ITIS Solr Web Services', 'endpoint': 'itis', 'services': [
             APIService.Name]}
     ITISWebService = {
-        S2N.NAME_KEY: 'ITIS Web Services', 'endpoint': 'itis2', 'services': [
+        S2nKey.NAME: 'ITIS Web Services', 'endpoint': 'itis2', 'services': [
             APIService.Name]}
     Lifemapper = {
-        S2N.NAME_KEY: 'Lifemapper', 'endpoint': 'lm', 'services': [
+        S2nKey.NAME: 'Lifemapper', 'endpoint': 'lm', 'services': [
             APIService.Map]}
     MorphoSource = {
-        S2N.NAME_KEY: 'MorphoSource', 'endpoint': 'mopho', 'services': [
+        S2nKey.NAME: 'MorphoSource', 'endpoint': 'mopho', 'services': [
             APIService.Occurrence]}
     Specify = {
-        S2N.NAME_KEY: 'Specify', 'endpoint': 'specify', 'services': [
+        S2nKey.NAME: 'Specify', 'endpoint': 'specify', 'services': [
             APIService.Occurrence, APIService.Resolve]}
 #     SpecifyArk = {
 #         'name': 'Specify Resolver', 'endpoint': 'sparks', 'services': [

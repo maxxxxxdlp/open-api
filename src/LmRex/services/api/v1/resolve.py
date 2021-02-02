@@ -1,8 +1,9 @@
 import cherrypy
 
-from LmRex.common.lmconstants import (ServiceProvider, APIService, S2N, SPECIFY)
+from LmRex.common.lmconstants import (ServiceProvider, APIService, SPECIFY)
 import LmRex.tools.solr as SpSolr
 from LmRex.services.api.v1.base import _S2nService
+from LmRex.services.api.v1.s2n_type import S2nKey        
 
 collection = 'spcoco'
 solr_location = 'notyeti-192.lifemapper.org'
@@ -22,7 +23,7 @@ class SpecifyResolve(_ResolveSvc):
     def get_url_from_meta(solr_output):
         url = msg = None
         try:
-            solr_doc = solr_output[S2N.RECORDS_KEY][0]
+            solr_doc = solr_output[S2nKey.RECORDS][0]
         except:
             pass
         else:
@@ -44,9 +45,9 @@ class SpecifyResolve(_ResolveSvc):
         output = SpSolr.query_guid(
             occid, SPECIFY.RESOLVER_COLLECTION, SPECIFY.RESOLVER_LOCATION)
         try:
-            output[S2N.COUNT_KEY]
+            output[S2nKey.COUNT]
         except:
-            output[S2N.ERRORS_KEY] = [
+            output[S2nKey.ERRORS] = [
                 'Failed to return count from collection {} at {}'.format(
                     SPECIFY.RESOLVER_COLLECTION, SPECIFY.RESOLVER_LOCATION)]
         return output

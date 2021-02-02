@@ -1,12 +1,17 @@
 import cherrypy
 
-from LmRex.common.lmconstants import (S2N, ServiceProvider, APIService)
-from LmRex.tools.api import (
-    GbifAPI, IdigbioAPI, MorphoSourceAPI, SpecifyPortalAPI, BisonAPI)
+from LmRex.common.lmconstants import (ServiceProvider, APIService)
+
+from LmRex.tools.provider.bison import BisonAPI
+from LmRex.tools.provider.gbif import GbifAPI
+from LmRex.tools.provider.idigbio import IdigbioAPI
+from LmRex.tools.provider.mopho import MorphoSourceAPI
+from LmRex.tools.provider.specify import SpecifyPortalAPI
+
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.resolve import SpecifyResolve
-from LmRex.services.api.v1.dataset import DatasetGBIF
-        
+from LmRex.services.api.v1.s2n_type import S2nKey        
+
 # .............................................................................
 @cherrypy.expose
 class _OccurrenceSvc(_S2nService):
@@ -20,7 +25,7 @@ class OccGBIF(_OccurrenceSvc):
     def get_records(self, occid, count_only):
         output = GbifAPI.get_occurrences_by_occid(
             occid, count_only=count_only)
-        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -55,7 +60,7 @@ class OccIDB(_OccurrenceSvc):
     PROVIDER = ServiceProvider.iDigBio
     def get_records(self, occid, count_only):
         output = IdigbioAPI.get_occurrences_by_occid(occid, count_only=count_only)
-        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -91,7 +96,7 @@ class OccMopho(_OccurrenceSvc):
     def get_records(self, occid, count_only):
         output = MorphoSourceAPI.get_occurrences_by_occid_page1(
             occid, count_only=count_only)
-        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -123,13 +128,13 @@ class OccSpecify(_OccurrenceSvc):
                 
         if url is not None:
             output = SpecifyPortalAPI.get_specify_record(occid, url, count_only)
-            output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+            output[S2nKey.SERVICE] = self.SERVICE_TYPE
         else:
             output = {
-                S2N.COUNT_KEY: 0, S2N.ERRORS_KEY: [msg], 
-                S2N.OCCURRENCE_ID_KEY: occid, S2N.PROVIDER_KEY: self.PROVIDER, 
-                S2N.PROVIDER_QUERY_KEY: [url], 
-                S2N.SERVICE_KEY: self.SERVICE_TYPE}
+                S2nKey.COUNT: 0, S2nKey.ERRORS: [msg], 
+                S2nKey.OCCURRENCE_ID: occid, S2nKey.PROVIDER: self.PROVIDER, 
+                S2nKey.PROVIDER_QUERY: [url], 
+                S2nKey.SERVICE: self.SERVICE_TYPE}
         return output 
     
     # ...............................................
@@ -163,7 +168,7 @@ class OccSpecify(_OccurrenceSvc):
 class OccTentacles(_OccurrenceSvc):
     # ...............................................
     def get_records(self, usr_params):
-        all_output = {S2N.COUNT_KEY: 0, S2N.RECORDS_KEY: []}
+        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
         
         occid = usr_params['occid']
         count_only = usr_params['count_only']
@@ -173,36 +178,36 @@ class OccTentacles(_OccurrenceSvc):
         solr_output = spark.get_specify_guid_meta(occid)
         (url, msg) = spark.get_url_from_meta(solr_output)
         # Do not add GUID service record to occurrence records
-        # all_output[ServiceProvider.Specify[S2N.NAME_KEY]] = solr_output
+        # all_output[ServiceProvider.Specify[S2nKey.NAME]] = solr_output
         
         # Specify Record from URL in ARK
         if url is not None:
             spocc = OccSpecify()
             sp_output = spocc.get_records(url, occid, count_only)
         else:
-            sp_output = {S2N.COUNT_KEY: 0, S2N.ERRORS_KEY: [msg]}
-        all_output[S2N.RECORDS_KEY].append(
-            {ServiceProvider.Specify[S2N.NAME_KEY]: sp_output})
+            sp_output = {S2nKey.COUNT: 0, S2nKey.ERRORS: [msg]}
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.Specify[S2nKey.NAME]: sp_output})
         
         # GBIF copy/s of Specify Record
         gocc = OccGBIF()
         gbif_output = gocc.get_records(occid, count_only)
-        all_output[S2N.RECORDS_KEY].append(
-            {ServiceProvider.GBIF[S2N.NAME_KEY]: gbif_output})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.GBIF[S2nKey.NAME]: gbif_output})
         
         # iDigBio copy/s of Specify Record
         idbocc = OccIDB()
         idb_output = idbocc.get_records(occid, count_only)
-        all_output[S2N.RECORDS_KEY].append(
-            {ServiceProvider.iDigBio[S2N.NAME_KEY]: idb_output})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.iDigBio[S2nKey.NAME]: idb_output})
         
         # MorphoSource records connected to Specify Record
         mopho = OccMopho()
         mopho_output = mopho.get_records(occid, count_only)
-        all_output[S2N.RECORDS_KEY].append(
-            {ServiceProvider.MorphoSource[S2N.NAME_KEY]: mopho_output})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.MorphoSource[S2nKey.NAME]: mopho_output})
 
-        all_output[S2N.COUNT_KEY] = len(all_output[S2N.RECORDS_KEY])
+        all_output[S2nKey.COUNT] = len(all_output[S2nKey.RECORDS])
         return all_output
 
     # ...............................................
@@ -243,7 +248,7 @@ if __name__ == '__main__':
         print('')
         # print missing elements
         count = 0
-        for key in S2N.required_for_occsvc_keys():
+        for key in S2nKey.required_for_occsvc_keys():
             try:
                 output[key]
             except:
@@ -260,7 +265,7 @@ if __name__ == '__main__':
         print('')
         # print missing elements
         count = 0
-        for key in S2N.required_for_occsvc_keys():
+        for key in S2nKey.required_for_occsvc_keys():
             try:
                 output[key]
             except:
@@ -291,9 +296,9 @@ if __name__ == '__main__':
         # Queries all services
         s2napi = OccTentacles()
         for count_only in [True, False]:
-            required_keys = S2N.required_for_occsvc_keys()
+            required_keys = S2nKey.required_for_occsvc_keys()
             if count_only is True:
-                required_keys = S2N.required_for_occsvc_norecs_keys()
+                required_keys = S2nKey.required_for_occsvc_norecs_keys()
  
             all_output = s2napi.GET(occid=occid, count_only=count_only)
              

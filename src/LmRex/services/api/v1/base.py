@@ -1,22 +1,11 @@
 import typing
 
 from LmRex.common.lmconstants import (
-    APIService, Lifemapper, S2N, VALID_MAP_REQUESTS)
-from LmRex.tools.api import (GbifAPI, ItisAPI)
+    APIService, Lifemapper, VALID_MAP_REQUESTS)
+from LmRex.tools.provider.gbif import GbifAPI
+from LmRex.tools.provider.itis import ItisAPI
+from LmRex.services.api.v1.s2n_type import S2nOutput
 
-RecordsList = typing.List[typing.Dict]
-
-# Changed to TypedDict on update to Python 3.8+
-class S2nOutput(typing.NamedTuple):
-    count: int
-    record_format: str = ''
-    records: typing.List[dict] = []
-    provider: str
-    errors: typing.List[str]
-    provider_query: typing.List[str]
-    service: str
-    label: str
-    
 # .............................................................................
 class _S2nService:
     """Base S-to-the-N service, handles parameter names and acceptable values"""
@@ -26,7 +15,7 @@ class _S2nService:
 
     def get_failure(
         self, count: int = 0, record_format: str = '',
-        records: typing.List[dict] = [], provider: str, 
+        records: typing.List[dict] = [], provider: str = '', 
         errors: typing.List[str] = [], provider_query: typing.List[str] = [],
         service: str = '') -> S2nOutput:
         """Output format for all (soon) S^n services

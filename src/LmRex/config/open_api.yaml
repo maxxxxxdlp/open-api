@@ -17,15 +17,15 @@ servers:
     description: Internal testing server
 tags:
   - name: name
-    description: Get species determination information
+    description: Get taxonomy information for a scientific name
   - name: occ
-    description: Get species occurrences
+    description: Get specimen occurrences
   - name: dataset
-    description: Get occurrences in a dataset
+    description: Get specimen occurrences in a dataset
   - name: resolve
     description: Get resolution metadata for a digital specimen object
   - name: map
-    description: Get URL to map of species points and predicted distributions
+    description: Get URL for map of species points and predicted distributions
 externalDocs:
   description: Lifemapper
   url: 'http://www.lifemapper.org/'
@@ -34,8 +34,8 @@ paths:
     get:
       tags:
         - name
-      summary: 'Tentacles : Get species determination information'
-      description: 'Get species determination information from available providers'
+      summary: 'Tentacles : Get taxonomy information Get specimen occurrence tific name'
+      description: 'Get taxonomy information for a scientific name from available providers'
       operationId: nameTentacles
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -53,8 +53,8 @@ paths:
     get:
       tags:
         - name
-      summary: 'GBIF : Get species determination information'
-      description: 'Get species determination information from the Global Biodiversity Information Facility (GBIF) Backbone Taxonomy'
+      summary: 'GBIF : Get taxonomy information for a scientific name'
+      description: 'Get taxonomy information for a scientific name from the Global Biodiversity Information Facility (GBIF) Backbone Taxonomy'
       operationId: nameGBIF
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -81,7 +81,7 @@ paths:
       tags:
         - name
       summary: 'ITIS : Get species determination information'
-      description: 'Get species determination information from the Integrated Taxonomic Information System (ITIS)'
+      description: 'Get taxonomy information for a scientific name from the Integrated Taxonomic Information System (ITIS)'
       operationId: nameITIS
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -101,8 +101,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'Tentacles : Get occurrence information'
-      description: 'Get occurrence information from available services'
+      summary: 'Tentacles : Get specimen occurrence information'
+      description: 'Get specimen occurrence information from available services'
       operationId: occTentacles
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -125,8 +125,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'ITIS : Get occurrence information'
-      description: 'Get occurrence information from the Global Biodiversity Information Facility (GBIF)'
+      summary: 'ITIS : Get specimen occurrence information'
+      description: 'Get specimen occurrence information from the Global Biodiversity Information Facility (GBIF)'
       operationId: occGBIF
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -149,8 +149,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'iDigBio : Get occurrence information'
-      description: 'Get occurrence information from the Integrated Digitized Biocollections (iDigBio)'
+      summary: 'iDigBio : Get specimen occurrence information'
+      description: 'Get specimen occurrence information from the Integrated Digitized Biocollections (iDigBio)'
       operationId: occIdb
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -173,7 +173,7 @@ paths:
     get:
       tags:
         - occ
-      summary: 'MorphoSource : Get occurrence information'
+      summary: 'MorphoSource : Get specimen occurrence information'
       description: 'Get information related to specimen occurrences from MorphoSource'
       operationId: occMopho
       parameters:
@@ -197,8 +197,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'Specify : Get occurrence information'
-      description: 'Get occurrence information from Specify'
+      summary: 'Specify : Get specimen occurrence information'
+      description: 'Get specimen occurrence information from Specify'
       operationId: occSpecify
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -297,8 +297,9 @@ components:
       name: gbif_count
       in: query
       description: >-
-        Whether to include `occurrence_count` and `occurrence_url` in the
-        response
+        Whether to include in the response `occurrence_count` for a count of 
+        specimen occurrences in GBIF and and `occurrence_url` for a query to 
+        retrieve those specimen occurrences
       required: false
       schema:
         type: boolean
@@ -306,7 +307,7 @@ components:
     gbif_accepted:
       name: gbif_accepted
       in: query
-      description: Whether to limit the response to `ACCEPTED` names only
+      description: Whether to limit the response to `ACCEPTED` or `VALID` names
       required: false
       schema:
         type: boolean
@@ -352,7 +353,7 @@ components:
     count_only:
       name: count_only
       in: query
-      description: Whether to limit the response to results count only
+      description: Whether to limit the response to a count of results
       required: false
       schema:
         type: boolean
@@ -360,7 +361,7 @@ components:
     count_only_default:
       name: count_only
       in: query
-      description: Whether to limit the response to results count only
+      description: Whether to limit the response to a count of results
       required: false
       schema:
         type: boolean
@@ -368,7 +369,8 @@ components:
   schemas:
     count: 
       type: integer
-      description: Number of records that matched the query. Usually 0 or 1
+      description: Number of records that matched the query. For specimen 
+                   occurrence IDs, there are usually 0 or 1 matches
       minimum: 0
       example: 1
     guid:

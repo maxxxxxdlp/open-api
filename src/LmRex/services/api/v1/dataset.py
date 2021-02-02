@@ -1,9 +1,10 @@
 import cherrypy
 
-from LmRex.common.lmconstants import S2N, ServiceProvider, APIService
+from LmRex.common.lmconstants import ServiceProvider, APIService
 from LmRex.tools.api import (
     GbifAPI, BisonAPI)
 from LmRex.services.api.v1.base import _S2nService
+from LmRex.services.api.v1.s2n_type import S2nKey        
         
 # .............................................................................
 @cherrypy.expose
@@ -19,7 +20,7 @@ class DatasetGBIF(_DatasetSvc):
         # 'do_limit' limits the number of records returned to the GBIF limit
         output = GbifAPI.get_occurrences_by_dataset(
             dataset_key, count_only)
-        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -62,7 +63,7 @@ class DatasetBISON(_DatasetSvc):
         # 'do_limit' limits the number of records returned to the GBIF limit
         output = BisonAPI.get_occurrences_by_name(
             namestr, count_only, do_limit=True)
-        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -102,14 +103,14 @@ class DatasetTentacles(_DatasetSvc):
     PROVIDER = None
     # ...............................................
     def _get_records(self, dsid, count_only):
-        all_output = {S2N.COUNT_KEY: 0, S2N.RECORDS_KEY: []}
+        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
         
         # GBIF copy/s of Specify Record
         dg = DatasetGBIF()
         gbif_output = dg.GET(dataset_key=dsid, count_only=count_only)
         all_output['GBIF Records'] = gbif_output
-        all_output[S2N.RECORDS_KEY].append(
-            {ServiceProvider.GBIF[S2N.NAME_KEY]: gbif_output})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.GBIF[S2nKey.NAME]: gbif_output})
         
         return all_output
 
@@ -120,7 +121,7 @@ class DatasetTentacles(_DatasetSvc):
         """Get one or more occurrence records for a dataset identifier from all
         available occurrence record services.
         
-        Args:
+        Args:S2
             dataset_key: a unique dataset identifier for a collection of 
                 occurrence records.
             count_only: flag to indicate whether to return only a count, or 
@@ -150,9 +151,9 @@ if __name__ == '__main__':
     
     gocc = DatasetGBIF()
     for count_only in [True, False]:
-        rkeys = S2N.required_for_datasetsvc_keys()
+        rkeys = S2nKey.required_for_datasetsvc_keys()
         if count_only is True:
-            rkeys = S2N.required_for_datasetsvc_norecs_keys()
+            rkeys = S2nKey.required_for_datasetsvc_norecs_keys()
 
         gout = gocc.GET(
             TST_VALUES.DS_GUIDS_W_SPECIFY_ACCESS_RECS[0], count_only=count_only)

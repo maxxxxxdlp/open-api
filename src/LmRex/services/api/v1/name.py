@@ -1,10 +1,11 @@
 import cherrypy
 
 from LmRex.common.lmconstants import (
-    S2N, ServiceProvider, APIService, TST_VALUES)
-from LmRex.services.api.v1.base import _S2nService, S2nOutput
-from LmRex.tools.api import (GbifAPI, ItisAPI)
-
+    ServiceProvider, APIService, TST_VALUES)
+from LmRex.services.api.v1.base import _S2nService
+from LmRex.services.api.v1.s2n_type import S2nKey        
+from LmRex.tools.provider.gbif import GbifAPI
+from LmRex.tools.provider.itis import ItisAPI
 
 # .............................................................................
 @cherrypy.expose
@@ -21,11 +22,11 @@ class NameGBIF(_NameSvc):
         # Get name from Gbif        
         output1 = GbifAPI.match_name(namestr, status=gbif_status)
         try:        
-            good_names = output1[S2N.RECORDS_KEY]
+            good_names = output1[S2nKey.RECORDS]
         except:
             good_names = []
         else:
-            prov_query_list = output1[S2N.PROVIDER_QUERY_KEY]
+            prov_query_list = output1[S2nKey.PROVIDER_QUERY]
             # Add occurrence count to name records
             if gbif_count is True:
                 for namerec in good_names:
@@ -37,20 +38,20 @@ class NameGBIF(_NameSvc):
                     else:
                         # Add more info to each record
                         output2 = GbifAPI.count_occurrences_for_taxon(taxon_key)
-                        namerec['occurrence_count'] = output2[S2N.COUNT_KEY]
+                        namerec['occurrence_count'] = output2[S2nKey.COUNT]
                         namerec['occurrence_url'] = output2['occurrence_url']
-                        query2_list = output2[S2N.PROVIDER_QUERY_KEY]
+                        query2_list = output2[S2nKey.PROVIDER_QUERY]
                         prov_query_list.extend(query2_list)
                         
         # Assemble output
         for key in [
-            S2N.COUNT_KEY, S2N.RECORD_FORMAT_KEY, S2N.NAME_KEY,
-            S2N.PROVIDER_KEY, S2N.ERRORS_KEY]:
+            S2nKey.COUNT, S2nKey.RECORD_FORMAT, S2nKey.NAME,
+            S2nKey.PROVIDER, S2nKey.ERRORS]:
             all_output[key] = output1[key]
             
-        all_output[S2N.PROVIDER_QUERY_KEY] = prov_query_list
-        all_output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
-        all_output[S2N.RECORDS_KEY] = good_names
+        all_output[S2nKey.PROVIDER_QUERY] = prov_query_list
+        all_output[S2nKey.SERVICE] = self.SERVICE_TYPE
+        all_output[S2nKey.RECORDS] = good_names
         return all_output
 
     # ...............................................
@@ -100,7 +101,7 @@ class NameGBIF(_NameSvc):
 #     # ...............................................
 #     def get_itis_taxon(self, namestr):
 #         output = ItisAPI.match_name(namestr)
-#         output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+#         output[S2nKey.SERVICE] = self.SERVICE_TYPE
 #         return output
 # 
 #     # ...............................................
@@ -133,7 +134,7 @@ class NameITISSolr(_NameSvc):
     def get_itis_accepted_taxon(self, namestr, itis_accepted, kingdom):
         output = ItisAPI.match_name(
             namestr, itis_accepted=itis_accepted, kingdom=kingdom)
-        output[S2N.SERVICE_KEY] = self.SERVICE_TYPE
+        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -172,24 +173,24 @@ class NameITISSolr(_NameSvc):
 class NameTentacles(_NameSvc):
     # ...............................................
     def get_records(self, usr_params):
-        all_output = {S2N.COUNT_KEY: 0, S2N.RECORDS_KEY: []}
+        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
         # GBIF Taxon Record
         gacc = NameGBIF()
         goutput = gacc.get_gbif_matching_taxon(
             usr_params['namestr'], usr_params['gbif_status'], 
             usr_params['gbif_count'])
-        all_output[S2N.RECORDS_KEY].append(
-            {ServiceProvider.GBIF[S2N.NAME_KEY]: goutput})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.GBIF[S2nKey.NAME]: goutput})
         
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(
             usr_params['namestr'], usr_params['itis_accepted'], 
             usr_params['kingdom'])
-        all_output[S2N.RECORDS_KEY].append(
-            {ServiceProvider.ITISSolr[S2N.NAME_KEY]: isoutput})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.ITISSolr[S2nKey.NAME]: isoutput})
         
-        all_output[S2N.COUNT_KEY] = len(all_output[S2N.RECORDS_KEY])
+        all_output[S2nKey.COUNT] = len(all_output[S2nKey.RECORDS])
         return all_output
 
     # ...............................................
@@ -244,7 +245,7 @@ if __name__ == '__main__':
                 for one_output in svcdict.values():
                     for k, v in one_output.items():
                         print('  {}: {}'.format(k, v))
-                    for key in S2N.required_for_namesvc_keys():
+                    for key in S2nKey.required_for_namesvc_keys():
                         try:
                             one_output[key]
                         except:

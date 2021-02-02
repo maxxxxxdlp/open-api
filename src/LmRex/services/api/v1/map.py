@@ -1,12 +1,12 @@
 import cherrypy
 
 from LmRex.common.lmconstants import (
-    S2N, ServiceProvider, APIService, Lifemapper, TST_VALUES)
+    ServiceProvider, APIService, Lifemapper, TST_VALUES)
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.name import NameGBIF
-from LmRex.tools.api import (LifemapperAPI, ItisAPI)
-
-
+from LmRex.services.api.v1.s2n_type import S2nKey        
+from LmRex.tools.provider.itis import ItisAPI
+from LmRex.tools.provider.lifemapper import LifemapperAPI
 
 # .............................................................................
 @cherrypy.expose
@@ -227,13 +227,13 @@ class MapBISON(_MapSvc):
 class MapTentacles(_MapSvc):
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
-        all_output = {S2N.COUNT_KEY: 0, S2N.RECORDS_KEY: []}
+        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
             
         # Lifemapper
         api = MapLM()
         lmoutput = api.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
-        all_output[S2N.RECORDS_KEY].append(
-            {ServiceProvider.Lifemapper[S2N.NAME_KEY]: lmoutput})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.Lifemapper[S2nKey.NAME]: lmoutput})
         
         # BISON
         return all_output
