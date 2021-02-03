@@ -2,11 +2,12 @@ import csv
 import os
 
 from LmRex.common.lmconstants import (
-    GBIF_MISSING_KEY, Idigbio, ServiceProvider, ENCODING, DATA_DUMP_DELIMITER)
+    APIService, GBIF_MISSING_KEY, Idigbio, ServiceProvider, ENCODING, 
+    DATA_DUMP_DELIMITER)
 from LmRex.fileop.logtools import (log_info)
 from LmRex.fileop.ready_file import ready_filename
 
-from LmRex.services.api.v1.s2n_type import S2nKey
+from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.provider.api import APIQuery
 
 # .............................................................................
@@ -97,18 +98,26 @@ class IdigbioAPI(APIQuery):
         try:
             api.query()
         except Exception as e:
-            std_output = {S2nKey.COUNT: 0, S2nKey.ERRORS: [cls._get_error_message(err=e)]}
+            out = cls.get_failure(
+                query_term=occid, errors=[cls._get_error_message(err=e)])
         else:
-            std_output = cls._standardize_output(
+            out = cls._standardize_output(
                 api.output, Idigbio.COUNT_KEY, Idigbio.RECORDS_KEY, 
                 Idigbio.RECORD_FORMAT, count_only=count_only, err=api.error)
         
-        # Add query metadata to output
-        std_output.query_term = occid
-        std_output.provider = cls.PROVIDER
-        std_output.provider_query = [api.url]
-
-        return std_output
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            provider_query=[api.url], query_term=occid, 
+            service=APIService.Occurrence)
+        return full_out
+# 
+#         # Add query metadata to output
+#         std_output.query_term = occid
+#         std_output.provider = cls.PROVIDER
+#         std_output.provider_query = [api.url]
+# 
+#         return std_output
 
     # ...............................................
     @classmethod

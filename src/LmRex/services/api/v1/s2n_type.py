@@ -84,37 +84,19 @@ class S2nError(str):
 
 
 def print_s2n_output(out_obj):
-    try:
-        print('count: {}'.format(out_obj.count))
-    except:
-        print('Missing count element')
-    try:
-        print('provider: {}'.format(out_obj.provider))
-    except:
-        print('Missing provider element')
-    try:
-        print('errors: {}'.format(out_obj.errors))
-    except:
-        print('Missing errors element')
-    try:
-        print('provider_query: {}'.format(out_obj.provider_query))
-    except:
-        print('Missing provider_query element')
-    try:
-        print('query_term: {}'.format(out_obj.query_term))
-    except:
-        print('Missing query_term element')
-    try:
-        print('service: {}'.format(out_obj.service))
-    except:
-        print('Missing service element')
-    try:
-        print('record_format: {}'.format(out_obj.record_format))
-    except:
-        print('Missing record_format element')
-    try:
-        print('records: {}'.format(out_obj.records))
-    except:
-        print('Missing records element')
+    missing = 0
+    print('*** S^n output ***')
+    elements = {
+        'count': out_obj.count, 'provider': out_obj.provider, 
+        'errors': out_obj.errors, 'provider_query': out_obj.provider_query, 
+        'query_term': out_obj.query_term, 'records': out_obj.records }    
+    for name, attelt in elements.items():
+        try:
+            print('{}: {}'.format(name, attelt))
+        except:
+            missing += 1
+            print('Missing {} element'.format(name))
+    print('Missing {} elements'.format(missing))
+    print('')
 
 

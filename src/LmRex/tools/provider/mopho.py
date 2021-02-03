@@ -1,6 +1,7 @@
-from LmRex.common.lmconstants import (MorphoSource, ServiceProvider, TST_VALUES)
+from LmRex.common.lmconstants import (
+    APIService, MorphoSource, ServiceProvider, TST_VALUES)
 from LmRex.fileop.logtools import (log_error, log_info)
-from LmRex.services.api.v1.s2n_type import S2nKey
+from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.provider.api import APIQuery
 
 # .............................................................................
@@ -20,28 +21,6 @@ class MorphoSourceAPI(APIQuery):
 
     # ...............................................
     @classmethod
-    def _page_occurrences(cls, start, occid, logger=None):
-        output = {'curr_count': 0, S2nKey.COUNT: 0, S2nKey.RECORDS: []}
-        api = MorphoSourceAPI(
-            resource=MorphoSource.OCC_RESOURCE, 
-            q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
-            other_filters={'start': start, 'limit': MorphoSource.LIMIT})
-        try:
-            api.query_by_get()
-        except Exception as e:
-            msg = 'Failed on {}, ({})'.format(api.url, e)
-            output[S2nKey.ERRORS] = msg
-            log_error(msg, logger=logger)
-        else:
-            # First query, report count
-            data = api.output
-            output['curr_count'] = data['returnedResults']
-            output[S2nKey.COUNT] = data['totalResults']
-            output[S2nKey.RECORDS] = data['results']
-        return output
-
-    # ...............................................
-    @classmethod
     def _standardize_record(cls, rec):
         # todo: standardize gbif output to DWC, DSO, etc
         return rec
@@ -54,24 +33,25 @@ class MorphoSourceAPI(APIQuery):
             resource=MorphoSource.OCC_RESOURCE, 
             q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
             other_filters={'start': start, 'limit': MorphoSource.LIMIT})
-        qry_meta = {
-            S2nKey.QUERY_TERM: occid, S2nKey.PROVIDER: cls.PROVIDER,
-            S2nKey.PROVIDER_QUERY: [api.url]}
-        
+
         try:
             api.query_by_get()
         except Exception as e:
-            std_output = {
-                S2nKey.COUNT: 0, S2nKey.ERRORS: cls._get_error_message(err=e)}
+            out = cls.get_failure(
+                query_term=occid, errors=[cls._get_error_message(err=e)])
         else:
-            std_output = cls._standardize_output(
+            # Standardize output from provider response
+            out = cls._standardize_output(
                 api.output, MorphoSource.TOTAL_KEY, MorphoSource.RECORDS_KEY, 
-                MorphoSource.RECORD_FORMAT, count_only, err=api.error)
-        # Add query metadata to output
-        for key, val in qry_meta.items():
-            std_output[key] = val                
-            # First query, report count
-        return std_output
+                MorphoSource.RECORD_FORMAT, count_only=count_only, 
+                err=api.error)
+        
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            provider_query=[api.url], query_term=occid, 
+            service=APIService.Occurrence)
+        return full_out
 
 # .............................................................................
 if __name__ == '__main__':

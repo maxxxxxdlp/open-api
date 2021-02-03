@@ -251,8 +251,8 @@ if __name__ == '__main__':
                 namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
                 gbif_count=True, itis_accepted=True, kingdom=None)
               
-            for svcout in all_output['records']:
-                for name, s2nout in svcout.items():
+            for svc in all_output['records']:
+                for name, s2nout in svc.items():
                     print(name)
                     print_s2n_output(s2nout)
                 print('')

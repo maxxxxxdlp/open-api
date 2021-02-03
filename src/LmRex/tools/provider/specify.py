@@ -1,5 +1,5 @@
 from LmRex.common.lmconstants import (
-    DWC, JSON_HEADERS, ServiceProvider, TST_VALUES)
+    APIService, DWC, JSON_HEADERS, ServiceProvider, TST_VALUES)
 from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.provider.api import APIQuery
 
@@ -67,27 +67,21 @@ class SpecifyPortalAPI(APIQuery):
             in the Solr Specify Resolver but are not resolvable to the host 
             database.  URLs returned for these records begin with 'unknown_url'.
         """
-        std_output = {S2nKey.COUNT: 0}
-        qry_meta = {
-            S2nKey.QUERY_TERM: occid, S2nKey.PROVIDER: cls.PROVIDER,
-            S2nKey.PROVIDER_QUERY: [url]}
-        
         if url.startswith('http'):
             api = APIQuery(url, headers=JSON_HEADERS, logger=logger)
     
             try:
                 api.query_by_get()
             except Exception as e:
-                std_output = {
-                    S2nKey.COUNT: 0, 
-                    S2nKey.ERRORS: [cls._get_error_message(err=e)]}
-            else:
-                std_output = cls._standardize_output(api.output, count_only)
-        # Add query metadata to output
-        for key, val in qry_meta.items():
-            std_output[key] = val                
-        return std_output
-
-
-
-
+                out = cls.get_failure(
+                    query_term=occid, errors=[cls._get_error_message(err=e)])
+            # Standardize output from provider response
+            out = cls._standardize_output(
+                api.output, count_only=count_only, err=api.error)
+        
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            provider_query=[url], query_term=occid, 
+            service=APIService.Occurrence)
+        return full_out

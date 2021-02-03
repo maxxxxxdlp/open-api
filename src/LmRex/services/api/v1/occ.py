@@ -10,7 +10,7 @@ from LmRex.tools.provider.specify import SpecifyPortalAPI
 
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.resolve import SpecifyResolve
-from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
+from LmRex.services.api.v1.s2n_type import (print_s2n_output, S2nKey, S2nOutput)
 
 # .............................................................................
 @cherrypy.expose
@@ -25,7 +25,6 @@ class OccGBIF(_OccurrenceSvc):
     def get_records(self, occid, count_only):
         output = GbifAPI.get_occurrences_by_occid(
             occid, count_only=count_only)
-        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -62,7 +61,6 @@ class OccIDB(_OccurrenceSvc):
     PROVIDER = ServiceProvider.iDigBio
     def get_records(self, occid, count_only):
         output = IdigbioAPI.get_occurrences_by_occid(occid, count_only=count_only)
-        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -101,7 +99,6 @@ class OccMopho(_OccurrenceSvc):
     def get_records(self, occid, count_only):
         output = MorphoSourceAPI.get_occurrences_by_occid_page1(
             occid, count_only=count_only)
-        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -125,26 +122,25 @@ class OccSpecify(_OccurrenceSvc):
     def get_records(self, url, occid, count_only):
         msg = 'Spocc failed: url = {}, occid = {}'.format(url, occid)
         if url is None:
-            if occid is None:
-                output = {'info': 'S^n service is online'}
-            else:
-                # Specify ARK Record
-                spark = SpecifyResolve()
-                solr_output = spark.get_specify_guid_meta(occid)
-                # Specify Record from URL in ARK
-                (url, msg) = spark.get_url_from_meta(solr_output)
+            # Resolve for record URL
+            spark = SpecifyResolve()
+            solr_output = spark.get_specify_guid_meta(occid)
+            (url, msg) = spark.get_url_from_meta(solr_output)
                 
-        if url is not None:
-            output = SpecifyPortalAPI.get_specify_record(occid, url, count_only)
-            output[S2nKey.SERVICE] = self.SERVICE_TYPE
+        if url is None:
+            out = self.get_failure(query_term=occid, errors=[msg])
         else:
-            output = {
-                S2nKey.COUNT: 0, S2nKey.ERRORS: [msg], 
-                S2nKey.QUERY_TERM: occid, 
-                S2nKey.PROVIDER: self.PROVIDER[S2nKey.NAME], 
-                S2nKey.PROVIDER_QUERY: [url], 
-                S2nKey.SERVICE: self.SERVICE_TYPE}
-        return output 
+            try:
+                out = SpecifyPortalAPI.get_specify_record(occid, url, count_only)
+            except Exception as e:
+                out = self.get_failure(query_term=occid, errors=[e])
+
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=self.PROVIDER,
+            errors=out.errors, provider_query=out.provider_query,
+            query_term=occid, service=self.SERVICE_TYPE)
+        return full_out
     
     # ...............................................
     @cherrypy.tools.json_out()
@@ -256,74 +252,28 @@ if __name__ == '__main__':
         # Queries Specify without ARK URL
         spocc = OccSpecify()
         output = spocc.GET(url=None, occid=occid, count_only=False)
-        # print results
-        for k, v in output.items():
-            print('  {}: {}'.format(k, v))
-        print('')
-        # print missing elements
-        count = 0
-        for key in S2nKey.required_keys():
-            try:
-                output[key]
-            except:
-                count += 1
-                print('Missing `{}` output element'.format(key))
-        print('Missing {} elements\n'.format(count))
-
-        # Queries GBIF
-        api = OccGBIF()
-        output = api.GET(occid=occid, count_only=False)
-        # print results
-        for k, v in output.items():
-            print('  {}: {}'.format(k, v))
-        print('')
-        # print missing elements
-        count = 0
-        for key in S2nKey.required_keys():
-            try:
-                output[key]
-            except:
-                count += 1
-                print('Missing `{}` output element'.format(key))
-        print('Missing {} elements\n'.format(count))
-            
+        print_s2n_output(output)
+             
     print('*** Return valid URL')
     for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS[:1]:
-        # Queries Specify without ARK URL
-        spocc = OccSpecify()
-        output = spocc.GET(url=None, occid=occid, count_only=False)
-        # print results
-        for k, v in output.items():
-            print('  {}: {}'.format(k, v))
-        print('')
- 
-        # Queries GBIF
-        api = OccGBIF()
-        output = api.GET(occid=occid, count_only=False)
-        # print results
-        for k, v in output.items():
-            print('  {}: {}'.format(k, v))
-        print('')
-        
-    print('*** Tentacles Return invalid URL for Specify, ok for rest')
-    for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
+
+        for cls in [OccGBIF, OccIDB, OccMopho, OccSpecify]:
+            api = cls()
+            output = api.GET(occid=occid, count_only=False)
+            print_s2n_output(output)
+
         # Queries all services
         s2napi = OccTentacles()
         for count_only in [True, False]:
             required_keys = S2nKey.required_keys()
             if count_only is False:
                 required_keys = S2nKey.required_with_recs_keys()
- 
+  
             all_output = s2napi.GET(occid=occid, count_only=count_only)
-             
-            for svcdict in all_output['records']:
-                for one_output in svcdict.values():
-                    for k, v in one_output.items():
-                        print('  {}: {}'.format(k, v))
-                    for key in required_keys:
-                        try:
-                            one_output[key]
-                        except:
-                            print('Missing `{}` output element'.format(key))
+              
+            for svc in all_output['records']:
+                for name, s2nout in svc.items():
+                    print(name)
+                    print_s2n_output(s2nout)
                 print('')
 
