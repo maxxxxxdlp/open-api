@@ -3,14 +3,14 @@ import cherrypy
 from LmRex.common.lmconstants import (
     ServiceProvider, APIService, TST_VALUES)
 from LmRex.services.api.v1.base import _S2nService
-from LmRex.services.api.v1.s2n_type import S2nKey        
+from LmRex.services.api.v1.s2n_type import (S2nKey, S2nOutput, print_s2n_output)
 from LmRex.tools.provider.gbif import GbifAPI
 from LmRex.tools.provider.itis import ItisAPI
 
 # .............................................................................
 @cherrypy.expose
 class _NameSvc(_S2nService):
-    SERVICE_TYPE = APIService.Name    
+    SERVICE_TYPE = APIService.Name
 
 # .............................................................................
 @cherrypy.expose
@@ -18,15 +18,15 @@ class NameGBIF(_NameSvc):
     PROVIDER = ServiceProvider.GBIF
     # ...............................................
     def get_gbif_matching_taxon(self, namestr, gbif_status, gbif_count):
-        all_output = {}
+#         all_output = {}
         # Get name from Gbif        
-        output1 = GbifAPI.match_name(namestr, status=gbif_status)
+        out1 = GbifAPI.match_name(namestr, status=gbif_status)
         try:        
-            good_names = output1[S2nKey.RECORDS]
+            good_names = out1.records
         except:
             good_names = []
         else:
-            prov_query_list = output1[S2nKey.PROVIDER_QUERY]
+            prov_query_list = out1.provider_query
             # Add occurrence count to name records
             if gbif_count is True:
                 for namerec in good_names:
@@ -37,21 +37,17 @@ class NameGBIF(_NameSvc):
                         print('name = {}'.format(namerec))
                     else:
                         # Add more info to each record
-                        output2 = GbifAPI.count_occurrences_for_taxon(taxon_key)
-                        namerec['occurrence_count'] = output2[S2nKey.COUNT]
-                        namerec['occurrence_url'] = output2['occurrence_url']
-                        query2_list = output2[S2nKey.PROVIDER_QUERY]
-                        prov_query_list.extend(query2_list)
+                        outdict = GbifAPI.count_occurrences_for_taxon(taxon_key)
+                        namerec[S2nKey.OCCURRENCE_COUNT] = outdict[S2nKey.COUNT]
+                        namerec[S2nKey.OCCURRENCE_URL] = outdict[S2nKey.OCCURRENCE_URL]
+                        prov_query_list.extend(outdict[S2nKey.PROVIDER_QUERY])
                         
-        # Assemble output
-        for key in [
-            S2nKey.COUNT, S2nKey.RECORD_FORMAT, S2nKey.NAME,
-            S2nKey.PROVIDER, S2nKey.ERRORS]:
-            all_output[key] = output1[key]
-            
-        all_output[S2nKey.PROVIDER_QUERY] = prov_query_list
-        all_output[S2nKey.SERVICE] = self.SERVICE_TYPE
-        all_output[S2nKey.RECORDS] = good_names
+        all_output = S2nOutput(
+            count=out1.count, record_format=out1.record_format, 
+            provider=out1.provider,errors=out1.errors, 
+            records=good_names, provider_query=prov_query_list,
+            query_term=namestr, service=self.SERVICE_TYPE)
+        
         return all_output
 
     # ...............................................
@@ -86,10 +82,7 @@ class NameGBIF(_NameSvc):
                 return self.get_gbif_matching_taxon(
                     namestr, usr_params['gbif_status'], usr_params['gbif_count'])
         except Exception as e:
-            return self.get_failure(
-                count=0, record_format='', records=[], provider=self.PROVIDER, 
-                errors=['{}'.format(e)], provider_query='', 
-                service=self.SERVICE_TYPE)
+            return self.get_failure(query_term=namestr, errors=[e])
 
 # # .............................................................................
 # @cherrypy.expose
@@ -132,10 +125,16 @@ class NameITISSolr(_NameSvc):
     PROVIDER = ServiceProvider.ITISSolr
     # ...............................................
     def get_itis_accepted_taxon(self, namestr, itis_accepted, kingdom):
-        output = ItisAPI.match_name(
+        out = ItisAPI.match_name(
             namestr, itis_accepted=itis_accepted, kingdom=kingdom)
-        output[S2nKey.SERVICE] = self.SERVICE_TYPE
-        return output
+        
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=self.PROVIDER[S2nKey.NAME],
+            errors=out.errors, provider_query=out.provider_query,
+            query_term=namestr, service=APIService.Name)
+
+        return full_out
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -153,44 +152,47 @@ class NameITISSolr(_NameSvc):
             kwargs: any additional keyword arguments are ignored
             
         Return:
-            a dictionary containing a count and list of dictionaries of 
-                ITIS records corresponding to names in the ITIS taxonomy
+            LmRex.services.api.v1.S2nOutput object with records as a list of 
+            dictionaries of ITIS records corresponding to names in the ITIS 
+            taxonomy
 
         Todo:
             Filter on kingdom
         """
-        usr_params = self._standardize_params(
-            namestr=namestr, itis_accepted=itis_accepted, gbif_parse=gbif_parse)
-        namestr = usr_params['namestr']
-        if not namestr:
-            return {'spcoco.message': 'S^n Name resolution is online'}
-        else:
-            return self.get_itis_accepted_taxon(
-                namestr, usr_params['itis_accepted'], usr_params['kingdom'])
+        try:
+            usr_params = self._standardize_params(
+                namestr=namestr, itis_accepted=itis_accepted, gbif_parse=gbif_parse)
+            namestr = usr_params['namestr']
+            if not namestr:
+                return {'spcoco.message': 'S^n Name resolution is online'}
+            else:
+                return self.get_itis_accepted_taxon(
+                    namestr, usr_params['itis_accepted'], usr_params['kingdom'])
+        except Exception as e:
+            return self.get_failure(query_term=namestr, errors=[e])
 
 # .............................................................................
 @cherrypy.expose
 class NameTentacles(_NameSvc):
     # ...............................................
     def get_records(self, usr_params):
-        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
+        allrecs = []
+        
         # GBIF Taxon Record
         gacc = NameGBIF()
         goutput = gacc.get_gbif_matching_taxon(
             usr_params['namestr'], usr_params['gbif_status'], 
             usr_params['gbif_count'])
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.GBIF[S2nKey.NAME]: goutput})
+        allrecs.append({ServiceProvider.GBIF[S2nKey.NAME]: goutput})
         
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(
             usr_params['namestr'], usr_params['itis_accepted'], 
             usr_params['kingdom'])
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.ITISSolr[S2nKey.NAME]: isoutput})
+        allrecs.append({ServiceProvider.ITISSolr[S2nKey.NAME]: isoutput})
         
-        all_output[S2nKey.COUNT] = len(all_output[S2nKey.RECORDS])
+        all_output = {S2nKey.COUNT: len(allrecs), S2nKey.RECORDS: allrecs}
         return all_output
 
     # ...............................................
@@ -215,20 +217,28 @@ class NameTentacles(_NameSvc):
 
         Return:
             a dictionary with keys for each service queried.  Values contain 
-                either a list of dictionaries/records returned for that service 
-                or a count.
+            LmRex.services.api.v1.S2nOutput object with records as a list of 
+            dictionaries of records corresponding to names in the provider 
+            taxonomy.
         """
-        usr_params = self._standardize_params(
-            namestr=namestr, gbif_accepted=gbif_accepted, gbif_parse=gbif_parse, 
-            gbif_count=gbif_count, itis_accepted=itis_accepted, kingdom=kingdom)
-        namestr = usr_params['namestr']
-        if not namestr:
-            return self._show_online()
-        else:
-            return self.get_records(usr_params)
-
+        try:
+            usr_params = self._standardize_params(
+                namestr=namestr, gbif_accepted=gbif_accepted, gbif_parse=gbif_parse, 
+                gbif_count=gbif_count, itis_accepted=itis_accepted, kingdom=kingdom)
+            namestr = usr_params['namestr']
+            if not namestr:
+                return self._show_online()
+            else:
+                return self.get_records(usr_params)
+        except Exception as e:
+            return self.get_failure(query_term=namestr, errors=[e])
+#             return self.get_failure(
+#                 count=0, record_format='', records=[], provider=self.PROVIDER, 
+#                 errors=['{}'.format(e)], provider_query='', 
+#                 service=self.SERVICE_TYPE)
 # .............................................................................
 if __name__ == '__main__':
+
     # test
     test_names = TST_VALUES.NAMES[:3]
     test_names.append(TST_VALUES.GUIDS_W_SPECIFY_ACCESS[0])
@@ -241,15 +251,10 @@ if __name__ == '__main__':
                 namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
                 gbif_count=True, itis_accepted=True, kingdom=None)
               
-            for svcdict in all_output['records']:
-                for one_output in svcdict.values():
-                    for k, v in one_output.items():
-                        print('  {}: {}'.format(k, v))
-                    for key in S2nKey.required_for_namesvc_keys():
-                        try:
-                            one_output[key]
-                        except:
-                            print('Missing `{}` output element'.format(key))
+            for svcout in all_output['records']:
+                for name, s2nout in svcout.items():
+                    print(name)
+                    print_s2n_output(s2nout)
                 print('')
 #
 #             api = NameGBIF()

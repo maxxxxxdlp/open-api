@@ -1,5 +1,5 @@
 from LmRex.common.lmconstants import (MorphoSource, ServiceProvider, TST_VALUES)
-from LmRex.fileop.logtools import (log_error)
+from LmRex.fileop.logtools import (log_error, log_info)
 from LmRex.services.api.v1.s2n_type import S2nKey
 from LmRex.tools.provider.api import APIQuery
 
@@ -55,7 +55,7 @@ class MorphoSourceAPI(APIQuery):
             q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
             other_filters={'start': start, 'limit': MorphoSource.LIMIT})
         qry_meta = {
-            S2nKey.OCCURRENCE_ID: occid, S2nKey.PROVIDER: cls.PROVIDER,
+            S2nKey.QUERY_TERM: occid, S2nKey.PROVIDER: cls.PROVIDER,
             S2nKey.PROVIDER_QUERY: [api.url]}
         
         try:
@@ -73,3 +73,20 @@ class MorphoSourceAPI(APIQuery):
             # First query, report count
         return std_output
 
+# .............................................................................
+if __name__ == '__main__':
+    # test
+    
+    log_info('Mopho records:')
+    for guid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS:
+        moutput = MorphoSourceAPI.get_occurrences_by_occid_page1(guid)
+        for r in moutput[S2nKey.RECORDS]:
+            occid = notes = None
+            try:
+                occid = r['specimen.occurrence_id']
+                notes = r['specimen.notes']
+            except Exception as e:
+                msg = 'Morpho source record exception {}'.format(e)
+            else:
+                msg = '{}: {}'.format(occid, notes)
+            log_info(msg)

@@ -3,10 +3,10 @@ import requests
 import urllib
 
 from LmRex.common.lmconstants import (
-    GBIF, ServiceProvider, URL_ESCAPES, ENCODING, TST_VALUES)
+    APIService, GBIF, ServiceProvider, URL_ESCAPES, ENCODING, TST_VALUES)
 from LmRex.fileop.logtools import (log_info, log_error)
 
-from LmRex.services.api.v1.s2n_type import S2nKey
+from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.provider.api import APIQuery
 
 # .............................................................................
@@ -114,23 +114,24 @@ class GbifAPI(APIQuery):
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'occurrenceID': occid}, logger=logger)
-        qry_meta = {
-            S2nKey.OCCURRENCE_ID: occid, S2nKey.PROVIDER: cls.PROVIDER,
-            S2nKey.PROVIDER_QUERY: [api.url]}
         try:
             api.query()
         except Exception as e:
-            std_output = {S2nKey.ERRORS: [cls._get_error_message(err=e)]}
+            out = cls.get_failure(
+                query_term=occid, errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
-            std_output = cls._standardize_output(
+            out = cls._standardize_output(
                 api.output, GBIF.COUNT_KEY, GBIF.RECORDS_KEY, 
                 GBIF.RECORD_FORMAT_OCCURRENCE, count_only=count_only, 
                 err=api.error)
-        # Add query parameters to output
-        for k, v in qry_meta.items():
-            std_output[k] = v
-        return std_output
+        
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            provider_query=[api.url], query_term=occid, 
+            service=APIService.Occurrence)
+        return full_out
 
     # ...............................................
     @classmethod
@@ -177,7 +178,6 @@ class GbifAPI(APIQuery):
     @classmethod
     def _standardize_match_output(cls, output, status, err=None):
             # Pull alternatives out of record
-        std_output = {}
         stdrecs = []
         errmsgs = []
         if err:
@@ -205,11 +205,12 @@ class GbifAPI(APIQuery):
             # Standardize name output
             for r in goodrecs:
                 stdrecs.append(cls._standardize_gbif_name(r))
-        std_output[S2nKey.COUNT] = len(stdrecs)
+        total = len(stdrecs)
         # TODO: standardize_record and provide schema link
-        std_output[S2nKey.RECORD_FORMAT] = GBIF.RECORD_FORMAT_NAME
-        std_output[S2nKey.RECORDS] = stdrecs
-        std_output[S2nKey.ERRORS] = errmsgs
+        std_output = S2nOutput(
+            count=total, record_format=GBIF.RECORD_FORMAT_NAME, records=stdrecs, 
+            provider=cls.PROVIDER, errors=errmsgs, 
+            provider_query=None, query_term=None, service=None)
         return std_output
         
     # ...............................................
@@ -225,8 +226,8 @@ class GbifAPI(APIQuery):
     @classmethod
     def _standardize_output(
             cls, output, count_key, records_key, record_format, count_only=False, err=None):
-        std_output = {S2nKey.COUNT: 0}
         stdrecs = []
+        total = 0
         errmsgs = []
         if err is not None:
             errmsgs.append(err)
@@ -237,8 +238,6 @@ class GbifAPI(APIQuery):
             errmsgs.append(
                 cls._get_error_message(
                     msg='Missing `{}` element'.format(count_key)))
-        else:
-            std_output[S2nKey.COUNT] = total
         # Records
         if not count_only:
             try:
@@ -256,9 +255,11 @@ class GbifAPI(APIQuery):
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
-            std_output[S2nKey.RECORDS] = stdrecs
-            std_output[S2nKey.RECORD_FORMAT] = record_format
-        std_output[S2nKey.ERRORS] = errmsgs
+        std_output = S2nOutput(
+            count=total, record_format=record_format, records=stdrecs, 
+            provider=cls.PROVIDER, errors=errmsgs, 
+            provider_query=None, query_term=None, service=None)
+
         return std_output
     
     # ...............................................
@@ -292,33 +293,33 @@ class GbifAPI(APIQuery):
             other_filters={
                 'dataset_key': dataset_key, 'offset': 0, 
                 'limit': limit}, logger=logger)
-        qry_meta = {
-            S2nKey.DATASET_ID: dataset_key, S2nKey.PROVIDER: cls.PROVIDER,
-            S2nKey.PROVIDER_QUERY: [api.url]}
         try:
             api.query()
         except Exception as e:
-            std_output = {S2nKey.ERRORS: [cls._get_error_message(err=e)]}
+            out = cls.get_failure(
+                query_term=dataset_key, errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
-            std_output = cls._standardize_output(
+            out = cls._standardize_output(
                 api.output, GBIF.COUNT_KEY, GBIF.RECORDS_KEY, 
                 GBIF.RECORD_FORMAT_OCCURRENCE, count_only=count_only, 
                 err=api.error)
             
-        # Add query parameters to output
-        for k, v in qry_meta.items():
-            std_output[k] = v
-        return std_output
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            provider_query=[api.url], query_term=dataset_key, 
+            service=APIService.Dataset)
+        return full_out
 
 
     # ...............................................
     @classmethod
-    def match_name(cls, name_str, status=None, logger=None):
+    def match_name(cls, namestr, status=None, logger=None):
         """Return closest accepted species in GBIF backbone taxonomy,
         
         Args:
-            name_str: A scientific namestring possibly including author, year, 
+            namestr: A scientific namestring possibly including author, year, 
                 rank marker or other name information.
             status: optional constant to match the TaxonomicStatus in the GBIF
                 record
@@ -332,7 +333,7 @@ class GbifAPI(APIQuery):
         Note:
             This function uses the name search API, 
         """
-        name_clean = name_str.strip()
+        name_clean = namestr.strip()
         other_filters = {'name': name_clean, 'verbose': 'true'}
 #         if rank:
 #             other_filters['rank'] = rank
@@ -341,24 +342,22 @@ class GbifAPI(APIQuery):
         api = GbifAPI(
             service=GBIF.SPECIES_SERVICE, key='match',
             other_filters=other_filters, logger=logger)
-        qry_meta = {
-            S2nKey.NAME: name_clean, S2nKey.PROVIDER: cls.PROVIDER,
-            S2nKey.PROVIDER_QUERY: [api.url]}
         
         try:
             api.query()
         except Exception as e:
-            std_output = {
-                S2nKey.COUNT: 0, 
-                S2nKey.ERRORS: [cls._get_error_message(err=e)]}
+            out = cls.get_failure(
+                query_term=namestr, errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
-            std_output = cls._standardize_match_output(
+            out = cls._standardize_match_output(
                 api.output, status, err=api.error)
-        # Add query parameters to output
-        for k, v in qry_meta.items():
-            std_output[k] = v
-        return std_output
+            
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            provider_query=[api.url], query_term=namestr, service=APIService.Name)
+        return full_out
 
 
     # ...............................................
@@ -373,15 +372,13 @@ class GbifAPI(APIQuery):
             A record as a dictionary containing the record count of occurrences
             with this accepted taxon, and a URL to retrieve these records.            
         """
-        std_output = {S2nKey.COUNT: 0}
+        simple_output = {}
         errmsgs = []
+        total = 0
         # Query GBIF
         api = GbifAPI(
             service=GBIF.OCCURRENCE_SERVICE, key=GBIF.SEARCH_COMMAND,
             other_filters={'taxonKey': taxon_key}, logger=logger)
-        qry_meta = {
-            'taxon_key': taxon_key, S2nKey.PROVIDER: cls.PROVIDER,
-            S2nKey.PROVIDER_QUERY: [api.url]}
         
         try:
             api.query_by_get()
@@ -389,20 +386,26 @@ class GbifAPI(APIQuery):
             errmsgs.append(cls._get_error_message(err=e))
         else:
             try:
-                std_output[S2nKey.COUNT] = api.output['count']
+                total = api.output['count']
             except Exception as e:
                 errmsgs.append(cls._get_error_message(
                     msg='Missing `count` element'))
             else:
-                if std_output[S2nKey.COUNT] < 1:
+                if total < 1:
                     errmsgs.append(cls._get_error_message(msg='No match'))
-                std_output['occurrence_url'] = '{}/{}'.format(
-                    GBIF.SPECIES_URL, taxon_key)
-        # Add query parameters to output
-        for k, v in qry_meta.items():
-            std_output[k] = v
-        std_output[S2nKey.ERRORS] = errmsgs
-        return std_output
+                    simple_output[S2nKey.OCCURRENCE_URL] = None
+                else:
+                    simple_output[S2nKey.OCCURRENCE_URL] = '{}/{}'.format(
+                        GBIF.SPECIES_URL, taxon_key)
+        # TODO: standardize_record and provide schema link
+        simple_output[S2nKey.COUNT] = total
+        simple_output[S2nKey.QUERY_TERM] = taxon_key
+        simple_output[S2nKey.RECORD_FORMAT] = None
+        simple_output[S2nKey.RECORDS] = []
+        simple_output[S2nKey.PROVIDER] = cls.PROVIDER
+        simple_output[S2nKey.PROVIDER_QUERY] = [api.url]
+        simple_output[S2nKey.ERRORS] = errmsgs
+        return simple_output
 
     # ......................................
     @classmethod
@@ -624,20 +627,7 @@ def test_idigbio_taxon_ids():
 if __name__ == '__main__':
     # test
     
-    log_info('Mopho records:')
-    for guid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS:
-        moutput = MorphoSourceAPI.get_occurrences_by_occid_page1(guid)
-        for r in moutput[S2nKey.RECORDS]:
-            occid = notes = None
-            try:
-                occid = r['specimen.occurrence_id']
-                notes = r['specimen.notes']
-            except Exception as e:
-                msg = 'Morpho source record exception {}'.format(e)
-            else:
-                msg = '{}: {}'.format(occid, notes)
-            log_info(msg)
-    
+
     namestr = TST_VALUES.NAMES[0]
     clean_names = GbifAPI.parse_names(names=TST_VALUES.NAMES)
     can_name = GbifAPI.parse_name(namestr)
@@ -647,21 +637,21 @@ if __name__ == '__main__':
         log_error('Failed to match {}'.format(namestr))
     else:
         acc_names = GbifAPI.match_name(acc_name, status='accepted')
-#         log_info('Matched accepted names:')
-#         for n in acc_names:
-#             log_info('{}: {}, {}'.format(
-#                 n['scientificName'], n['status'], n['rank']))
-#         log_info ('')
-#         syn_names = GbifAPI.match_name(acc_name, status='synonym')
-#         log_info('Matched synonyms:')
-#         for n in syn_names:
-#             log_info('{}: {}, {}'.format(
-#                 n['scientificName'], n['status'], n['rank']))
-#         log_info ('')
+        log_info('Matched accepted names:')
+        for n in acc_names:
+            log_info('{}: {}, {}'.format(
+                n['scientificName'], n['status'], n['rank']))
+        log_info ('')
+        syn_names = GbifAPI.match_name(acc_name, status='synonym')
+        log_info('Matched synonyms:')
+        for n in syn_names:
+            log_info('{}: {}, {}'.format(
+                n['scientificName'], n['status'], n['rank']))
+        log_info ('')
         
-#         names = ['ursidae', 'Poa annua']
-#         recs = GbifAPI.get_occurrences_by_dataset(TST_VALUES.DATASET_GUIDS[0])
-#         log_info('Returned {} records for dataset:'.format(len(recs)))
+        names = ['ursidae', 'Poa annua']
+        recs = GbifAPI.get_occurrences_by_dataset(TST_VALUES.DS_GUIDS_W_SPECIFY_ACCESS_RECS[0])
+        log_info('Returned {} records for dataset:'.format(len(recs)))
         names = ['Poa annua']
         for name in names:
             pass
@@ -672,24 +662,3 @@ if __name__ == '__main__':
                 log_info('{}: {}, {}'.format(
                     n['scientificName'], n['status'], n['rank']))
             log_info ('')
-            itis_names = ItisAPI.match_name(name)
-#             log_info ('Matched {} with {} ITIS names using Solr'.format(
-#                 name, len(itis_names)))
-#             for n in itis_names:
-#                 log_info('{}: {}, {}, {}'.format(
-#                     n['nameWOInd'], n['kingdom'], n['usage'], n['rank']))
-#             log_info ('')
-#     
-#             itis_names = ItisAPI.match_name(name)
-#             log_info ('Matched {} with {} ITIS names using web services'.format(
-#                 name, len(itis_names)))
-#             for n in itis_names:
-#                 log_info('{} {}: {}'.format(
-#                     n['tsn'], n['scientificName'], n['nameUsage']))
-#             log_info ('')
-
-"""
-https://api.gbif.org/v1/occurrence/search?occurrenceId=dbe1622c-1ed3-11e3-bfac-90b11c41863e
-url = 'https://search.idigbio.org/v2/search/records/?rq={%22occurrenceid%22%3A%22a413b456-0bff-47da-ab26-f074d9be5219%22}'
-
-"""

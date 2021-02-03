@@ -25,7 +25,7 @@ class DatasetGBIF(_DatasetSvc):
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, dataset_key=None, count_only=None, **kwargs):
+    def GET(self, dataset_key=None, count_only=False, **kwargs):
         """Get one or more occurrence records for a dataset identifier from the
         GBIF occurrence service.
         
@@ -37,21 +37,28 @@ class DatasetGBIF(_DatasetSvc):
             kwargs: any additional keyword arguments are ignored
 
         Return:
-            A dictionary of metadata and a count of records found in GBIF and 
-            an optional list of records.
+            LmRex.services.api.v1.S2nOutput object with optional records as a 
+            list of dictionaries of GBIF records corresponding to specimen 
+            occurrences in the GBIF database
                 
+        Note: 
+            If count_only=False, the records element will contain a subset of 
+            records available for that dataset.  The number of records will be
+            less than or equal to the paging limit set by the provider.  
         Note: 
             The dataset_key is an identifier assigned by GBIF to collections
             which publish their datasets to GBIF.
         """
-        count_only = self._set_default(count_only, True)
-        usr_params = self._standardize_params(
-            dataset_key=dataset_key, count_only=count_only)
-        dataset_key = usr_params['dataset_key']
-        if not dataset_key:
-            return {'spcoco.message': 'S^n GBIF dataset query is online'}
-        else:
-            return self._get_records(dataset_key, usr_params['count_only'])
+        try:
+            usr_params = self._standardize_params(
+                dataset_key=dataset_key, count_only=count_only)
+            dataset_key = usr_params['dataset_key']
+            if not dataset_key:
+                return {'spcoco.message': 'S^n GBIF dataset query is online'}
+            else:
+                return self._get_records(dataset_key, usr_params['count_only'])
+        except Exception as e:
+            return self.get_failure(query_term=dataset_key, errors=[e])
 
 
 # .............................................................................
@@ -59,16 +66,16 @@ class DatasetGBIF(_DatasetSvc):
 class DatasetBISON(_DatasetSvc):
     PROVIDER = ServiceProvider.BISON
     # ...............................................
-    def _get_records(self, namestr, count_only):
+    def _get_records(self, dataset_key, count_only):
         # 'do_limit' limits the number of records returned to the GBIF limit
-        output = BisonAPI.get_occurrences_by_name(
-            namestr, count_only, do_limit=True)
+        output = BisonAPI.get_occurrences_by_dataset(
+            dataset_key, count_only, do_limit=True)
         output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, namestr=None, match_itis=True, count_only=None, **kwargs):
+    def GET(self, dataset_key=None, match_itis=True, count_only=False, **kwargs):
         """Get one or more occurrence records for a dataset identifier from the
         BISON occurrence service.
         
@@ -80,23 +87,32 @@ class DatasetBISON(_DatasetSvc):
             kwargs: any additional keyword arguments are ignored
 
         Return:
-            A dictionary of metadata and a count of records found in BISON and 
-            an optional list of records.
+            LmRex.services.api.v1.S2nOutput object with optional records as a 
+            list of dictionaries of BISON records corresponding to specimen 
+            occurrences in the BISON database
                 
+        Note: 
+            If count_only=False, the records element will contain a subset of 
+            records available for that dataset.  The number of records will be
+            less than or equal to the paging limit set by the provider.  
         Note: 
             The dataset_key is an identifier assigned by GBIF to collections
             which publish their datasets to GBIF.  BISON maintains this value 
             in records they retrieve from GBIF. 
+            
+        TODO: Not yet implemented!
         """
-        count_only = self._set_default(count_only, True)
-        usr_params = self._standardize_params(
-            namestr=namestr, match_itis=match_itis, count_only=count_only)
-        namestr = usr_params['namestr']
-        if namestr is None:
-            return self._show_online()
-        else:
-            return self._get_records(namestr, usr_params['count_only'])
-    
+        try:
+            usr_params = self._standardize_params(
+                dataset_key=dataset_key, match_itis=match_itis, count_only=count_only)
+            namestr = usr_params['namestr']
+            if namestr is None:
+                return self._show_online()
+            else:
+                return self._get_records(dataset_key, usr_params['count_only'])
+        except Exception as e:
+            return self.get_failure(query_term=dataset_key, errors=[e])
+
 # .............................................................................
 @cherrypy.expose
 class DatasetTentacles(_DatasetSvc):
@@ -117,7 +133,7 @@ class DatasetTentacles(_DatasetSvc):
     # ...............................................
     # ...............................................
     @cherrypy.tools.json_out()
-    def GET(self, dataset_key=None, count_only=None, **kwargs):
+    def GET(self, dataset_key=None, count_only=False, **kwargs):
         """Get one or more occurrence records for a dataset identifier from all
         available occurrence record services.
         
@@ -130,20 +146,27 @@ class DatasetTentacles(_DatasetSvc):
 
         Return:
             a dictionary with keys for each service queried.  Service values 
-            contain metadata and a count of records found in that service and an 
-            optional list of records.
-                
+            LmRex.services.api.v1.S2nOutput object with optional records as a 
+            list of dictionaries of GBIF records corresponding to specimen 
+            occurrences in the GBIF database
+              
+        Note: 
+            If count_only=False, the records element will contain a subset of 
+            records available for that dataset.  The number of records will be
+            less than or equal to the paging limit set by the provider.  
         Note: 
             The dataset_key is an identifier assigned by GBIF to collections
             which publish their datasets to GBIF.  BISON maintains this value 
             in records they retrieve from GBIF. 
         """
-        count_only = self._set_default(count_only, True)
-        usr_params = self._standardize_params(
-            dataset_key=dataset_key, count_only=count_only)
-        return self._get_records(
-            usr_params['dataset_key'], usr_params['count_only'])
-        
+        try:
+            usr_params = self._standardize_params(
+                dataset_key=dataset_key, count_only=count_only)
+            return self._get_records(
+                usr_params['dataset_key'], usr_params['count_only'])
+        except Exception as e:
+            return self.get_failure(errors=[e])
+
 # .............................................................................
 if __name__ == '__main__':
     # test
@@ -151,9 +174,9 @@ if __name__ == '__main__':
     
     gocc = DatasetGBIF()
     for count_only in [True, False]:
-        rkeys = S2nKey.required_for_datasetsvc_keys()
-        if count_only is True:
-            rkeys = S2nKey.required_for_datasetsvc_norecs_keys()
+        rkeys = S2nKey.required_keys()
+        if count_only is False:
+            rkeys = S2nKey.required_with_recs_keys()
 
         gout = gocc.GET(
             TST_VALUES.DS_GUIDS_W_SPECIFY_ACCESS_RECS[0], count_only=count_only)

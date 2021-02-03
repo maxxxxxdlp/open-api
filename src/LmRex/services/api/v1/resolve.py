@@ -34,9 +34,7 @@ class SpecifyResolve(_ResolveSvc):
                 pass
             else:
                 if not url.startswith('http'):
-                    msg = (
-                        'No direct record access to {} returned from collection {}'
-                        .format(url, SPECIFY.RESOLVER_COLLECTION))
+                    msg = ('No direct record access to {}'.format(url))
                     url = None
         return (url, msg)
     

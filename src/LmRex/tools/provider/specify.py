@@ -1,6 +1,6 @@
-from LmRex.common.lmconstants import (DWC, JSON_HEADERS, ServiceProvider, TST_VALUES)
-from LmRex.fileop.logtools import (log_error)
-from LmRex.services.api.v1.s2n_type import S2nKey
+from LmRex.common.lmconstants import (
+    DWC, JSON_HEADERS, ServiceProvider, TST_VALUES)
+from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.provider.api import APIQuery
 
 # .............................................................................
@@ -25,8 +25,8 @@ class SpecifyPortalAPI(APIQuery):
     @classmethod
     def _standardize_output(
             cls, output, count_only=False, err=None):
-        std_output = {S2nKey.COUNT: 0}
         stdrecs = []
+        total = 0
         errmsgs = []
         if err is not None:
             errmsgs.append(err)
@@ -36,7 +36,7 @@ class SpecifyPortalAPI(APIQuery):
         except Exception as e:
             errmsgs.append(cls._get_error_message(err=e))
         else:
-            std_output[S2nKey.COUNT] = len(recs)
+            total = len(recs)
         # Records
         if not count_only:
             for r in recs:
@@ -45,10 +45,13 @@ class SpecifyPortalAPI(APIQuery):
                 except Exception as e:
                     msg = cls._get_error_message(err=e)
                     errmsgs.append(msg)
-            # TODO: make sure Specify is using full DWC
-            std_output[S2nKey.RECORD_FORMAT] = DWC.SCHEMA
-            std_output[S2nKey.RECORDS] = stdrecs
-        std_output[S2nKey.ERRORS] = errmsgs
+
+        # TODO: make sure Specify is using full DWC                    
+        std_output = S2nOutput(
+            count=total, record_format=DWC.SCHEMA, records=stdrecs, 
+            provider=cls.PROVIDER, errors=errmsgs, 
+            provider_query=None, query_term=None, service=None)
+
         return std_output
 
     # ...............................................
@@ -66,7 +69,7 @@ class SpecifyPortalAPI(APIQuery):
         """
         std_output = {S2nKey.COUNT: 0}
         qry_meta = {
-            S2nKey.OCCURRENCE_ID: occid, S2nKey.PROVIDER: cls.PROVIDER,
+            S2nKey.QUERY_TERM: occid, S2nKey.PROVIDER: cls.PROVIDER,
             S2nKey.PROVIDER_QUERY: [url]}
         
         if url.startswith('http'):

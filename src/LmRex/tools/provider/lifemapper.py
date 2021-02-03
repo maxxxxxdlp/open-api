@@ -1,6 +1,6 @@
 from LmRex.common.lmconstants import (Lifemapper, ServiceProvider, TST_VALUES)
 from LmRex.fileop.logtools import (log_error)
-from LmRex.services.api.v1.s2n_type import S2nKey
+from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.provider.api import APIQuery
 
 # .............................................................................
@@ -108,10 +108,9 @@ class LifemapperAPI(APIQuery):
     def _standardize_output(cls, output, color=None, count_only=False, err=None):
         stdrecs = []
         errmsgs = []
+        total = len(output)
         if err is not None:
             errmsgs.append(err)
-        # Count
-        std_output = {S2nKey.COUNT: len(output)}
         # Records]
         if not count_only:
             for r in output:
@@ -119,10 +118,13 @@ class LifemapperAPI(APIQuery):
                     stdrecs.append(cls._standardize_record(r, color=color))
                 except Exception as e:
                     errmsgs.append(cls._get_error_message(err=e))
-            # TODO: revisit record format for other map providers
-            std_output[S2nKey.RECORD_FORMAT] = Lifemapper.RECORD_FORMAT_MAP
-            std_output[S2nKey.RECORDS] = stdrecs
-        std_output[S2nKey.ERRORS] = errmsgs
+        
+        # TODO: revisit record format for other map providers
+        std_output = S2nOutput(
+            count=total, record_format=Lifemapper.RECORD_FORMAT_MAP, 
+            records=stdrecs, provider=cls.PROVIDER, errors=errmsgs, 
+            provider_query=None, query_term=None, service=None)
+
         return std_output
     
 #     # ...............................................

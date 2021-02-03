@@ -10,7 +10,7 @@ from LmRex.tools.provider.specify import SpecifyPortalAPI
 
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.resolve import SpecifyResolve
-from LmRex.services.api.v1.s2n_type import S2nKey        
+from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 
 # .............................................................................
 @cherrypy.expose
@@ -42,17 +42,19 @@ class OccGBIF(_OccurrenceSvc):
             kwargs: any additional keyword arguments are ignored
 
         Return:
-            a dictionary with keys for each service queried.  Values contain 
-                either a list of dictionaries/records returned for that service 
-                or a count.
+            LmRex.services.api.v1.S2nOutput object with optional records as a 
+            list of dictionaries of GBIF records corresponding to specimen 
+            occurrences in the GBIF database
         """
-        usr_params = self._standardize_params(occid=occid, count_only=count_only)
-        occurrence_id = usr_params['occid']
-        if occurrence_id is None:
-            return self._show_online()
-        else:
-            return self.get_records(occurrence_id, usr_params['count_only'])
-
+        try:
+            usr_params = self._standardize_params(occid=occid, count_only=count_only)
+            occurrence_id = usr_params['occid']
+            if occurrence_id is None:
+                return self._show_online()
+            else:
+                return self.get_records(occurrence_id, usr_params['count_only'])
+        except Exception as e:
+            return self.get_failure(query_term=occid, errors=[e])
 
 # .............................................................................
 @cherrypy.expose
@@ -77,17 +79,20 @@ class OccIDB(_OccurrenceSvc):
             kwargs: any additional keyword arguments are ignored
 
         Return:
-            a dictionary with keys for each service queried.  Values contain 
-                either a list of dictionaries/records returned for that service 
-                or a count.
+            LmRex.services.api.v1.S2nOutput object with optional records as a 
+            list of dictionaries of iDigBio records corresponding to specimen 
+            occurrences in the iDigBio database
         """
-        usr_params = self._standardize_params(occid=occid, count_only=count_only)
-        occurrence_id = usr_params['occid']
-        if occurrence_id is None:
-            return self._show_online()
-        else:
-            return self.get_records(occurrence_id, usr_params['count_only'])
-          
+        try:
+            usr_params = self._standardize_params(occid=occid, count_only=count_only)
+            occurrence_id = usr_params['occid']
+            if occurrence_id is None:
+                return self._show_online()
+            else:
+                return self.get_records(occurrence_id, usr_params['count_only'])
+        except Exception as e:
+            return self.get_failure(query_term=occid, errors=[e])
+
 # .............................................................................
 @cherrypy.expose
 class OccMopho(_OccurrenceSvc):
@@ -102,12 +107,15 @@ class OccMopho(_OccurrenceSvc):
     # ...............................................
     @cherrypy.tools.json_out()
     def GET(self, occid=None, count_only=False, **kwargs):
-        usr_params = self._standardize_params(occid=occid, count_only=count_only)
-        occurrence_id = usr_params['occid']
-        if occurrence_id is None:
-            return self._show_online()
-        else:
-            return self.get_records(occurrence_id, usr_params['count_only'])
+        try:
+            usr_params = self._standardize_params(occid=occid, count_only=count_only)
+            occurrence_id = usr_params['occid']
+            if occurrence_id is None:
+                return self._show_online()
+            else:
+                return self.get_records(occurrence_id, usr_params['count_only'])
+        except Exception as e:
+            return self.get_failure(query_term=occid, errors=[e])
 
 # .............................................................................
 @cherrypy.expose
@@ -132,7 +140,8 @@ class OccSpecify(_OccurrenceSvc):
         else:
             output = {
                 S2nKey.COUNT: 0, S2nKey.ERRORS: [msg], 
-                S2nKey.OCCURRENCE_ID: occid, S2nKey.PROVIDER: self.PROVIDER, 
+                S2nKey.QUERY_TERM: occid, 
+                S2nKey.PROVIDER: self.PROVIDER[S2nKey.NAME], 
                 S2nKey.PROVIDER_QUERY: [url], 
                 S2nKey.SERVICE: self.SERVICE_TYPE}
         return output 
@@ -152,16 +161,19 @@ class OccSpecify(_OccurrenceSvc):
             kwargs: any additional keyword arguments are ignored
 
         Return:
-            a dictionary with keys for each service queried.  Values contain 
-                either a list of dictionaries/records returned for that service 
-                or a count.
+            LmRex.services.api.v1.S2nOutput object with optional records as a 
+            list of dictionaries of Specify records corresponding to specimen 
+            occurrences in the Specify database
         """
-        usr_params = self._standardize_params(occid=occid, url=url)
-        if usr_params['url'] is None and usr_params['occid'] is None:
-            return self._show_online()
-        else:
-            return self.get_records(
-                usr_params['url'], usr_params['occid'], count_only)
+        try:
+            usr_params = self._standardize_params(occid=occid, url=url)
+            if usr_params['url'] is None and usr_params['occid'] is None:
+                return self._show_online()
+            else:
+                return self.get_records(
+                    usr_params['url'], usr_params['occid'], count_only)
+        except Exception as e:
+            return self.get_failure(query_term=occid, errors=[e])
 
 # .............................................................................
 @cherrypy.expose
@@ -181,11 +193,8 @@ class OccTentacles(_OccurrenceSvc):
         # all_output[ServiceProvider.Specify[S2nKey.NAME]] = solr_output
         
         # Specify Record from URL in ARK
-        if url is not None:
-            spocc = OccSpecify()
-            sp_output = spocc.get_records(url, occid, count_only)
-        else:
-            sp_output = {S2nKey.COUNT: 0, S2nKey.ERRORS: [msg]}
+        spocc = OccSpecify()
+        sp_output = spocc.get_records(url, occid, count_only)
         all_output[S2nKey.RECORDS].append(
             {ServiceProvider.Specify[S2nKey.NAME]: sp_output})
         
@@ -226,12 +235,17 @@ class OccTentacles(_OccurrenceSvc):
 
         Return:
             a dictionary with keys for each service queried.  Values contain 
-                either a list of dictionaries/records returned for that service 
-                or a count.
+            LmRex.services.api.v1.S2nOutput object with optional records as a 
+            list of dictionaries of records corresponding to specimen 
+            occurrences in the provider database
         """
-        usr_params = self._standardize_params(occid=occid, count_only=count_only)
-        return self.get_records(usr_params)
-        
+        try:
+            usr_params = self._standardize_params(
+                occid=occid, count_only=count_only)
+            return self.get_records(usr_params)
+        except Exception as e:
+            return self.get_failure(query_term=occid, errors=[e])
+
 # .............................................................................
 if __name__ == '__main__':
     # test
@@ -248,7 +262,7 @@ if __name__ == '__main__':
         print('')
         # print missing elements
         count = 0
-        for key in S2nKey.required_for_occsvc_keys():
+        for key in S2nKey.required_keys():
             try:
                 output[key]
             except:
@@ -265,7 +279,7 @@ if __name__ == '__main__':
         print('')
         # print missing elements
         count = 0
-        for key in S2nKey.required_for_occsvc_keys():
+        for key in S2nKey.required_keys():
             try:
                 output[key]
             except:
@@ -296,9 +310,9 @@ if __name__ == '__main__':
         # Queries all services
         s2napi = OccTentacles()
         for count_only in [True, False]:
-            required_keys = S2nKey.required_for_occsvc_keys()
-            if count_only is True:
-                required_keys = S2nKey.required_for_occsvc_norecs_keys()
+            required_keys = S2nKey.required_keys()
+            if count_only is False:
+                required_keys = S2nKey.required_with_recs_keys()
  
             all_output = s2napi.GET(occid=occid, count_only=count_only)
              

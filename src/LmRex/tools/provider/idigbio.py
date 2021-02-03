@@ -2,7 +2,7 @@ import csv
 import os
 
 from LmRex.common.lmconstants import (
-    Idigbio, ServiceProvider, ENCODING)
+    GBIF_MISSING_KEY, Idigbio, ServiceProvider, ENCODING, DATA_DUMP_DELIMITER)
 from LmRex.fileop.logtools import (log_info)
 from LmRex.fileop.ready_file import ready_filename
 
@@ -12,7 +12,7 @@ from LmRex.tools.provider.api import APIQuery
 # .............................................................................
 class IdigbioAPI(APIQuery):
     """Class to query iDigBio APIs and return results"""
-    PROVIDER = ServiceProvider.iDigBio['name']
+    PROVIDER = ServiceProvider.iDigBio[S2nKey.NAME]
     # ...............................................
     def __init__(self, q_filters=None, other_filters=None, filter_string=None,
                  headers=None, logger=None):
@@ -93,9 +93,6 @@ class IdigbioAPI(APIQuery):
         qf = {Idigbio.QKEY: 
               '{"' + Idigbio.OCCURRENCEID_FIELD + '":"' + occid + '"}'}
         api = IdigbioAPI(other_filters=qf, logger=logger)
-        qry_meta = {
-            S2nKey.OCCURRENCE_ID: occid, S2nKey.PROVIDER: cls.PROVIDER,
-            S2nKey.PROVIDER_QUERY: [api.url]}
 
         try:
             api.query()
@@ -105,9 +102,12 @@ class IdigbioAPI(APIQuery):
             std_output = cls._standardize_output(
                 api.output, Idigbio.COUNT_KEY, Idigbio.RECORDS_KEY, 
                 Idigbio.RECORD_FORMAT, count_only=count_only, err=api.error)
+        
         # Add query metadata to output
-        for key, val in qry_meta.items():
-            std_output[key] = val                
+        std_output.query_term = occid
+        std_output.provider = cls.PROVIDER
+        std_output.provider_query = [api.url]
+
         return std_output
 
     # ...............................................
@@ -225,11 +225,11 @@ class IdigbioAPI(APIQuery):
                     'Deleting existing file {} ...'.format(fname), logger=logger)
                 os.remove(fname)
 
-        summary = {self.GBIF_MISSING_KEY: []}
+        summary = {GBIF_MISSING_KEY: []}
 
         ready_filename(point_output_file, overwrite=True)
         with open(point_output_file, 'w', encoding=ENCODING, newline='') as csv_f:
-            writer = csv.writer(csv_f, delimiter=GbifAPI.DELIMITER)
+            writer = csv.writer(csv_f, delimiter=DATA_DUMP_DELIMITER)
             fld_names = None
             for gid in taxon_ids:
                 # Pull / write field names first time
@@ -238,13 +238,13 @@ class IdigbioAPI(APIQuery):
 
                 summary[gid] = pt_count
                 if pt_count == 0:
-                    summary[self.GBIF_MISSING_KEY].append(gid)
+                    summary[GBIF_MISSING_KEY].append(gid)
 
         # get/write missing data
         if missing_id_file is not None and len(
-                summary[self.GBIF_MISSING_KEY]) > 0:
+                summary[GBIF_MISSING_KEY]) > 0:
             with open(missing_id_file, 'w', encoding=ENCODING) as out_f:
-                for gid in summary[self.GBIF_MISSING_KEY]:
+                for gid in summary[GBIF_MISSING_KEY]:
                     out_f.write('{}\n'.format(gid))
 
         return summary
@@ -256,13 +256,13 @@ class IdigbioAPI(APIQuery):
         if not isinstance(taxon_ids, list):
             taxon_ids = [taxon_ids]
 
-        summary = {self.GBIF_MISSING_KEY: []}
+        summary = {GBIF_MISSING_KEY: []}
 
         for gid in taxon_ids:
             # Pull/write fieldnames first time
             pt_count = self._count_idigbio_records(gid)
             if pt_count == 0:
-                summary[self.GBIF_MISSING_KEY].append(gid)
+                summary[GBIF_MISSING_KEY].append(gid)
             summary[gid] = pt_count
 
         return summary

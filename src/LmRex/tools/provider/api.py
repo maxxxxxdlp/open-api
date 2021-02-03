@@ -1,11 +1,12 @@
 """Module containing functions for API Queries"""
 import requests
+import typing
 import urllib
 
 from LmRex.common.lmconstants import (
-    GBIF, HTTPStatus, URL_ESCAPES, ENCODING, TST_VALUES)
+    HTTPStatus, URL_ESCAPES, ENCODING, TST_VALUES)
 from LmRex.fileop.logtools import (log_warn)
-from LmRex.services.api.v1.s2n_type import S2nKey
+from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.lm_xml import fromstring, deserialize
 
 # .............................................................................
@@ -15,8 +16,8 @@ class APIQuery:
     Note:
         CSV files are created with tab delimiter
     """
-    DELIMITER = GBIF.DATA_DUMP_DELIMITER
-    GBIF_MISSING_KEY = 'unmatched_gbif_ids'
+    # Not implemented in base class
+    PROVIDER = None
 
     def __init__(self, base_url, q_key='q', q_filters=None,
                  other_filters=None, filter_string=None, headers=None, 
@@ -53,9 +54,9 @@ class APIQuery:
     def _standardize_output(
             cls, output, count_key, records_key, record_format, 
             count_only=False, err=None):
-        std_output = {S2nKey.COUNT: 0}
         errmsgs = []
         stdrecs = []
+        total = 0
         if err is not None:
             errmsgs.append(err)
         # Count
@@ -64,8 +65,6 @@ class APIQuery:
         except:
             errmsgs.append(cls._get_error_message(
                 msg='Missing `{}` element'.format(count_key)))
-        else:
-            std_output[S2nKey.COUNT] = total
         # Records
         if not count_only:
             try:
@@ -80,11 +79,13 @@ class APIQuery:
                         stdrecs.append(cls._standardize_record(r))
                     except Exception as e:
                         msg = cls._get_error_message(err=e)
-                        errmsgs.append(msg)            
-            std_output[S2nKey.RECORD_FORMAT] = record_format
-            std_output[S2nKey.RECORDS] = stdrecs
-        # Errors
-        std_output[S2nKey.ERRORS] = errmsgs
+                        errmsgs.append(msg)
+                        
+        std_output = S2nOutput(
+            count=total, record_format=record_format, records=stdrecs, 
+            provider=cls.PROVIDER, errors=errmsgs, 
+            provider_query=None, query_term=None, service=None)
+
         return std_output
 
     # .....................................
@@ -251,6 +252,35 @@ class APIQuery:
                 q_val = ' AND '.join((q_val, cls))
         q_val = first_clause + q_val
         return q_val
+
+    # ...............................................
+    @classmethod
+    def get_failure(
+        cls, count: int = 0, record_format: str = '',
+        records: typing.List[dict] = [], provider: str = '', 
+        errors: typing.List[str] = [], provider_query: typing.List[str] = [],
+        query_term: str = '', service: str = '') -> S2nOutput:
+        """Output format for all (soon) API queries
+        
+        Args:
+            count: number of records returned
+            record_format: schema for the records returned
+            records: list of records (dictionaries)
+            provider: original data provider
+            errors: list of errors (strings)
+            provider_query: list of queries (url strings)
+            service: type of S^n services
+            
+        Return:
+            LmRex.services.api.v1.S2nOutput object
+        """
+        if not provider:
+            provider = cls.PROVIDER
+        return S2nOutput(
+            count=count, record_format=record_format, 
+            records=records, provider=provider,
+            errors=errors, provider_query=provider_query,
+            query_term=query_term, service=service)
 
     # ...............................................
     def query_by_get(self, output_type='json'):

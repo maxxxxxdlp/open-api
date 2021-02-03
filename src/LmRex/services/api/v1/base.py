@@ -13,11 +13,13 @@ class _S2nService:
     SERVICE_TYPE = None
     PROVIDER = None
 
+    # .............................................................................
+    @classmethod
     def get_failure(
-        self, count: int = 0, record_format: str = '',
+        cls, count: int = 0, record_format: str = '',
         records: typing.List[dict] = [], provider: str = '', 
         errors: typing.List[str] = [], provider_query: typing.List[str] = [],
-        service: str = '') -> S2nOutput:
+        query_term: str = '', service: str = '') -> S2nOutput:
         """Output format for all (soon) S^n services
         
         Args:
@@ -27,20 +29,21 @@ class _S2nService:
             provider: original data provider
             errors: list of errors (strings)
             provider_query: list of queries (url strings)
+            query_term: query term provided by the user, ex: name or id
             service: type of S^n services
             
         Return:
             LmRex.services.api.v1.S2nOutput object
         """
         if not provider:
-            provider = self.PROVIDER
+            provider = cls.PROVIDER
         if not service: 
-            service = self.SERVICE_TYPE
+            service = cls.SERVICE_TYPE
         return S2nOutput(
             count=count, record_format=record_format, 
             records=records, provider=provider,
             errors=errors, provider_query=provider_query,
-            service=service)
+            query_term=query_term, service=service)
 
     # .............................................................................
     @classmethod
@@ -183,7 +186,7 @@ class _S2nService:
     def _standardize_params(
             self, namestr=None, gbif_accepted=False, gbif_parse=False,  
             gbif_count=False, itis_match=False, itis_accepted=False, kingdom=None, 
-            occid=None, dataset_key=None, count_only=True, url=None,
+            occid=None, dataset_key=None, count_only=False, url=None,
             scenariocode=None, bbox=None, color=None, exceptions=None, height=None, 
             layers=None, request=None, frmat=None, srs=None, transparent=None, 
             width=None, do_match=True):

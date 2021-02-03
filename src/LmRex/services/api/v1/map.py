@@ -4,7 +4,7 @@ from LmRex.common.lmconstants import (
     ServiceProvider, APIService, Lifemapper, TST_VALUES)
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.name import NameGBIF
-from LmRex.services.api.v1.s2n_type import S2nKey        
+from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.provider.itis import ItisAPI
 from LmRex.tools.provider.lifemapper import LifemapperAPI
 
@@ -168,24 +168,28 @@ class MapLM(_MapSvc):
             namestr: a scientific name
             color: one of a defined set of color choices for projection display 
             kwargs: additional keyword arguments - to be ignored
+
         Return:
-            a list of dictionaries containing a matching name 
-            (synonym, invalid, etc), record count, and query URL for retrieving 
-            the records.
+            LmRex.services.api.v1.S2nOutput object with records as a 
+            list of dictionaries of Lifemapper records corresponding to 
+            maps with URLs and their layers in the Lifemapper archive
             
         Todo: 
             fix color parameter in Lifemapper WMS service
         """
-        usr_params = self._standardize_params(
-            namestr=namestr, scenariocode=scenariocode, color=color, 
-            do_match=do_match)
-        namestr = usr_params['namestr']
-        if not namestr:
-            return self._show_online()
-        else:
-            return self.get_map_layers(
-                namestr,  usr_params['scenariocode'], usr_params['color'], 
-                usr_params['do_match'])
+        try:
+            usr_params = self._standardize_params(
+                namestr=namestr, scenariocode=scenariocode, color=color, 
+                do_match=do_match)
+            namestr = usr_params['namestr']
+            if not namestr:
+                return self._show_online()
+            else:
+                return self.get_map_layers(
+                    namestr,  usr_params['scenariocode'], usr_params['color'], 
+                    usr_params['do_match'])
+        except Exception as e:
+            return self.get_failure(query_term=namestr, errors=[e])
 
 # .............................................................................
 @cherrypy.expose
@@ -209,17 +213,22 @@ class MapBISON(_MapSvc):
             gbif_parse: flag to indicate whether to first use the GBIF parser 
                 to parse a scientific name into canonical name 
             kwargs: additional keyword arguments - to be ignored
+ 
         Return:
-            a dictionary containing asrc/LmRex/services/api/v1/ count and list of dictionaries of 
-                ITIS records corresponding to names in the ITIS taxonomy
+            LmRex.services.api.v1.S2nOutput object with records as a 
+            list of dictionaries of BISON records corresponding to 
+            maps with URLs and their layers in the BISON database
         """
-        usr_params = self._standardize_params(
-            namestr=namestr, gbif_parse=gbif_parse)
-        namestr = usr_params['namestr']
-        if not namestr:
-            return self._show_online()
-        else:
-            return self.get_itis_taxon(namestr)
+        try:
+            usr_params = self._standardize_params(
+                namestr=namestr, gbif_parse=gbif_parse)
+            namestr = usr_params['namestr']
+            if not namestr:
+                return self._show_online()
+            else:
+                return self.get_itis_taxon(namestr)
+        except Exception as e:
+            return self.get_failure(query_term=namestr, errors=[e])
 
 
 # .............................................................................
@@ -227,13 +236,19 @@ class MapBISON(_MapSvc):
 class MapTentacles(_MapSvc):
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
-        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
-            
+#         all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
+        all_output = S2nOutput(
+            count=0, records=[], query_term=namestr)
         # Lifemapper
         api = MapLM()
-        lmoutput = api.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.Lifemapper[S2nKey.NAME]: lmoutput})
+        try:
+            lmoutput = api.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
+#             all_output[S2nKey.RECORDS].append(
+#             {ServiceProvider.Lifemapper[S2nKey.NAME]: lmoutput})
+        except Exception as e:
+            return self.get_failure(query_term=namestr, errors=[e])
+        else:
+            all_output.records.append(lmoutput)
         
         # BISON
         return all_output
@@ -251,19 +266,23 @@ class MapTentacles(_MapSvc):
                 to parse a scientific name into canonical name 
         Return:
             a dictionary with keys for each service queried.  Values contain 
-                either a list of dictionaries/records returned for that service 
-                or a count.
+            LmRex.services.api.v1.S2nOutput object with records as a 
+            list of dictionaries of Lifemapper records corresponding to 
+            maps with URLs and their layers in the Lifemapper archive
         """
-        usr_params = self._standardize_params(
-            namestr=namestr, gbif_accepted=gbif_accepted, gbif_parse=gbif_parse, 
-            gbif_count=gbif_count, status=status, kingdom=kingdom)
-        namestr = usr_params['namestr']
-        if not namestr:
-            return self._show_online()
-        else:
-            return self.get_records(
-                namestr, usr_params['gbif_status'], usr_params['gbif_count'],
-                usr_params['status'], usr_params['kingdom'])
+        try:
+            usr_params = self._standardize_params(
+                namestr=namestr, gbif_accepted=gbif_accepted, gbif_parse=gbif_parse, 
+                gbif_count=gbif_count, status=status, kingdom=kingdom)
+            namestr = usr_params['namestr']
+            if not namestr:
+                return self._show_online()
+            else:
+                return self.get_records(
+                    namestr, usr_params['gbif_status'], usr_params['gbif_count'],
+                    usr_params['status'], usr_params['kingdom'])
+        except Exception as e:
+            return self.get_failure(query_term=namestr, errors=[e])
 
 # .............................................................................
 if __name__ == '__main__':

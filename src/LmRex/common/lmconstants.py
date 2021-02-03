@@ -18,6 +18,9 @@ ICH_RSS_URL = 'https://ichthyology.specify.ku.edu/export/rss'
 
 SPECIFY_ARK_PREFIX = 'http://spcoco.org/ark:/'
 
+DATA_DUMP_DELIMITER = '\t'
+GBIF_MISSING_KEY = 'unmatched_gbif_ids'
+
 # class S2N:
 #     COUNT_KEY = 'count'
 #     RECORD_FORMAT_KEY = 'record_format'
