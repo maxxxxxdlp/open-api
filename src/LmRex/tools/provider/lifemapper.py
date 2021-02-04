@@ -1,4 +1,5 @@
-from LmRex.common.lmconstants import (Lifemapper, ServiceProvider, TST_VALUES)
+from LmRex.common.lmconstants import (
+    APIService, Lifemapper, ServiceProvider, TST_VALUES)
 from LmRex.fileop.logtools import (log_error)
 from LmRex.services.api.v1.s2n_type import S2nKey, S2nOutput
 from LmRex.tools.provider.api import APIQuery
@@ -34,7 +35,7 @@ class LifemapperAPI(APIQuery):
     
     # ...............................................
     @classmethod
-    def _standardize_record(cls, rec, color=None):
+    def _standardize_map_record(cls, rec, color=None):
         try:
             mapname = rec['map']['mapName']
             url = rec['map']['endpoint']
@@ -105,7 +106,63 @@ class LifemapperAPI(APIQuery):
     
     # ...............................................
     @classmethod
-    def _standardize_output(cls, output, color=None, count_only=False, err=None):
+    def _standardize_occ_record(cls, rec, color=None):
+        errmsgs = []
+        try:
+            mapname = rec['map']['mapName']
+            url = rec['map']['endpoint']
+            point_name = rec['map']['layerName']
+        except Exception as e:
+            msg = 'Failed to retrieve map url from {}, {}'.format(rec, e)
+            raise Exception(msg)
+        else:
+            endpoint = '{}/{}'.format(url, mapname)
+            try:
+                rec['spatialVector']
+            except:
+                errmsgs.append('Missing spatialVector element')
+            else:
+                bbox = ptcount = None
+                try:
+                    bbox = rec['spatialVector']['bbox']
+                except:
+                    errmsgs.append('Missing spatialVector/bbox element')
+                try:
+                    ptcount = rec['spatialVector']['numFeatures']
+                except:
+                    errmsgs.append('Missing spatialVector/numFeatures element')
+
+                try:
+                    occid = rec['id']
+                    point_url = rec['url']
+                    newrec = {
+                        'endpoint': endpoint,
+                        'point_link': point_url,
+                        'point_name': point_name,
+                        'point_count': ptcount,
+                        'point_bbox': bbox,
+                        'species_name': rec['speciesName'],
+                        'modtime': rec['statusModTime']}
+                except Exception as e:
+                    msg = 'Failed to retrieve point data from {}, {}'.format(rec, e)
+                    raise Exception(msg)
+        
+        try:
+            stat = rec['status']
+        except:
+            errmsgs.append(cls._get_error_message(
+                msg='Missing `status` element'))
+        else:
+            # No projection layer without Complete status 
+            if stat != Lifemapper.COMPLETE_STAT_VAL:
+                errmsgs.append(cls._get_error_message(
+                    msg='Occurrenceset status is not complete'))
+        newrec[S2nKey.ERRORS] = errmsgs
+        return newrec
+
+    # ...............................................
+    @classmethod
+    def _standardize_map_output(cls, output, color=None, count_only=False, err=None):
         stdrecs = []
         errmsgs = []
         total = len(output)
@@ -115,7 +172,7 @@ class LifemapperAPI(APIQuery):
         if not count_only:
             for r in output:
                 try:
-                    stdrecs.append(cls._standardize_record(r, color=color))
+                    stdrecs.append(cls._standardize_map_record(r, color=color))
                 except Exception as e:
                     errmsgs.append(cls._get_error_message(err=e))
         
@@ -127,6 +184,29 @@ class LifemapperAPI(APIQuery):
 
         return std_output
     
+    # ...............................................
+    @classmethod
+    def _standardize_occ_output(cls, output, color=None, count_only=False, err=None):
+        stdrecs = []
+        errmsgs = []
+        total = len(output)
+        if err is not None:
+            errmsgs.append(err)
+        # Records]
+        if not count_only:
+            for r in output:
+                try:
+                    stdrecs.append(cls._standardize_occ_record(r, color=color))
+                except Exception as e:
+                    errmsgs.append(cls._get_error_message(err=e))
+        
+        # TODO: revisit record format for other map providers
+        std_output = S2nOutput(
+            count=total, record_format=Lifemapper.RECORD_FORMAT_OCC, 
+            records=stdrecs, provider=cls.PROVIDER, errors=errmsgs, 
+            provider_query=None, query_term=None, service=None)
+
+        return std_output
 #     # ...............................................
 #     @classmethod
 #     def _construct_map_url(
@@ -297,23 +377,21 @@ class LifemapperAPI(APIQuery):
             other_filters[Lifemapper.SCENARIO_KEY] = prjscenariocode
         api = LifemapperAPI(
             resource=Lifemapper.PROJ_RESOURCE, other_filters=other_filters)
-        qry_meta = {
-            S2nKey.NAME: name, S2nKey.PROVIDER: cls.PROVIDER,
-            S2nKey.PROVIDER_QUERY: [api.url]}
         
         try:
             api.query_by_get()
         except Exception as e:
-            std_output = {
-                S2nKey.COUNT: 0, 
-                S2nKey.ERRORS: [cls._get_error_message(err=e)]}
+            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
-            std_output = cls._standardize_output(
+            out = cls._standardize_map_output(
                 api.output, color=color, count_only=False, err=api.error)
-        # Add query metadata to output
-        for key, val in qry_meta.items():
-            std_output[key] = val                
-        return std_output
+
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            provider_query=[api.url], query_term=name, 
+            service=APIService.Dataset)
+        return full_out
 
     # ...............................................
     @classmethod
@@ -330,25 +408,49 @@ class LifemapperAPI(APIQuery):
         Note: 
             Lifemapper contains only 'Accepted' name froms the GBIF Backbone 
             Taxonomy and this method requires them for success.
-
-        Todo:
-            handle full record returns instead of atoms
         """
-        output = []
-        recs = []
         api = LifemapperAPI(
             resource=Lifemapper.OCC_RESOURCE, 
             q_filters={Lifemapper.NAME_KEY: name})
         try:
             api.query_by_get()
-        except Exception:
-            log_error('Failed on {}'.format(api.url), logger=logger)
+        except Exception as e:
+            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
-            # Output is list of records?
-            recs = api.output
-            output[S2nKey.RECORDS] = recs
-            output[S2nKey.COUNT] = len(recs) 
-        return output
+            # Standardize output from provider response
+            out = cls._standardize_occ_output(api.output, err=api.error)
+
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            query_term=name)
+        return full_out    
+
+    # ...............................................
+    @classmethod
+    def _get_occurrenceset_data(cls, url, logger=None):
+        """
+        Return occurrenceset for a given metadata url.  
+        
+        Args:
+            url: a link to the metadata for a Lifemapper occurrenceSet
+            logger: optional logger for info and error messages.  If None, 
+                prints to stdout    
+        """
+        api = APIQuery(url, logger=logger)
+        try:
+            api.query_by_get()
+        except Exception as e:
+            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
+        else:
+            # Standardize output from provider response
+            out = cls._standardize_occ_output(api.output, err=api.error)
+
+        full_out = S2nOutput(
+            count=out.count, record_format=out.record_format, 
+            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+            provider_query=[url])
+        return full_out    
 
 
 """

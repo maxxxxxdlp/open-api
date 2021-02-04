@@ -234,20 +234,16 @@ class ItisAPI(APIQuery):
         try:
             api.query()
         except Exception as e:
-            out = cls.get_failure(
-                query_term=sciname, service=APIService.Name, 
-                errors=[cls._get_error_message(err=e)])
+            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             try:
                 output = api.output['response']
-            except Exception as e:
+            except:
                 if api.error is not None:
                     out = cls.get_failure(
-                        query_term=sciname, service=APIService.Name, 
-                        errors=[api.error])
+                        errors=[cls._get_error_message(err=api.error)])
                 else:
                     out = cls.get_failure(
-                        query_term=sciname, service=APIService.Name, 
                         errors=[cls._get_error_message(
                             msg='Missing `response` element')])
             else:
@@ -281,8 +277,7 @@ class ItisAPI(APIQuery):
         try:
             apiq.query()
         except Exception as e:
-            cls.get_failure(
-                query_term=tsn, service=APIService.Name, errors=[apiq.error])
+            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
             out = cls._standardize_output(

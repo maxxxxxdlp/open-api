@@ -37,8 +37,7 @@ class MorphoSourceAPI(APIQuery):
         try:
             api.query_by_get()
         except Exception as e:
-            out = cls.get_failure(
-                query_term=occid, errors=[cls._get_error_message(err=e)])
+            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
             out = cls._standardize_output(

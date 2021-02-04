@@ -73,8 +73,7 @@ class SpecifyPortalAPI(APIQuery):
             try:
                 api.query_by_get()
             except Exception as e:
-                out = cls.get_failure(
-                    query_term=occid, errors=[cls._get_error_message(err=e)])
+                out = cls.get_failure(errors=[cls._get_error_message(err=e)])
             # Standardize output from provider response
             out = cls._standardize_output(
                 api.output, count_only=count_only, err=api.error)

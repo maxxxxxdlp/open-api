@@ -367,6 +367,7 @@ class Lifemapper:
         'fuschia', 'aqua', 'bluered', 'bluegreen', 'greenred']
     # TODO: replace with a schema definition
     RECORD_FORMAT_MAP = 'lifemapper_layer schema TBD'
+    RECORD_FORMAT_OCC = 'lifemapper_occ schema TBD'
     
     @staticmethod
     def valid_scenario_codes():

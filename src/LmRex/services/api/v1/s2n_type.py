@@ -71,19 +71,19 @@ class S2nKey:
 # This corresponds to the base_response in OpenAPI specification
 class S2nOutput(typing.NamedTuple):
     count: int
-    provider: str
-    errors: typing.List[str]
-    provider_query: typing.List[str]
     query_term: str
     service: str
+    provider: str
+    provider_query: typing.List[str] = []
     record_format: str = ''
     records: typing.List[dict] = []
+    errors: typing.List[str] = []
     
 class S2nError(str):
     pass
 
 
-def print_s2n_output(out_obj):
+def print_s2n_output(out_obj, count_only=False):
     missing = 0
     print('*** S^n output ***')
     elements = {
@@ -92,7 +92,10 @@ def print_s2n_output(out_obj):
         'query_term': out_obj.query_term, 'records': out_obj.records }    
     for name, attelt in elements.items():
         try:
-            print('{}: {}'.format(name, attelt))
+            if name == 'records' and count_only is True:
+                print('{}: {} returned records'.format(name, len(attelt)))
+            else:
+                print('{}: {}'.format(name, attelt))
         except:
             missing += 1
             print('Missing {} element'.format(name))

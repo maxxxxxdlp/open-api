@@ -98,8 +98,7 @@ class IdigbioAPI(APIQuery):
         try:
             api.query()
         except Exception as e:
-            out = cls.get_failure(
-                query_term=occid, errors=[cls._get_error_message(err=e)])
+            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             out = cls._standardize_output(
                 api.output, Idigbio.COUNT_KEY, Idigbio.RECORDS_KEY, 

@@ -1,10 +1,10 @@
 import cherrypy
 
 from LmRex.common.lmconstants import ServiceProvider, APIService
-from LmRex.tools.api import (
-    GbifAPI, BisonAPI)
+from LmRex.tools.provider.gbif import GbifAPI
+from LmRex.tools.provider.bison import BisonAPI
 from LmRex.services.api.v1.base import _S2nService
-from LmRex.services.api.v1.s2n_type import S2nKey        
+from LmRex.services.api.v1.s2n_type import S2nKey, print_s2n_output       
         
 # .............................................................................
 @cherrypy.expose
@@ -20,7 +20,6 @@ class DatasetGBIF(_DatasetSvc):
         # 'do_limit' limits the number of records returned to the GBIF limit
         output = GbifAPI.get_occurrences_by_dataset(
             dataset_key, count_only)
-        output[S2nKey.SERVICE] = self.SERVICE_TYPE
         return output
 
     # ...............................................
@@ -174,18 +173,8 @@ if __name__ == '__main__':
     
     gocc = DatasetGBIF()
     for count_only in [True, False]:
-        rkeys = S2nKey.required_keys()
-        if count_only is False:
-            rkeys = S2nKey.required_with_recs_keys()
-
-        gout = gocc.GET(
+        out = gocc.GET(
             TST_VALUES.DS_GUIDS_W_SPECIFY_ACCESS_RECS[0], count_only=count_only)
-        print(gout)
+        print_s2n_output(out, count_only=True)
             
-        for key in rkeys:
-            try:
-                gout[key]
-            except:
-                print('Missing `{}` output element'.format(key))
-
 
