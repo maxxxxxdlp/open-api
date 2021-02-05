@@ -253,8 +253,8 @@ class DwCArchive:
         return solr_outfname, content_type, is_new
         
     # ......................................................
-    def extract_from_zip(self, zip_fname, extract_path=None):
-        zfile = zipfile.ZipFile(zip_fname, mode='r', allowZip64=True)
+    def extract_from_zip(self, extract_path=None):
+        zfile = zipfile.ZipFile(self.zipfile, mode='r', allowZip64=True)
         # unzip zip file stream
         for zinfo in zfile.infolist():
             _, ext = os.path.splitext(zinfo.filename)
@@ -263,7 +263,7 @@ class DwCArchive:
                 zfile.extract(zinfo, path=extract_path)
             else:
                 log_warn('Unexpected filename {} in zipfile {}'.format(
-                    zinfo.filename, zip_fname), logger=self.logger)
+                    zinfo.filename, self.zipfile), logger=self.logger)
 
     
     # ......................................................

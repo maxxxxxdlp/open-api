@@ -1,10 +1,10 @@
 import os
-import pytest
 import shutil
 import time
 
+from LmRex.tools.dwca import DwCArchive, get_dwca_urls, download_dwca
 from spcoco.resolve import *
-from common.lmconstants import (DWCA)
+from LmRex.common.lmconstants import (DWCA)
 
 
 TEST_SPECIFY_RSS = 'https://ichthyology.specify.ku.edu/export/rss/'
@@ -27,33 +27,33 @@ class Test_Resolver:
             
     # ............................
     def test_download_link(self):
-        test_path, extract_dir, zip_dwca_fname = prep_dwca_data()
+#         test_path, extract_dir, zip_dwca_fname = prep_dwca_data()
+        archive, test_path = prep_dwca_data()
         zip_dwca_fullfname = download_dwca(TEST_SPECIFY_URLS[0], test_path)
         assert(os.path.exists(zip_dwca_fullfname))
 
     # ............................
     def test_extract_dwca(self):
-        test_path, extract_dir, zip_dwca_fname = prep_dwca_data(
-            do_download=True, do_extract=False)
-        zipfname = os.path.join(test_path, zip_dwca_fname)
+#         test_path, extract_dir, zip_dwca_fname = prep_dwca_data(
+#             do_download=True, do_extract=False)
+        archive, test_path = prep_dwca_data(do_download=True, do_extract=False)
+        zipfname = os.path.join(test_path, archive.zipfile)
         extract_path = os.path.join(test_path, extract_dir)
         
-        extract_dwca(zipfname, extract_path=extract_path)
+        archive = DwCArchive(zipfname, outpath=extract_path)
+        archive.extract_from_zip()
 
-        meta_fname = os.path.join(extract_path, DWCA.META_FNAME)
-        ds_meta_fname = os.path.join(extract_path, DWCA.DATASET_META_FNAME)
-        assert(os.path.exists(meta_fname))
-        assert(os.path.exists(ds_meta_fname))
+        assert(os.path.exists(self.meta_fname))
+        assert(os.path.exists(self.ds_meta_fname))
         
         
     # ............................
     def test_read_dwca(self):
         test_path, extract_dir, _ = prep_dwca_data(
             do_download=True, do_extract=True)
-        meta_fname = os.path.join(
-            test_path, extract_dir, DWCA.META_FNAME)
-        ds_meta_fname = os.path.join(
-            test_path, extract_dir, DWCA.DATASET_META_FNAME)
+        
+        archive = DwCArchive(zipfname, outpath=extract_path)
+        
         # Read dataset metadata        
         ds_uuid = read_dataset_uuid(ds_meta_fname)
         assert(len(ds_uuid) > 20 and _is_uuid(ds_uuid))
@@ -116,15 +116,16 @@ def prep_dwca_data(do_download=False, do_extract=False):
     elif os.path.exists(zip_dwca_fullfname):
         _clear_data(test_path)
         
+    archive = DwCArchive(zip_dwca_fullfname, outpath=extract_path)
+        
     # Extract DWCA file or clear dwca data
-    meta_fname = os.path.join(test_path, extract_dir, DWCA.META_FNAME)
     if do_extract:
-        if not os.path.exists(meta_fname):
-            extract_dwca(zip_dwca_fullfname, extract_path=extract_path)
-    elif os.path.exists(meta_fname):
+        if not os.path.exists(archive.meta_fname):
+            archive.extract_from_zip()
+    elif os.path.exists(archive.meta_fname):
         _clear_data(extract_path)
     
-    return test_path, extract_dir, zip_dwca_fname
+    return archive, test_path, extract_dir, #zip_dwca_fname
     
     # Read record metadata
     """
