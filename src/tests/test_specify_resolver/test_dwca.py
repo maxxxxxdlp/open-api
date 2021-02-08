@@ -34,38 +34,37 @@ class Test_Resolver:
 
     # ............................
     def test_extract_dwca(self):
-#         test_path, extract_dir, zip_dwca_fname = prep_dwca_data(
-#             do_download=True, do_extract=False)
-        archive, test_path = prep_dwca_data(do_download=True, do_extract=False)
-        zipfname = os.path.join(test_path, archive.zipfile)
-        extract_path = os.path.join(test_path, extract_dir)
-        
-        archive = DwCArchive(zipfname, outpath=extract_path)
+        archive = prep_dwca_data(do_download=True, do_extract=False)
         archive.extract_from_zip()
 
-        assert(os.path.exists(self.meta_fname))
-        assert(os.path.exists(self.ds_meta_fname))
+        assert(os.path.exists(archive.meta_fname))
+        assert(os.path.exists(archive.ds_meta_fname))
         
         
     # ............................
     def test_read_dwca(self):
-        test_path, extract_dir, _ = prep_dwca_data(
-            do_download=True, do_extract=True)
-        
-        archive = DwCArchive(zipfname, outpath=extract_path)
+        archive = prep_dwca_data(do_download=True, do_extract=True)
         
         # Read dataset metadata        
-        ds_uuid = read_dataset_uuid(ds_meta_fname)
+        ds_uuid = archive.read_dataset_uuid()
         assert(len(ds_uuid) > 20 and _is_uuid(ds_uuid))
         
         # Read DWCA metadata
-        fileinfo = read_core_fileinfo(meta_fname)
+        fileinfo = archive.read_core_fileinfo()
         for key in (
             DWCA.DELIMITER_KEY, DWCA.LINE_DELIMITER_KEY, DWCA.QUOTE_CHAR_KEY, 
             DWCA.LOCATION_KEY, DWCA.UUID_KEY, DWCA.FLDMAP_KEY, DWCA.FLDS_KEY):
             # Key exists and is not empty
             assert(key in fileinfo.keys())
             assert(fileinfo[key])
+            
+    def test_rewrite_for_solr(self):
+        archive = prep_dwca_data(do_download=True, do_extract=True)
+        ds_uuid = archive.read_dataset_uuid()
+        fileinfo = archive.read_core_fileinfo()
+
+        solr_fname = archive.read_recs_for_solr(fileinfo, ds_uuid)
+        print(solr_fname)
 
 # ...............................................
 def _is_uuid(uuidstr):
@@ -97,24 +96,24 @@ def _clear_data(path_to_delete):
     else:
         print('Path {} does not exist to delete'.format(path_to_delete))
         
+TEST_PATH = '/tmp/test.{}'.format(DATE_STR)
 # ...............................................
 def prep_dwca_data(do_download=False, do_extract=False):
-    test_path = '/tmp/test.{}'.format(DATE_STR)
     url = TEST_SPECIFY_URLS[0]
     _, zip_dwca_fname = os.path.split(url)
     extract_dir, _ = os.path.splitext(zip_dwca_fname)
-    extract_path = os.path.join(test_path, extract_dir)
+    extract_path = os.path.join(TEST_PATH, extract_dir)
     
     # Download DWCA file or clear all test data
-    zip_dwca_fullfname = os.path.join(test_path, zip_dwca_fname)
+    zip_dwca_fullfname = os.path.join(TEST_PATH, zip_dwca_fname)
     if do_download:
         if not os.path.exists(zip_dwca_fullfname):
             # download file
-            dfname = download_dwca(url, test_path, overwrite=True)
+            dfname = download_dwca(url, TEST_PATH, overwrite=True)
             if os.path.exists(dfname):
                 raise Exception('Failed to download {}'.format(url))
     elif os.path.exists(zip_dwca_fullfname):
-        _clear_data(test_path)
+        _clear_data(TEST_PATH)
         
     archive = DwCArchive(zip_dwca_fullfname, outpath=extract_path)
         
@@ -125,7 +124,7 @@ def prep_dwca_data(do_download=False, do_extract=False):
     elif os.path.exists(archive.meta_fname):
         _clear_data(extract_path)
     
-    return archive, test_path, extract_dir, #zip_dwca_fname
+    return archive#, extract_dir, #zip_dwca_fname
     
     # Read record metadata
     """
@@ -136,5 +135,3 @@ def prep_dwca_data(do_download=False, do_extract=False):
     fileinfo['fieldname_index_map'] = field_idxs
     fileinfo['fieldnames'] = ordered_fldnames
     """
-    solr_fname = read_recs_for_solr(core_fileinfo, ds_uuid, extract_path)
-    print(solr_fname)

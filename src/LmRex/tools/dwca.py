@@ -171,7 +171,7 @@ class DwCArchive:
     
 
     # ......................................................
-    def rewrite_recs_for_solr(self, fileinfo, ds_uuid, outpath, overwrite=True):
+    def rewrite_recs_for_solr(self, fileinfo, ds_uuid, overwrite=True):
         """
         Note: 
             Produces data requiring http post to contain 
@@ -181,7 +181,7 @@ class DwCArchive:
         is_new = False
         out_delimiter = ','
         content_type = 'text/csv'
-        core_fname = os.path.join(outpath, fileinfo[DWCA.LOCATION_KEY])
+        core_fname = os.path.join(self.dwca_path, fileinfo[DWCA.LOCATION_KEY])
         core_fname_noext, _ = os.path.splitext(core_fname)
         solr_outfname = core_fname_noext + '.solr.csv'
         specify_record_server = '{}/{}'.format(
@@ -267,14 +267,15 @@ class DwCArchive:
 
     
     # ......................................................
-    def read_dataset_uuid(self, meta_fname):
+    def read_dataset_uuid(self):
         idstr = None
-        if os.path.split(meta_fname)[1] != 'eml.xml':
+        if os.path.split(self.ds_meta_fname)[1] != DWCA.DATASET_META_FNAME:
             log_error(
-                'Expected filename eml.xml at {}'.format(meta_fname), 
+                'Expected filename {} at {}'.format(
+                    DWCA.DATASET_META_FNAME, self.ds_meta_fname), 
                 logger=self.logger)
             return ''
-        tree = ET.parse(meta_fname)
+        tree = ET.parse(self.meta_fname)
         root = tree.getroot()
         elt = root.find('dataset')
         id_elts = elt.findall('alternateIdentifier')
@@ -297,12 +298,9 @@ class DwCArchive:
         return ch
         
     # ......................................................
-    def read_core_fileinfo(self, meta_fname):
+    def read_core_fileinfo(self):
         """Reads meta.xml file for information about the core occurrence file
         
-        Args:
-            meta_fname: meta.xml file at the top level of a Darwin Core Archive
-            
         Returns:
             Dictionary of core occurrence file information, with keys matching the 
             names/tags in the meta.xml file:
@@ -312,14 +310,14 @@ class DwCArchive:
                 fieldnames: ordered fieldnames 
                 fieldname_index_map: dict of fields and corresponding column indices
         """
-        if os.path.split(meta_fname)[1] != 'meta.xml':
+        if os.path.split(self.meta_fname)[1] != DWCA.META_FNAME:
             log_error(
-                'Expected filename meta.xml at {}'.format(meta_fname), 
-                logger=self.logger)
+                'Expected filename {} at {}'.format(
+                    DWCA.META_FNAME, self.meta_fname), logger=self.logger)
             return ''
         fileinfo = {}
         field_idxs = {}
-        tree = ET.parse(meta_fname)
+        tree = ET.parse(self.meta_fname)
         root = tree.getroot()
         core_elt = root.find('{}core'.format(DWCA.NS))
         if core_elt.attrib['rowType'] == DWCA.CORE_TYPE:
