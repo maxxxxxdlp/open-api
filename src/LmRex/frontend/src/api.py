@@ -7,6 +7,17 @@ error_message = templates.load('error_message.html')
 
 
 def fetch_response(endpoint: str, request_url: str) -> str:
+    """
+    Fetches a response for an endpoint and formats the response
+    Also, handles possible errors
+    Args:
+        endpoint(str): name of the endpoint
+        request_url(str): request url to send a request too
+
+    Returns:
+        str:
+            Formatted response or formatted error message
+    """
     response = make_request(request_url)
 
     error = '' if response['type'] == 'success' else \

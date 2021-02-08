@@ -12,12 +12,22 @@ tags = [[tag.name, tag.description] for tag in api.tags]
 
 
 class RouteInfo(NamedTuple):
+    """Short description of an API Endpoint"""
     path: str
     summary: str
     description: str
 
 
 def get_routes_for_tag(tag: str) -> List[RouteInfo]:
+    """
+    Fetches a list of routes available for a particular tag
+    Args:
+        tag(str): tag to fetch routes for
+
+    Returns:
+        List[RouteInfo]:
+            list of routes
+    """
     return [
         RouteInfo(path, path_data.get.summary, path_data.get.description)
         for path, path_data in api.paths.items() if tag in path_data.get.tags
@@ -25,6 +35,7 @@ def get_routes_for_tag(tag: str) -> List[RouteInfo]:
 
 
 class RouteParameter(NamedTuple):
+    """API Endpoint parameter"""
     name: str
     description: str
     required: bool
@@ -35,6 +46,7 @@ class RouteParameter(NamedTuple):
 
 
 class RouteDetailedInfo(NamedTuple):
+    """API endpoint"""
     path: str
     server: str
     summary: str
@@ -43,6 +55,15 @@ class RouteDetailedInfo(NamedTuple):
 
 
 def get_data_for_route(tag: str, route_index: int) -> RouteDetailedInfo:
+    """
+    Fetches the data needed to display the API endpoint
+    Args:
+        tag(str): name of the current tag
+        route_index(int): index of a route among the routes for a tag
+
+    Returns:
+
+    """
     route: RouteInfo = get_routes_for_tag(tag)[route_index]
     return RouteDetailedInfo(
         route.path,
@@ -68,23 +89,3 @@ def get_data_for_route(tag: str, route_index: int) -> RouteDetailedInfo:
             ) for parameter in api.paths[route.path].get.parameters
         ],
     )
-
-
-"""
-
-# call an operation that requires authentication
-linodes = api.call_getLinodeInstances()
-
-
-linode = api.call_getLinodeInstance(parameters={ "linodeId": 123 })
-
-# the models returns are all of the same (generated) type
-print(type(linode))  # openapi.schemas.Linode
-type(linode) == type(linodes.data[0])  # True
-
-# call an operation with a request body
-new_linode = api.call_createLinodeInstance(data={ "region": "us-east", "type": "g6-standard-2" })
-
-# the returned models is still of the correct type
-type(new_linode) == type(linode)  # True
-"""

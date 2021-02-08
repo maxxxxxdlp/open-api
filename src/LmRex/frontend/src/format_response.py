@@ -9,6 +9,15 @@ field__text = templates.load('field__text.html')
 
 
 def format_list(values: List[any]) -> str:
+    """
+    Formats a list
+    Args:
+        values: list
+
+    Returns:
+        str:
+            formatted list
+    """
     if not values:
         return '[]'
     else:
@@ -24,6 +33,15 @@ def format_list(values: List[any]) -> str:
 
 
 def format_string(value: str) -> str:
+    """
+    Formats a string
+    Args:
+        value: str
+
+    Returns:
+        str:
+            formatted string
+    """
     if type(value) is str and ('\n' in value or len(value) > 80):
         return field__text(value=value)
     else:
@@ -31,6 +49,15 @@ def format_string(value: str) -> str:
 
 
 def format_value(value: any) -> str:
+    """
+    Formats a value, depending on its type
+    Args:
+        value: any
+
+    Returns:
+        str:
+            formatted value
+    """
     if type(value) is bool:
         return field__boolean(value=value)
     if type(value) is list:
@@ -42,6 +69,17 @@ def format_value(value: any) -> str:
 
 
 def format_dict(fields: Dict[str, any], is_list_of_values: bool = False) -> str:
+    """
+    Formats a dict
+    Args:
+        fields (Dict[str,any]): dictionary to format
+        is_list_of_values (bool):
+            whether a dictionary is a list with numeric indexes
+
+    Returns:
+        str:
+            formatted list
+    """
     if not fields:
         return '{}'
     else:
@@ -55,4 +93,14 @@ def format_dict(fields: Dict[str, any], is_list_of_values: bool = False) -> str:
 
 
 def format_response(_endpoint: str, response: Dict[str, any]) -> str:
+    """
+    Formats the response object
+    Args:
+        _endpoint (str): name of the endpoint
+        response (Dict[str,any]): response object
+
+    Returns:
+        str:
+            formatted response
+    """
     return format_dict(response)

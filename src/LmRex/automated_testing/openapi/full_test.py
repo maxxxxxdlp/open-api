@@ -23,6 +23,7 @@ failed_request_limit = 100
 
 @dataclass
 class ParameterData:
+    """Parsed API endpoint's parameter"""
     name: str
     location: str
     required: Union[bool, None]
@@ -31,7 +32,26 @@ class ParameterData:
     default: Union[bool, None]
 
 
-def validate_parameter_data(endpoint_name: str, parameter_data: ParameterData):
+def validate_parameter_data(
+        endpoint_name: str,
+        parameter_data: ParameterData
+)->Union[str, None]:
+    """
+    Validate that the API schema has correct parameter properties specified
+
+    Args:
+        endpoint_name (str): The name of the endpoint parameter belongs too
+        parameter_data (ParameterData): Parsed API endpoint's parameter
+
+    Returns:
+        Union[str, None]:
+            None if validation is successful.
+            String 'continue' if parameter needs to be skipped
+
+    Raises:
+        AssertionError: on validation issue
+
+    """
     try:
         if parameter_data.type != 'boolean' and not parameter_data.examples:
             if not parameter_data.required:
@@ -69,6 +89,19 @@ def validate_parameter_data(endpoint_name: str, parameter_data: ParameterData):
 
 def create_request_url(endpoint_name: str, parameters: List[ParameterData],
                        variation: List[any]) -> str:
+    """
+    Fills the parameters into the endpoint URL
+
+    Args:
+        endpoint_name (str): the name of the endpoint
+        parameters (List[ParameterData]): list of parameters for the endpoint
+        variation: (List[any]): the values for the parameters
+
+    Returns:
+        str:
+            The endpoint request URL with embedded parameters
+
+    """
     return functools.reduce(
         lambda request_url, index: (
             request_url.replace('{%s}' % parameters[index].name,
@@ -85,7 +118,18 @@ def create_request_url(endpoint_name: str, parameters: List[ParameterData],
     )
 
 
-def test():
+def test()->None:
+    """
+    Runs a comprehensive test on all API endpoints
+
+    Returns:
+        None
+
+    Raises:
+        AssertionError - if API schema is incorrect
+        Exception - if generated URL does not meet the API schema requirements
+
+    """
     failed_requests = 0
 
     for endpoint_name, endpoint_data in api.paths.items():
