@@ -41,7 +41,8 @@ def prepare_request(request_url: str, log_errors: bool = False):
         error_response = {
             'type':         'invalid_request_url',
             'title':        'Invalid Request URL',
-            'error_status': 'Request URL does not meet the OpenAPI Schema requirements',
+            'error_status': 'Request URL does not meet the' +
+                            'OpenAPI Schema requirements',
             'url':          request_url,
             'text':         error_message,
         }
@@ -90,14 +91,22 @@ def file_request(request, openapi_request, request_url: str):
 
     # validate the response against the schema
     formatted_response = RequestsOpenAPIResponseFactory.create(response)
-    response_content_validator = response_validator.validate(openapi_request, formatted_response)
+    response_content_validator = response_validator.validate(
+        openapi_request,
+        formatted_response
+    )
 
     if response_content_validator.errors:
-        error_message = list(map(lambda e: e.schema_errors, response_content_validator.errors))
+        error_message = list(
+            map(
+                lambda e: e.schema_errors, response_content_validator.errors
+            )
+        )
         error_response = {
             'type':            'invalid_response_schema',
             'title':           'Invalid response schema',
-            'error_status':    'Response content does not meet the OpenAPI Schema requirements',
+            'error_status':    'Response content does not meet' +
+                               'the OpenAPI Schema requirements',
             'status_code':     response.status_code,
             'url':             request_url,
             'text':            error_message,
@@ -118,6 +127,9 @@ def make_request(request_url: str, log_client_error=False):
     if response['type'] != 'success':
         return response
     else:
-        request, openapi_request = itemgetter('request', 'openapi_request')(response)
+        request, openapi_request = itemgetter(
+            'request',
+            'openapi_request'
+        )(response)
 
     return file_request(request, openapi_request, request_url)

@@ -13,5 +13,10 @@ def report_error(content: Dict[str, any]) -> None:
 
     formatted_error = json.dumps(content, indent=4, default=str)
 
-    with open(os.path.join(settings.ERROR_LOGS_LOCATION, date_time_now), 'w') as file:
+    with open(
+            os.path.join(
+                settings.ERROR_LOGS_LOCATION, date_time_now
+            ),
+            'w'
+    ) as file:
         file.write(formatted_error)
