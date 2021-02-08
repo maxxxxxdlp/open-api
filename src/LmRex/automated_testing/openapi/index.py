@@ -28,6 +28,16 @@ session = Session()
 
 
 def prepare_request(request_url: str, log_errors: bool = False):
+    """
+    Prepare request and validate the request URL
+    Args:
+        request_url (str): request URL
+        log_errors (bool): whether to log errors to the `error_logs` folder
+
+    Returns:
+        object: Prepared request or error message
+
+    """
     parsed_url = urlparse.urlparse(request_url)
     base_url = request_url.split('?')[0]
     query_params_dict = parse_qs(parsed_url.query)
@@ -58,6 +68,17 @@ def prepare_request(request_url: str, log_errors: bool = False):
 
 
 def file_request(request, openapi_request, request_url: str):
+    """
+    Send a prepared request and validate the response
+    Args:
+        request: request object
+        openapi_request: openapi request object
+        request_url (str): request url
+
+    Returns:
+        Request response or error message
+
+    """
     prepared_request = request.prepare()
     response = session.send(prepared_request)
 
@@ -122,6 +143,17 @@ def file_request(request, openapi_request, request_url: str):
 
 
 def make_request(request_url: str, log_client_error=False):
+    """
+    Prepares a request and sends it, while running validation on each step
+    Args:
+        request_url (str): request error
+        log_client_error (boolean):
+            whether to log request preparation error messages
+
+    Returns:
+        Request response or error message
+
+    """
     response = prepare_request(request_url, log_client_error)
 
     if response['type'] != 'success':

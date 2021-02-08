@@ -6,6 +6,16 @@ def get_gbif_records(
         path: str,
         response: Dict[str, any]
 ) -> List[Dict[str, any]]:
+    """
+    Get GBIF response from the response object that may include other providers
+    Args:
+        path (str): path of the current endpoint
+        response (Dict[str,any]): response object
+
+    Returns:
+        GBIF response object
+
+    """
     return response['records'] if 'gbif' in path \
         else response['records'][0]['GBIF']['records']
 
@@ -15,6 +25,18 @@ def gbif_count(
         path: str,
         response: Dict[str, any]
 ) -> bool:
+    """
+    Check that `gbif_count` parameter affected the response object in an
+    expected way
+    Args:
+        parameter_value (bool): the value of the `gbif_count` parameter
+        path (str): path of the current endpoint
+        response (Dict[str,any]): response object
+
+    Returns:
+        bool:
+            whether validation was successful
+    """
     for record in get_gbif_records(path, response):
         if (
             not parameter_value and (
@@ -37,6 +59,18 @@ def gbif_accepted(
         path: str,
         response: Dict[str, any]
 ) -> bool:
+    """
+    Check that `gbif_accepted` parameter affected the response object in an
+    expected way
+    Args:
+        parameter_value (bool): the value of the `gbif_accepted` parameter
+        path (str): path of the current endpoint
+        response (Dict[str,any]): response object
+
+    Returns:
+        bool:
+            whether validation was successful
+    """
     for record in get_gbif_records(path, response):
         if parameter_value and record['status'] != 'ACCEPTED':
             return False
@@ -49,6 +83,18 @@ def count_only(
         path: str,
         response: Dict[str, any]
 ) -> bool:
+    """
+    Check that `count_only` parameter affected the response object in an
+    expected way
+    Args:
+        parameter_value (bool): the value of the `count_only` parameter
+        path (str): path of the current endpoint
+        response (Dict[str,any]): response object
+
+    Returns:
+        bool:
+            whether validation was successful
+    """
     pass
 
 

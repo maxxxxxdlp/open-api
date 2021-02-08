@@ -6,6 +6,14 @@ from LmRex.config import frontend_config as settings
 
 
 def report_error(content: Dict[str, any]) -> None:
+    """
+    Save the error message to `error_logs` folder
+    Args:
+        content: the error message
+
+    Returns:
+        None
+    """
     if not os.path.exists(settings.ERROR_LOGS_LOCATION):
         os.makedirs(settings.ERROR_LOGS_LOCATION)
 
