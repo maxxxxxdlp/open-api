@@ -1,5 +1,5 @@
-CherryPy==18.6.0
 openapi-core==0.13.4
+CherryPy==18.6.0
 openapi3==1.1.0
 Jinja2==2.11.2
 simplejson==3.17.2
