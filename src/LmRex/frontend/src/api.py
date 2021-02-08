@@ -15,7 +15,8 @@ def fetch_response(endpoint: str, request_url: str) -> str:
     if response['type'] == 'invalid_request_url':
         return error
 
-    if response['type'] == 'invalid_response_code' or response['type'] == 'invalid_response_mime_type':
+    if response['type'] == 'invalid_response_code' \
+        or response['type'] == 'invalid_response_mime_type':
         return '<iframe class="error_iframe" srcdoc="%s"></iframe>' \
                % response['text'].replace('&', '&amp;').replace('"', '&quot;')
 

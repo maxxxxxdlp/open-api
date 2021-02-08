@@ -59,7 +59,9 @@ def get_data_for_route(tag: str, route_index: int) -> RouteDetailedInfo:
                     name: list(value.values())[0]
                     for name, value in parameter.examples.items()
                 } if parameter.examples
-                else { parameter.example: parameter.example } if parameter.example
+                else {
+                    parameter.example: parameter.example
+                } if parameter.example
                 else { },
                 parameter.schema.type,
                 parameter.in_,

@@ -12,7 +12,10 @@ def menu() -> str:
 
 
 def tag(tag_name: str) -> str:
-    return routes_menu(tag_name=tag_name, paths=parse_schema.get_routes_for_tag(tag_name))
+    return routes_menu(
+        tag_name=tag_name,
+        paths=parse_schema.get_routes_for_tag(tag_name)
+    )
 
 
 def endpoint(tag_name: str, path_index: int) -> str:

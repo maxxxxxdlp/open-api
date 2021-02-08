@@ -15,7 +15,8 @@ def format_list(values: List[any]) -> str:
         return format_dict(
             fields=dict(
                 [
-                    ('[%d]' % index, value) for index, value in enumerate(values)
+                    ('[%d]' % index, value) for index, value in
+                    enumerate(values)
                 ]
             ),
             is_list_of_values=True
@@ -46,7 +47,8 @@ def format_dict(fields: Dict[str, any], is_list_of_values: bool = False) -> str:
     else:
         return field__dict(
             fields=[
-                field(label=label, value=format_value(value)) for label, value in fields.items()
+                field(label=label, value=format_value(value)) for label, value
+                in fields.items()
             ],
             is_list_of_values=is_list_of_values
         )
