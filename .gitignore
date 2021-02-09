@@ -141,3 +141,6 @@ src/web/.DS_Store
 
 # Error logs
 src/LmRex/automated_testing/error_logs
+
+# Collection Stats Charts
+src/LmRex/collection_stats/data
