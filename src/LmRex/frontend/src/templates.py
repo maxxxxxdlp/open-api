@@ -6,7 +6,7 @@ env = Environment(
 )
 
 
-def load(path: str):
+def load(path: str, ):
     """
     Loads the template and returns its ref
     Args:
