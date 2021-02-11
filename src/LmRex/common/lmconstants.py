@@ -119,6 +119,12 @@ VALID_MAP_REQUESTS = ['getmap', 'getlegendgraphic']
 
 # .............................................................................
 class TST_VALUES:
+    SPECIFY_RSS = 'https://ichthyology.specify.ku.edu/export/rss/'
+    SPECIFY_URLS = [
+    'https://ichthyology.specify.ku.edu/static/depository/export_feed/kui-dwca.zip',
+    'https://ichthyology.specify.ku.edu/static/depository/export_feed/kuit-dwca.zip'
+    ]
+
     DS_GUIDS_W_SPECIFY_ACCESS_RECS = [
         '56caf05f-1364-4f24-85f6-0c82520c2792', 
         '8f79c802-a58c-447f-99aa-1d6a0790825a']

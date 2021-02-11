@@ -6,8 +6,7 @@ from LmRex.common.lmconstants import (
     ENCODING, TEST_SPECIFY7_SERVER, SPECIFY7_RECORD_ENDPOINT, DWCA,
     SPECIFY7_SERVER_KEY, ICH_RSS_URL, KU_IPT_RSS_URL)
 from LmRex.fileop.logtools import (LMLog, log_info, log_warn, log_error)
-from LmRex.spcoco.dwca import (DwCArchive, get_dwca_urls, download_dwca)
-from LmRex.tools.api import GbifAPI, IdigbioAPI
+from LmRex.tools.dwca import (DwCArchive, get_dwca_urls, download_dwca)
 import LmRex.tools.solr as SpSolr
 
 
@@ -39,12 +38,16 @@ def _get_server_addr():
     return hn
 
 # ......................................................
-def is_guid(idstr):
+def is_uuid(uuidstr):
+    if len(uuidstr) <= 30:
+        return False
+    
+    cleanstr = uuidstr.replace('-', '')
     try:
-        int(idstr.replace('-', ''), 16)
-        return True
+        int(cleanstr, 16)
     except:
         return False
+    return True
 
 # ...............................................
 def get_specify_server(dwca_url):
@@ -80,7 +83,7 @@ def main(zname, dwca_url, outpath, solr_location, testguids=[]):
         datasets = {'unknown_guid': {'filename': zname}}
     # Download Zipfiles and save info on each
     else:        
-        datasets = get_dwca_urls(dwca_url, isIPT)
+        datasets = get_dwca_urls(dwca_url, isIPT=isIPT)
         for guid, meta in datasets.items():
             try:
                 url = meta['url']

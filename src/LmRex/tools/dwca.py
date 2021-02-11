@@ -1,19 +1,15 @@
-import argparse
 import os
 import requests
-import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
 
-from LmRex.tools.api import APIQuery, GbifAPI, IdigbioAPI
+from LmRex.tools.provider.api import APIQuery
 from LmRex.fileop.logtools import (log_info, log_warn, log_error)
 from LmRex.fileop.csvtools import (get_csv_dict_reader, get_csv_dict_writer)
 from LmRex.fileop.ready_file import ready_filename, delete_file
-import LmRex.tools.solr as SpSolr
 from LmRex.common.lmconstants import (
-    SPECIFY_ARK_PREFIX, GBIF, DWCA, ENCODING, TEST_SPECIFY7_SERVER, 
-    SPECIFY7_RECORD_ENDPOINT, SPECIFY7_SERVER_KEY, SPCOCO_FIELDS, 
-    ICH_RSS_URL, KU_IPT_RSS_URL)
+    SPECIFY_ARK_PREFIX, DWCA, ENCODING, TEST_SPECIFY7_SERVER, 
+    SPECIFY7_RECORD_ENDPOINT, SPECIFY7_SERVER_KEY, SPCOCO_FIELDS)
 
 
 INCR_KEY = 0
@@ -36,7 +32,7 @@ rurl = '{}/{}/{}/{}'.format(
 # Read occurrence.csv for specimen UUIDs
 # Write fields for solr to CSV
 # ......................................................
-def get_dwca_urls(rss_url, isIPT):
+def get_dwca_urls(rss_url, isIPT=False):
     if isIPT:
         ds_ident_key = 'title'
         link_key = '{http://ipt.gbif.org/}dwca'
@@ -63,7 +59,15 @@ def get_dwca_urls(rss_url, isIPT):
     return datasets
     
 # ......................................................
-def download_dwca(url, baseoutpath, overwrite=False, logger=None):
+def assemble_download_filename(url, baseoutpath):
+    """Construct the full filename to download a DWCA into, based on the 
+    filename to be downloaded or the IPT endpoint containing the DWCA.
+    
+    Note: Must download DWCA files into different directories, as the contents
+    unzip into the top level directory, and identically named files will be 
+    overwritten.
+    
+    """
     if url.endswith('.zip'):
         _, fname = os.path.split(url)
         basename, _ = os.path.splitext(fname)
@@ -79,6 +83,11 @@ def download_dwca(url, baseoutpath, overwrite=False, logger=None):
         else:
             name = '.'.join(parts)
         outfilename = os.path.join(baseoutpath, name, '{}.zip'.format(name))
+    return outfilename
+        
+# ......................................................
+def download_dwca(url, baseoutpath, overwrite=False, logger=None):
+    outfilename = assemble_download_filename(url, baseoutpath)
     success = ready_filename(outfilename, overwrite=overwrite)
     if success:
         ret_code = None
@@ -255,6 +264,8 @@ class DwCArchive:
     # ......................................................
     def extract_from_zip(self, extract_path=None):
         zfile = zipfile.ZipFile(self.zipfile, mode='r', allowZip64=True)
+        if extract_path is None:
+            extract_path, _ = os.path.split(self.zipfile)
         # unzip zip file stream
         for zinfo in zfile.infolist():
             _, ext = os.path.splitext(zinfo.filename)
@@ -275,7 +286,7 @@ class DwCArchive:
                     DWCA.DATASET_META_FNAME, self.ds_meta_fname), 
                 logger=self.logger)
             return ''
-        tree = ET.parse(self.meta_fname)
+        tree = ET.parse(self.ds_meta_fname)
         root = tree.getroot()
         elt = root.find('dataset')
         id_elts = elt.findall('alternateIdentifier')
