@@ -7,7 +7,8 @@ def get_gbif_records(
         response: Dict[str, any]
 ) -> List[Dict[str, any]]:
     """
-    Get GBIF response from the response object that may include other providers
+    Get GBIF response from the response object
+    that may include other providers
     Args:
         path (str): path of the current endpoint
         response (Dict[str,any]): response object
