@@ -98,7 +98,7 @@ def count_only(
     pass
 
 
-parameter_constraints: dict[
+parameter_constraints: Dict[
     str,
     Callable[[bool, str, Dict[str, any]], bool]
 ] = {
