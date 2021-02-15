@@ -13,9 +13,6 @@ TEST_SPECIFY7_RSS_URL = '{}/export/rss'.format(TEST_SPECIFY7_SERVER)
 SPECIFY7_SERVER_KEY = 'specify7-server'
 SPECIFY7_RECORD_ENDPOINT = 'export/record'
 
-KU_IPT_RSS_URL = 'http://ipt.nhm.ku.edu:8080/ipt/rss.do'
-ICH_RSS_URL = 'https://ichthyology.specify.ku.edu/export/rss'
-
 SPECIFY_ARK_PREFIX = 'http://spcoco.org/ark:/'
 
 DATA_DUMP_DELIMITER = '\t'
@@ -119,6 +116,12 @@ VALID_MAP_REQUESTS = ['getmap', 'getlegendgraphic']
 
 # .............................................................................
 class TST_VALUES:
+    SPECIFY_SOLR_COLLECTION = 'spcoco'
+    SPECIFY_SOLR_LOCATION = 'notyeti-192.lifemapper.org'
+
+    KU_IPT_RSS_URL = 'http://ipt.nhm.ku.edu:8080/ipt/rss.do'
+    ICH_RSS_URL = 'https://ichthyology.specify.ku.edu/export/rss'
+
     SPECIFY_RSS = 'https://ichthyology.specify.ku.edu/export/rss/'
     SPECIFY_URLS = [
     'https://ichthyology.specify.ku.edu/static/depository/export_feed/kui-dwca.zip',
@@ -129,6 +132,7 @@ class TST_VALUES:
         '56caf05f-1364-4f24-85f6-0c82520c2792', 
         '8f79c802-a58c-447f-99aa-1d6a0790825a']
     GUIDS_W_SPECIFY_ACCESS = [
+        '98fb49e0-591b-469e-99af-117b0bfdd7ee',
         '2c1becd5-e641-4e83-b3f5-76a55206539a', 
         'a413b456-0bff-47da-ab26-f074d9be5219',
         'dc92869c-1ed3-11e3-bfac-90b11c41863e',
@@ -385,6 +389,7 @@ class Lifemapper:
 # ......................................................
 class MorphoSource:
     URL = 'http://www.morphosource.org/api/v1'
+    FROZEN_URL = 'https://ea-boyerlab-morphosource-01.oit.duke.edu/api/v1'
     OCC_RESOURCE = 'specimens'
     MEDIA_RESOURCE = 'media'
     OTHER_RESOURCES = ['taxonomy', 'projects', 'facilities']

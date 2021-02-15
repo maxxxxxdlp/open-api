@@ -14,7 +14,7 @@ class MorphoSourceAPI(APIQuery):
             other_filters={}, logger=None):
         """Constructor for MorphoSourceAPI class"""
         url = '{}/{}/{}'.format(
-            MorphoSource.URL, MorphoSource.COMMAND, resource)
+            MorphoSource.FROZEN_URL, MorphoSource.COMMAND, resource)
         APIQuery.__init__(
             self, url, q_filters=q_filters, 
             other_filters=other_filters, logger=logger)
@@ -33,9 +33,12 @@ class MorphoSourceAPI(APIQuery):
             resource=MorphoSource.OCC_RESOURCE, 
             q_filters={MorphoSource.OCCURRENCEID_KEY: occid},
             other_filters={'start': start, 'limit': MorphoSource.LIMIT})
-
+        # Handle bad SSL certificate on old MorphoSource API until v2 is working
+        verify=True
+        if api.url.index(MorphoSource.FROZEN_URL) >= 0:
+            verify=False
         try:
-            api.query_by_get()
+            api.query_by_get(verify=verify)
         except Exception as e:
             out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:

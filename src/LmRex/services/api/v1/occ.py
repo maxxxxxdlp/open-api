@@ -247,33 +247,39 @@ if __name__ == '__main__':
     # test
     from LmRex.common.lmconstants import TST_VALUES   
     
-    print('*** Return invalid URL')
-    for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
-        # Queries Specify without ARK URL
-        spocc = OccSpecify()
-        output = spocc.GET(url=None, occid=occid, count_only=False)
-        print_s2n_output(output)
-             
-    print('*** Return valid URL')
-    for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS[:1]:
-
-        for cls in [OccGBIF, OccIDB, OccMopho, OccSpecify]:
+#     print('*** Return invalid URL')
+#     for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS[:1]:
+#         # Queries Specify without ARK URL
+#         spocc = OccSpecify()
+#         output = spocc.GET(url=None, occid=occid, count_only=False)
+#         print_s2n_output(output)
+#     
+    print('*** Return birds from mopho')         
+    for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS:
+        for cls in [OccMopho]:
             api = cls()
             output = api.GET(occid=occid, count_only=False)
             print_s2n_output(output)
 
-        # Queries all services
-        s2napi = OccTentacles()
-        for count_only in [True, False]:
-            required_keys = S2nKey.required_keys()
-            if count_only is False:
-                required_keys = S2nKey.required_with_recs_keys()
-  
-            all_output = s2napi.GET(occid=occid, count_only=count_only)
-              
-            for svc in all_output['records']:
-                for name, s2nout in svc.items():
-                    print(name)
-                    print_s2n_output(s2nout)
-                print('')
+#     print('*** Return valid URL')
+#     for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS:
+#         for cls in [OccGBIF, OccIDB, OccSpecify]:
+#             api = cls()
+#             output = api.GET(occid=occid, count_only=False)
+#             print_s2n_output(output)
+
+#         # Queries all services
+#         s2napi = OccTentacles()
+#         for count_only in [True, False]:
+#             required_keys = S2nKey.required_keys()
+#             if count_only is False:
+#                 required_keys = S2nKey.required_with_recs_keys()
+#   
+#             all_output = s2napi.GET(occid=occid, count_only=count_only)
+#               
+#             for svc in all_output['records']:
+#                 for name, s2nout in svc.items():
+#                     print(name)
+#                     print_s2n_output(s2nout)
+#                 print('')
 

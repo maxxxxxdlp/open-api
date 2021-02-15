@@ -283,7 +283,7 @@ class APIQuery:
             query_term=query_term, service=service)
 
     # ...............................................
-    def query_by_get(self, output_type='json'):
+    def query_by_get(self, output_type='json', verify=True):
         """
         Queries the API and sets 'output' attribute to a JSON or ElementTree 
         object and S2nKey.ERRORS attribute to a string if appropriate.
@@ -295,7 +295,10 @@ class APIQuery:
         self.error = None
         errmsg = None
         try:
-            response = requests.get(self.url, headers=self.headers)
+            if verify:
+                response = requests.get(self.url, headers=self.headers)
+            else:
+                response = requests.get(self.url, headers=self.headers, verify=False)
         except Exception as e:
             errmsg = self._get_error_message(err=e)
         else:

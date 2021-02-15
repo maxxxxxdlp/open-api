@@ -4,7 +4,7 @@ import time
 
 from LmRex.tools.dwca import (
     assemble_download_filename, DwCArchive, get_dwca_urls, download_dwca)
-from LmRex.tools.resolve import is_uuid
+from LmRex.tools.utils import is_uuid
 from LmRex.common.lmconstants import (DWCA, TST_VALUES)
 
 

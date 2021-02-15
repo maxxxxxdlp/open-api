@@ -240,7 +240,7 @@ class NameTentacles(_NameSvc):
 if __name__ == '__main__':
 
     # test
-    test_names = TST_VALUES.NAMES[:3]
+    test_names = TST_VALUES.NAMES[:5]
     test_names.append(TST_VALUES.GUIDS_W_SPECIFY_ACCESS[0])
     
     for namestr in test_names:

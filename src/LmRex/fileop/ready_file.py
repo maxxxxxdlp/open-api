@@ -1,10 +1,8 @@
 """Module containing file functions"""
 
 import glob
-from io import StringIO
 import os
-import shutil
-import zipfile
+import requests
 
 SHP_EXT = 'shp'
 SHP_EXTENSIONS = [

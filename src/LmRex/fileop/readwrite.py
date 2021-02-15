@@ -1,11 +1,8 @@
 import csv
-import logging
-from logging.handlers import RotatingFileHandler
 from multiprocessing import cpu_count
 import os
 import subprocess
 from sys import maxsize
-import time
 
 # from common.constants import (LOG_FORMAT, LOG_DATE_FORMAT, LOGFILE_MAX_BYTES,
 #                               LOGFILE_BACKUP_COUNT, EXTRA_VALS_KEY)
