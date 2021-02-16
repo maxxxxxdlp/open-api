@@ -1,21 +1,29 @@
+from uuid import UUID
 
 # ......................................................
-def is_uuid(uuidstr):
-    """Identify whether the string follows a UUID pattern
+def is_valid_uuid(uuid_to_test, version=4):
+    """Check if uuid_to_test is a valid UUID.
     
     Args:
-        uuidstr: string to test for possible UUID
-        
-    Returns:
-        True if possible UUID string, False if not
-    """
-    if len(uuidstr) <= 30:
-        return False
+        uuid_to_test : str
+        version : {1, 2, 3, 4}
     
-    cleanstr = uuidstr.replace('-', '')
+    Returns: `True` if uuid_to_test is a valid UUID, otherwise `False`.
+    
+    Examples:
+        >>> is_valid_uuid('c9bf9e57-1685-4c89-bafb-ff5af830be8a')
+        True
+        >>> is_valid_uuid('c9bf9e58')
+        False
+    """
+    
     try:
-        int(cleanstr, 16)
-    except:
+        uuid_obj = UUID(uuid_to_test, version=version)
+    except ValueError:
         return False
-return True
+    return str(uuid_obj) == uuid_to_test
 
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()

@@ -4,7 +4,7 @@ import time
 
 from LmRex.tools.dwca import (
     assemble_download_filename, DwCArchive, get_dwca_urls, download_dwca)
-from LmRex.tools.utils import is_uuid
+from LmRex.tools.utils import is_valid_uuid
 from LmRex.common.lmconstants import (DWCA, TST_VALUES)
 
 
@@ -64,7 +64,7 @@ def test_read_dwca_meta():
     
     # Read dataset metadata        
     ds_uuid = archive.read_dataset_uuid()
-    assert(len(ds_uuid) > 20 and is_uuid(ds_uuid))
+    assert(is_valid_uuid(ds_uuid))
     
     # Read DWCA metadata
     fileinfo = archive.read_core_fileinfo()

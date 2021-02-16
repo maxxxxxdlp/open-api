@@ -11,7 +11,7 @@ from LmRex.fileop.csvtools import (get_csv_dict_reader, get_csv_dict_writer)
 from LmRex.fileop.ready_file import ready_filename, delete_file
 from LmRex.tools.provider.api import APIQuery
 import LmRex.tools.solr as SpSolr
-from LmRex.tools.utils import is_uuid
+from LmRex.tools.utils import is_valid_uuid
 
 
 INCR_KEY = 0
@@ -457,7 +457,7 @@ def index_specify7_dataset(
         dwca_guid = dwca.read_dataset_uuid(ds_meta_fname)
         # Save new guid for update of datasets dict 
         # if zname argument is provided, we have dataset without guid from download site
-        if is_uuid(tmp_guid) and dwca_guid != tmp_guid:
+        if is_valid_uuid(tmp_guid) and dwca_guid != tmp_guid:
             log_info(
                 'DWCA meta.xml guid {} conflicts with reported guid {}'.format(
                     dwca_guid, tmp_guid), logger=logger)
