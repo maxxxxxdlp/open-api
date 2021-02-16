@@ -4,7 +4,7 @@ from LmRex.common.lmconstants import (
     ServiceProvider, APIService, Lifemapper, TST_VALUES)
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.name import NameGBIF
-from LmRex.services.api.v1.s2n_type import S2nOutput, print_s2n_output
+from LmRex.services.api.v1.s2n_type import (S2nKey, S2nOutput, print_s2n_output)
 from LmRex.tools.provider.itis import ItisAPI
 from LmRex.tools.provider.lifemapper import LifemapperAPI
 
@@ -137,20 +137,19 @@ class MapBISON(_MapSvc):
 class MapTentacles(_MapSvc):
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
-#         all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
-        all_output = S2nOutput(
-            count=0, records=[], query_term=namestr)
+        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
+#         all_output = S2nOutput(
+#             count=0, records=[], query_term=namestr)
         # Lifemapper
         api = MapLM()
         try:
             lmoutput = api.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
-#             all_output[S2nKey.RECORDS].append(
-#             {ServiceProvider.Lifemapper[S2nKey.NAME]: lmoutput})
         except Exception as e:
             return self.get_failure(query_term=namestr, errors=[e])
         else:
-            all_output.records.append(lmoutput)
-        
+#             all_output.records.append(lmoutput)
+            all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.Lifemapper[S2nKey.NAME]: lmoutput})
         # BISON
         return all_output
 

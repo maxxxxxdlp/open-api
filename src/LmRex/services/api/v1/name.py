@@ -176,23 +176,25 @@ class NameITISSolr(_NameSvc):
 class NameTentacles(_NameSvc):
     # ...............................................
     def get_records(self, usr_params):
-        allrecs = []
+        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
         
         # GBIF Taxon Record
         gacc = NameGBIF()
         goutput = gacc.get_gbif_matching_taxon(
             usr_params['namestr'], usr_params['gbif_status'], 
             usr_params['gbif_count'])
-        allrecs.append({ServiceProvider.GBIF[S2nKey.NAME]: goutput})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.GBIF[S2nKey.NAME]: goutput})
         
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(
             usr_params['namestr'], usr_params['itis_accepted'], 
             usr_params['kingdom'])
-        allrecs.append({ServiceProvider.ITISSolr[S2nKey.NAME]: isoutput})
+        all_output[S2nKey.RECORDS].append(
+            {ServiceProvider.iDigBio[S2nKey.NAME]: isoutput})
         
-        all_output = {S2nKey.COUNT: len(allrecs), S2nKey.RECORDS: allrecs}
+        all_output[S2nKey.COUNT] = len(all_output[S2nKey.RECORDS])
         return all_output
 
     # ...............................................
