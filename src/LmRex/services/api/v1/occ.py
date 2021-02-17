@@ -10,7 +10,7 @@ from LmRex.tools.provider.specify import SpecifyPortalAPI
 
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.resolve import SpecifyResolve
-from LmRex.services.api.v1.s2n_type import (print_s2n_output, S2nOutput)
+from LmRex.services.api.v1.s2n_type import (print_s2n_output, S2nOutput, S2nKey)
 
 # .............................................................................
 @cherrypy.expose
@@ -112,7 +112,7 @@ class OccMopho(_OccurrenceSvc):
             else:
                 return self.get_records(occurrence_id, usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[e])
+            return self.get_failure(query_term=occid, errors=[str(e)])
 
 # .............................................................................
 @cherrypy.expose
@@ -136,10 +136,9 @@ class OccSpecify(_OccurrenceSvc):
                 out = self.get_failure(query_term=occid, errors=[e])
 
         full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=self.PROVIDER,
-            errors=out.errors, provider_query=out.provider_query,
-            query_term=occid, service=self.SERVICE_TYPE)
+            out.count, occid, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME],
+            provider_query=out.provider_query, record_format=out.record_format, 
+            records=out.records, errors=out.errors)
         return full_out
     
     # ...............................................
@@ -193,37 +192,26 @@ class OccTentacles(_OccurrenceSvc):
         spocc = OccSpecify()
         sp_output = spocc.get_records(url, occid, count_only)
         allrecs.append(sp_output)
-#         all_output[S2nKey.RECORDS].append(
-#             {ServiceProvider.Specify[S2nKey.NAME]: sp_output})
         
         # GBIF copy/s of Specify Record
         gocc = OccGBIF()
         gbif_output = gocc.get_records(occid, count_only)
         allrecs.append(gbif_output)
-#         all_output[S2nKey.RECORDS].append(
-#             {ServiceProvider.GBIF[S2nKey.NAME]: gbif_output})
         
         # iDigBio copy/s of Specify Record
         idbocc = OccIDB()
         idb_output = idbocc.get_records(occid, count_only)
         allrecs.append(idb_output)
-#         all_output[S2nKey.RECORDS].append(
-#             {ServiceProvider.iDigBio[S2nKey.NAME]: idb_output})
         
         # MorphoSource records connected to Specify Record
         mopho = OccMopho()
         mopho_output = mopho.get_records(occid, count_only)
         allrecs.append(mopho_output)
-#         all_output[S2nKey.RECORDS].append(
-#             {ServiceProvider.MorphoSource[S2nKey.NAME]: mopho_output})
 
         full_out = S2nOutput(
-            count=len(allrecs), records=allrecs, provider=self.PROVIDER,
-            query_term=occid, service=APIService.Occurrence)
+            len(allrecs), occid, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME],
+            records=allrecs)
         return full_out
-
-#         all_output[S2nKey.COUNT] = len(all_output[S2nKey.RECORDS])
-#         return all_output
 
     # ...............................................
     # ...............................................

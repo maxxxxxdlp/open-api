@@ -43,11 +43,9 @@ class NameGBIF(_NameSvc):
                         prov_query_list.extend(outdict[S2nKey.PROVIDER_QUERY])
                         
         all_output = S2nOutput(
-            count=out1.count, record_format=out1.record_format, 
-            provider=out1.provider,errors=out1.errors, 
-            records=good_names, provider_query=prov_query_list,
-            query_term=namestr, service=self.SERVICE_TYPE)
-        
+            out1.count, namestr, self.SERVICE_TYPE, out1.provider, 
+            provider_query=prov_query_list, record_format=out1.record_format,  
+            records=good_names, errors=out1.errors)        
         return all_output
 
     # ...............................................
@@ -129,10 +127,9 @@ class NameITISSolr(_NameSvc):
             namestr, itis_accepted=itis_accepted, kingdom=kingdom)
         
         full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=self.PROVIDER[S2nKey.NAME],
-            errors=out.errors, provider_query=out.provider_query,
-            query_term=namestr, service=APIService.Name)
+            out.count, namestr, out, self.PROVIDER[S2nKey.NAME], 
+            provider_query=out.provider_query, record_format=out.record_format,  
+            records=out.provider_query, errors=out.errors)
 
         return full_out
 
@@ -194,8 +191,9 @@ class NameTentacles(_NameSvc):
         allrecs.append(isoutput)
 
         full_out = S2nOutput(
-            count=len(allrecs), records=allrecs, provider=self.PROVIDER,
-            query_term=namestr, service=APIService.Name)
+            len(allrecs), namestr, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME], 
+            records=allrecs)
+
         return full_out
 
     # ...............................................

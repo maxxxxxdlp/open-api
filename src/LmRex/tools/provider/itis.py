@@ -174,8 +174,8 @@ class ItisAPI(APIQuery):
     # ...............................................
     @classmethod
     def _standardize_output(
-            cls, output, count_key, records_key, record_format, 
-            itis_accepted=False, err=None):
+            cls, output, count_key, records_key, record_format, query_term, 
+            service, provider_query=[], itis_accepted=False, err=None):
         total = 0
         stdrecs = []
         errmsgs = []
@@ -198,11 +198,11 @@ class ItisAPI(APIQuery):
                     usage = doc['usage'].lower()
                     if usage in ('accepted', 'valid'):
                         stdrecs.append(cls._standardize_record(doc))
-        
         std_output = S2nOutput(
-            count=total, record_format=record_format, records=stdrecs, 
-            provider=cls.PROVIDER, errors=errmsgs, 
-            provider_query=None, query_term=None, service=None)
+            total, query_term, service, cls.PROVIDER, 
+            provider_query=provider_query, record_format=record_format, 
+            records=stdrecs, errors=errmsgs)
+        
         return std_output
     
 # ...............................................
@@ -243,21 +243,22 @@ class ItisAPI(APIQuery):
                     out = cls.get_failure(
                         errors=[cls._get_error_message(err=api.error)])
                 else:
-                    out = cls.get_failure(
+                    std_out = cls.get_failure(
                         errors=[cls._get_error_message(
                             msg='Missing `response` element')])
             else:
                 # Standardize output from provider response
-                out = cls._standardize_output(
+                std_out = cls._standardize_output(
                     output, Itis.COUNT_KEY, Itis.RECORDS_KEY, Itis.RECORD_FORMAT, 
+                    sciname, APIService.Name, provider_query=[api.url], 
                     itis_accepted=itis_accepted, err=api.error)
 
-        full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-            provider_query=[api.url], query_term=sciname, 
-            service=APIService.Name)
-        return full_out    
+#         full_out = S2nOutput(
+#             count=out.count, record_format=out.record_format, 
+#             records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+#             provider_query=[api.url], query_term=sciname, 
+#             service=APIService.Name)
+        return out    
 
 # ...............................................
     @classmethod
@@ -282,14 +283,15 @@ class ItisAPI(APIQuery):
             # Standardize output from provider response
             out = cls._standardize_output(
                 output, Itis.COUNT_KEY, Itis.RECORDS_KEY, Itis.RECORD_FORMAT, 
+                tsn, APIService.Name, provider_query=[apiq.url], 
                 itis_accepted=True, err=apiq.error)
 
-        full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-            provider_query=[apiq.url], query_term=tsn, 
-            service=APIService.Name)
-        return full_out    
+#         full_out = S2nOutput(
+#             count=out.count, record_format=out.record_format, 
+#             records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+#             provider_query=[apiq.url], query_term=tsn, 
+#             service=APIService.Name)
+        return out
 
 
     # ...............................................

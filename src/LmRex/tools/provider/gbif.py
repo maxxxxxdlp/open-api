@@ -117,20 +117,21 @@ class GbifAPI(APIQuery):
         try:
             api.query()
         except Exception as e:
-            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
+            std_output = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
-            out = cls._standardize_output(
+            std_out = cls._standardize_output(
                 api.output, GBIF.COUNT_KEY, GBIF.RECORDS_KEY, 
-                GBIF.RECORD_FORMAT_OCCURRENCE, count_only=count_only, 
-                err=api.error)
+                GBIF.RECORD_FORMAT_OCCURRENCE, occid, 
+                APIService.Occurrence, provider_query=[api.url], 
+                count_only=count_only, err=api.error)
         
-        full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-            provider_query=[api.url], query_term=occid, 
-            service=APIService.Occurrence)
-        return full_out
+#         full_out = S2nOutput(
+#             count=out.count, record_format=out.record_format, 
+#             records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+#             provider_query=[api.url], query_term=occid, 
+#             service=APIService.Occurrence)
+        return std_out
 
     # ...............................................
     @classmethod
@@ -224,7 +225,8 @@ class GbifAPI(APIQuery):
     # ...............................................
     @classmethod
     def _standardize_output(
-            cls, output, count_key, records_key, record_format, count_only=False, err=None):
+            cls, output, count_key, records_key, record_format, query_term, 
+            service, provider_query=[], count_only=False, err=None):
         stdrecs = []
         total = 0
         errmsgs = []
@@ -255,9 +257,8 @@ class GbifAPI(APIQuery):
                         msg = cls._get_error_message(err=e)
                         errmsgs.append(msg)
         std_output = S2nOutput(
-            count=total, record_format=record_format, records=stdrecs, 
-            provider=cls.PROVIDER, errors=errmsgs, 
-            provider_query=None, query_term=None, service=None)
+            total, query_term, service, cls.PROVIDER, provider_query=[cls.url], 
+            record_format=record_format, records=stdrecs, errors=errmsgs)
 
         return std_output
     
@@ -295,20 +296,20 @@ class GbifAPI(APIQuery):
         try:
             api.query()
         except Exception as e:
-            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
+            std_out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
-            out = cls._standardize_output(
+            std_out = cls._standardize_output(
                 api.output, GBIF.COUNT_KEY, GBIF.RECORDS_KEY, 
-                GBIF.RECORD_FORMAT_OCCURRENCE, count_only=count_only, 
-                err=api.error)
+                GBIF.RECORD_FORMAT_OCCURRENCE, dataset_key, APIService.Dataset, 
+                provider_query=[api.url], count_only=count_only, err=api.error)
             
-        full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-            provider_query=[api.url], query_term=dataset_key, 
-            service=APIService.Dataset)
-        return full_out
+#         full_out = S2nOutput(
+#             count=out.count, record_format=out.record_format, 
+#             records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+#             provider_query=[api.url], query_term=dataset_key, 
+#             service=APIService.Dataset)
+        return std_out
 
 
     # ...............................................

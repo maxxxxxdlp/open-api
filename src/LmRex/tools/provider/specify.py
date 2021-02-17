@@ -24,7 +24,7 @@ class SpecifyPortalAPI(APIQuery):
     # ...............................................
     @classmethod
     def _standardize_output(
-            cls, output, count_only=False, err=None):
+            cls, output, query_term, service, provider_query=[], count_only=False, err=None):
         stdrecs = []
         total = 0
         errmsgs = []
@@ -46,11 +46,14 @@ class SpecifyPortalAPI(APIQuery):
                     msg = cls._get_error_message(err=e)
                     errmsgs.append(msg)
 
-        # TODO: make sure Specify is using full DWC                    
+        # TODO: make sure Specify is using full DWC              
+#         out = cls._standardize_output(
+#             total, Idigbio.COUNT_KEY, Idigbio.RECORDS_KEY, 
+#             Idigbio.RECORD_FORMAT, occid, APIService.Occurrence, 
+#             count_only=count_only, err=api.error)
         std_output = S2nOutput(
-            count=total, record_format=DWC.SCHEMA, records=stdrecs, 
-            provider=cls.PROVIDER, errors=errmsgs, 
-            provider_query=None, query_term=None, service=None)
+            total, query_term, service, cls.PROVIDER, provider_query=[cls.url], 
+            record_format=DWC.SCHEMA, records=stdrecs, errors=errmsgs)
 
         return std_output
 
@@ -73,14 +76,15 @@ class SpecifyPortalAPI(APIQuery):
             try:
                 api.query_by_get()
             except Exception as e:
-                out = cls.get_failure(errors=[cls._get_error_message(err=e)])
+                std_output = cls.get_failure(errors=[cls._get_error_message(err=e)])
             # Standardize output from provider response
-            out = cls._standardize_output(
-                api.output, count_only=count_only, err=api.error)
+            std_output = cls._standardize_output(
+                api.output, occid, APIService.Occurrence, 
+                provider_query=[url], count_only=count_only, err=api.error)
         
-        full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-            provider_query=[url], query_term=occid, 
-            service=APIService.Occurrence)
-        return full_out
+#         full_out = S2nOutput(
+#             count=out.count, record_format=out.record_format, 
+#             records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+#             provider_query=[url], query_term=occid, 
+#             service=APIService.Occurrence)
+        return std_output

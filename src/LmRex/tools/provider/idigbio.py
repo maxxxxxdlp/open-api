@@ -98,25 +98,19 @@ class IdigbioAPI(APIQuery):
         try:
             api.query()
         except Exception as e:
-            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
+            std_out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
-            out = cls._standardize_output(
+            std_out = cls._standardize_output(
                 api.output, Idigbio.COUNT_KEY, Idigbio.RECORDS_KEY, 
-                Idigbio.RECORD_FORMAT, count_only=count_only, err=api.error)
+                Idigbio.RECORD_FORMAT, occid, APIService.Occurrence, 
+                provider_query=[api.url], count_only=count_only, err=api.error)
         
-        full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-            provider_query=[api.url], query_term=occid, 
-            service=APIService.Occurrence)
-        return full_out
-# 
-#         # Add query metadata to output
-#         std_output.query_term = occid
-#         std_output.provider = cls.PROVIDER
-#         std_output.provider_query = [api.url]
-# 
-#         return std_output
+#         full_out = S2nOutput(
+#             count=out.count, record_format=out.record_format, 
+#             records=out.records, provider=cls.PROVIDER, errors=out.errors, 
+#             provider_query=[api.url], query_term=occid, 
+#             service=APIService.Occurrence)
+        return std_out
 
     # ...............................................
     @classmethod

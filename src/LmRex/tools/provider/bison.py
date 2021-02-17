@@ -1,7 +1,7 @@
 from copy import copy
 
 from LmRex.common.lmconstants import (
-    BISON, BisonQuery, ServiceProvider, TST_VALUES)
+    APIService, BISON, BisonQuery, ServiceProvider, TST_VALUES)
 from LmRex.fileop.logtools import (log_info)
 
 from LmRex.services.api.v1.s2n_type import S2nKey
@@ -101,7 +101,8 @@ class BisonAPI(APIQuery):
         else:
             std_output = cls._standardize_output(
                 api.output, BISON.COUNT_KEY, BISON.RECORDS_KEY, 
-                BISON.RECORD_FORMAT, count_only=count_only, err=api.error)
+                BISON.RECORD_FORMAT, namestr, APIService.Occurrence, 
+                provider_query=[api.url], count_only=count_only, err=api.error)
         # Add query metadata to output
         for key, val in qry_meta.items():
             std_output[key] = val             

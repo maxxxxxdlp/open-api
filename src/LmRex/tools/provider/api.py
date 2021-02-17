@@ -52,8 +52,8 @@ class APIQuery:
     # ...............................................
     @classmethod
     def _standardize_output(
-            cls, output, count_key, records_key, record_format, 
-            count_only=False, err=None):
+            cls, output, count_key, records_key, record_format, query_term, 
+            service, provider_query=[], count_only=False, err=None):
         errmsgs = []
         stdrecs = []
         total = 0
@@ -82,9 +82,9 @@ class APIQuery:
                         errmsgs.append(msg)
                         
         std_output = S2nOutput(
-            count=total, record_format=record_format, records=stdrecs, 
-            provider=cls.PROVIDER, errors=errmsgs, 
-            provider_query=None, query_term=None, service=None)
+            total, query_term, service, cls.PROVIDER, 
+            provider_query=provider_query, record_format=record_format, 
+            records=stdrecs, errors=errmsgs)
 
         return std_output
 

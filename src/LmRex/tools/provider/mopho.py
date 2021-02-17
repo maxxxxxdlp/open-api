@@ -40,20 +40,15 @@ class MorphoSourceAPI(APIQuery):
         try:
             api.query_by_get(verify=verify)
         except Exception as e:
-            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
+            std_out = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
-            out = cls._standardize_output(
+            std_out = cls._standardize_output(
                 api.output, MorphoSource.TOTAL_KEY, MorphoSource.RECORDS_KEY, 
-                MorphoSource.RECORD_FORMAT, count_only=count_only, 
-                err=api.error)
+                MorphoSource.RECORD_FORMAT, occid, APIService.Occurrence, 
+                provider_query=[api.url], count_only=count_only, err=api.error)
         
-        full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-            provider_query=[api.url], query_term=occid, 
-            service=APIService.Occurrence)
-        return full_out
+        return std_out
 
 # .............................................................................
 if __name__ == '__main__':

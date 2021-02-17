@@ -4,7 +4,8 @@ from LmRex.common.lmconstants import ServiceProvider, APIService
 from LmRex.tools.provider.gbif import GbifAPI
 from LmRex.tools.provider.bison import BisonAPI
 from LmRex.services.api.v1.base import _S2nService
-from LmRex.services.api.v1.s2n_type import S2nOutput, print_s2n_output       
+from LmRex.services.api.v1.s2n_type import S2nOutput, print_s2n_output       ,\
+    S2nKey
         
 # .............................................................................
 @cherrypy.expose
@@ -124,10 +125,10 @@ class DatasetTentacles(_DatasetSvc):
         dg = DatasetGBIF()
         gbif_output = dg.GET(dataset_key=dsid, count_only=count_only)
         allrecs.append(gbif_output)
-        
+
         full_out = S2nOutput(
-            count=len(allrecs), records=allrecs, provider=self.PROVIDER,
-            query_term=dsid, service=APIService.Dataset)        
+            len(allrecs), dsid, APIService.Dataset, self.PROVIDER, 
+            records=allrecs)        
         return full_out
 
     # ...............................................

@@ -39,11 +39,11 @@ class _S2nService:
             provider = cls.PROVIDER
         if not service: 
             service = cls.SERVICE_TYPE
-        return S2nOutput(
-            count=count, record_format=record_format, 
-            records=records, provider=provider,
-            errors=errors, provider_query=provider_query,
-            query_term=query_term, service=service)
+        all_output = S2nOutput(
+            count, query_term, service, provider, 
+            provider_query=provider_query, record_format=record_format,  
+            records=records, errors=errors)
+        return all_output
 
     # .............................................................................
     @classmethod

@@ -53,10 +53,9 @@ class MapLM(_MapSvc):
             queries.extend(lout.provider_query)
         
         full_out = S2nOutput(
-            count=len(stdrecs), record_format=Lifemapper.RECORD_FORMAT_MAP, 
-            records=stdrecs, provider=lout.provider, errors=errmsgs, 
-            provider_query=queries, query_term=namestr, 
-            service=self.SERVICE_TYPE)
+            len(stdrecs), namestr, self.SERVICE_TYPE, lout.provider, 
+            provider_query=queries, record_format=Lifemapper.RECORD_FORMAT_MAP, 
+            records=stdrecs, errors=errmsgs)
         return full_out
 
     # ...............................................
@@ -149,9 +148,8 @@ class MapTentacles(_MapSvc):
             allrecs.append(lmoutput)
 
         full_out = S2nOutput(
-            count=len(allrecs), records=allrecs, provider=self.PROVIDER,
-            query_term=namestr, service=APIService.Map)
-
+            len(allrecs), namestr, APIService.Map, self.PROVIDER[S2nKey.NAME], 
+            records=allrecs)
         return full_out
 
     # ...............................................
