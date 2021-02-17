@@ -4,7 +4,7 @@ from LmRex.common.lmconstants import ServiceProvider, APIService
 from LmRex.tools.provider.gbif import GbifAPI
 from LmRex.tools.provider.bison import BisonAPI
 from LmRex.services.api.v1.base import _S2nService
-from LmRex.services.api.v1.s2n_type import S2nKey, print_s2n_output       
+from LmRex.services.api.v1.s2n_type import S2nOutput, print_s2n_output       
         
 # .............................................................................
 @cherrypy.expose
@@ -16,7 +16,7 @@ class _DatasetSvc(_S2nService):
 class DatasetGBIF(_DatasetSvc):
     PROVIDER = ServiceProvider.GBIF
     # ...............................................
-    def _get_records(self, dataset_key, count_only):
+    def get_records(self, dataset_key, count_only):
         # 'do_limit' limits the number of records returned to the GBIF limit
         output = GbifAPI.get_occurrences_by_dataset(
             dataset_key, count_only)
@@ -55,7 +55,7 @@ class DatasetGBIF(_DatasetSvc):
             if not dataset_key:
                 return {'spcoco.message': 'S^n GBIF dataset query is online'}
             else:
-                return self._get_records(dataset_key, usr_params['count_only'])
+                return self.get_records(dataset_key, usr_params['count_only'])
         except Exception as e:
             return self.get_failure(query_term=dataset_key, errors=[e])
 
@@ -115,19 +115,20 @@ class DatasetGBIF(_DatasetSvc):
 # .............................................................................
 @cherrypy.expose
 class DatasetTentacles(_DatasetSvc):
-    PROVIDER = None
+    PROVIDER = ServiceProvider.S2N
     # ...............................................
     def _get_records(self, dsid, count_only):
-        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
+        allrecs = []
         
         # GBIF copy/s of Specify Record
         dg = DatasetGBIF()
         gbif_output = dg.GET(dataset_key=dsid, count_only=count_only)
-        all_output['GBIF Records'] = gbif_output
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.GBIF[S2nKey.NAME]: gbif_output})
+        allrecs.append(gbif_output)
         
-        return all_output
+        full_out = S2nOutput(
+            count=len(allrecs), records=allrecs, provider=self.PROVIDER,
+            query_term=dsid, service=APIService.Dataset)        
+        return full_out
 
     # ...............................................
     # ...............................................

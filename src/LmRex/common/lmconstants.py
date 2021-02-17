@@ -185,6 +185,10 @@ class APIService:
 
 # .............................................................................
 class ServiceProvider:
+    S2N = {
+        S2nKey.NAME: 'S2N', 'endpoint': '', 'services': [
+            APIService.Occurrence, APIService.Name, APIService.Dataset, 
+            APIService.Map]}
     BISON = {
         S2nKey.NAME: 'BISON', 'endpoint': 'bison', 'services': [APIService.Dataset]}
     GBIF = {

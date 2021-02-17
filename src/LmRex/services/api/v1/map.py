@@ -135,11 +135,10 @@ class MapBISON(_MapSvc):
 # .............................................................................
 @cherrypy.expose
 class MapTentacles(_MapSvc):
+    PROVIDER = ServiceProvider.S2N
     # ...............................................
     def get_records(self, namestr, gbif_status, gbif_count ,status, kingdom):
-        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
-#         all_output = S2nOutput(
-#             count=0, records=[], query_term=namestr)
+        allrecs = []
         # Lifemapper
         api = MapLM()
         try:
@@ -147,11 +146,13 @@ class MapTentacles(_MapSvc):
         except Exception as e:
             return self.get_failure(query_term=namestr, errors=[e])
         else:
-#             all_output.records.append(lmoutput)
-            all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.Lifemapper[S2nKey.NAME]: lmoutput})
-        # BISON
-        return all_output
+            allrecs.append(lmoutput)
+
+        full_out = S2nOutput(
+            count=len(allrecs), records=allrecs, provider=self.PROVIDER,
+            query_term=namestr, service=APIService.Map)
+
+        return full_out
 
     # ...............................................
     @cherrypy.tools.json_out()

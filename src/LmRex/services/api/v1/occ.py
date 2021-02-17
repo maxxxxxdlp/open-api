@@ -10,7 +10,7 @@ from LmRex.tools.provider.specify import SpecifyPortalAPI
 
 from LmRex.services.api.v1.base import _S2nService
 from LmRex.services.api.v1.resolve import SpecifyResolve
-from LmRex.services.api.v1.s2n_type import (print_s2n_output, S2nKey, S2nOutput)
+from LmRex.services.api.v1.s2n_type import (print_s2n_output, S2nOutput)
 
 # .............................................................................
 @cherrypy.expose
@@ -174,9 +174,11 @@ class OccSpecify(_OccurrenceSvc):
 # .............................................................................
 @cherrypy.expose
 class OccTentacles(_OccurrenceSvc):
+    PROVIDER = ServiceProvider.S2N
     # ...............................................
     def get_records(self, usr_params):
-        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
+#         all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
+        allrecs = []
         
         occid = usr_params['occid']
         count_only = usr_params['count_only']
@@ -186,34 +188,42 @@ class OccTentacles(_OccurrenceSvc):
         solr_output = spark.get_specify_guid_meta(occid)
         (url, msg) = spark.get_url_from_meta(solr_output)
         # Do not add GUID service record to occurrence records
-        # all_output[ServiceProvider.Specify[S2nKey.NAME]] = solr_output
         
         # Specify Record from URL in ARK
         spocc = OccSpecify()
         sp_output = spocc.get_records(url, occid, count_only)
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.Specify[S2nKey.NAME]: sp_output})
+        allrecs.append(sp_output)
+#         all_output[S2nKey.RECORDS].append(
+#             {ServiceProvider.Specify[S2nKey.NAME]: sp_output})
         
         # GBIF copy/s of Specify Record
         gocc = OccGBIF()
         gbif_output = gocc.get_records(occid, count_only)
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.GBIF[S2nKey.NAME]: gbif_output})
+        allrecs.append(gbif_output)
+#         all_output[S2nKey.RECORDS].append(
+#             {ServiceProvider.GBIF[S2nKey.NAME]: gbif_output})
         
         # iDigBio copy/s of Specify Record
         idbocc = OccIDB()
         idb_output = idbocc.get_records(occid, count_only)
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.iDigBio[S2nKey.NAME]: idb_output})
+        allrecs.append(idb_output)
+#         all_output[S2nKey.RECORDS].append(
+#             {ServiceProvider.iDigBio[S2nKey.NAME]: idb_output})
         
         # MorphoSource records connected to Specify Record
         mopho = OccMopho()
         mopho_output = mopho.get_records(occid, count_only)
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.MorphoSource[S2nKey.NAME]: mopho_output})
+        allrecs.append(mopho_output)
+#         all_output[S2nKey.RECORDS].append(
+#             {ServiceProvider.MorphoSource[S2nKey.NAME]: mopho_output})
 
-        all_output[S2nKey.COUNT] = len(all_output[S2nKey.RECORDS])
-        return all_output
+        full_out = S2nOutput(
+            count=len(allrecs), records=allrecs, provider=self.PROVIDER,
+            query_term=occid, service=APIService.Occurrence)
+        return full_out
+
+#         all_output[S2nKey.COUNT] = len(all_output[S2nKey.RECORDS])
+#         return all_output
 
     # ...............................................
     # ...............................................

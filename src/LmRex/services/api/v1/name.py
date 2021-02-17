@@ -174,28 +174,29 @@ class NameITISSolr(_NameSvc):
 # .............................................................................
 @cherrypy.expose
 class NameTentacles(_NameSvc):
+    PROVIDER = ServiceProvider.S2N
     # ...............................................
     def get_records(self, usr_params):
-        all_output = {S2nKey.COUNT: 0, S2nKey.RECORDS: []}
+        allrecs = []
         
         # GBIF Taxon Record
         gacc = NameGBIF()
         goutput = gacc.get_gbif_matching_taxon(
             usr_params['namestr'], usr_params['gbif_status'], 
             usr_params['gbif_count'])
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.GBIF[S2nKey.NAME]: goutput})
+        allrecs.append(goutput)
         
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(
             usr_params['namestr'], usr_params['itis_accepted'], 
             usr_params['kingdom'])
-        all_output[S2nKey.RECORDS].append(
-            {ServiceProvider.iDigBio[S2nKey.NAME]: isoutput})
-        
-        all_output[S2nKey.COUNT] = len(all_output[S2nKey.RECORDS])
-        return all_output
+        allrecs.append(isoutput)
+
+        full_out = S2nOutput(
+            count=len(allrecs), records=allrecs, provider=self.PROVIDER,
+            query_term=namestr, service=APIService.Name)
+        return full_out
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -245,6 +246,7 @@ if __name__ == '__main__':
     test_names = TST_VALUES.NAMES[:5]
     test_names.append(TST_VALUES.GUIDS_W_SPECIFY_ACCESS[0])
     
+    test_names = ['Acer obtusifolium Sibthorp & Smith']
     for namestr in test_names:
         for gparse in [False]:
             print('Name = {}  GBIF parse = {}'.format(namestr, gparse))
@@ -253,11 +255,8 @@ if __name__ == '__main__':
                 namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
                 gbif_count=True, itis_accepted=True, kingdom=None)
               
-            for svc in all_output['records']:
-                for name, s2nout in svc.items():
-                    print(name)
-                    print_s2n_output(s2nout)
-                print('')
+            for svc in all_output.records:
+                print_s2n_output(svc)
 #
 #             api = NameGBIF()
 #             std_output  = api.GET(

@@ -78,7 +78,21 @@ class S2nOutput(typing.NamedTuple):
     record_format: str = ''
     records: typing.List[dict] = []
     errors: typing.List[str] = []
-    
+     
+
+# class S2nOutput(dict):
+#     'count': int
+#     'query_term': str
+#     'service': str
+#     'provider': str
+#     'provider_query': typing.List[str] = []
+#     'record_format': str = ''
+#     'records': typing.List[dict] = []
+#     'errors': typing.List[str] = []
+#     
+#     def __init__(self, count, query_term):
+#         pass
+
 class S2nError(str):
     pass
 
