@@ -162,23 +162,3 @@ def print_s2n_output(response_dict):
     print('')
 
 
-# def print_s2n_output(out_obj):
-#     print('*** S^n output ***')
-#     for name, attelt in out_obj.response.items():
-#         try:
-#             if name == 'records':
-#                 print('{}: {} returned records'.format(name, len(attelt)))
-#             else:
-#                 print('{}: {}'.format(name, attelt))
-#         except:
-#             pass
-#     outelts = set(out_obj.response.keys())
-#     missing = S2nKey.response_keys().difference(outelts)
-#     extras = outelts.difference(S2nKey.response_keys())
-#     if missing:
-#         print('Missing elements: {}'.format(missing))
-#     if extras:
-#         print('Extra elements: {}'.format(extras))
-#     print('')
-
-

@@ -278,20 +278,15 @@ class ItisAPI(APIQuery):
         try:
             apiq.query()
         except Exception as e:
-            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
+            std_output = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
-            out = cls._standardize_output(
+            std_output = cls._standardize_output(
                 output, Itis.COUNT_KEY, Itis.RECORDS_KEY, Itis.RECORD_FORMAT, 
                 tsn, APIService.Name, provider_query=[apiq.url], 
                 itis_accepted=True, err=apiq.error)
 
-#         full_out = S2nOutput(
-#             count=out.count, record_format=out.record_format, 
-#             records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-#             provider_query=[apiq.url], query_term=tsn, 
-#             service=APIService.Name)
-        return out
+        return std_output
 
 
     # ...............................................

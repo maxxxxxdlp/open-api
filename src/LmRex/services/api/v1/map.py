@@ -89,7 +89,7 @@ class MapLM(_MapSvc):
                     namestr,  usr_params['scenariocode'], usr_params['color'], 
                     usr_params['do_match'])
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[e])
+            return self.get_failure(query_term=namestr, errors=[str(e)])
 
 # .............................................................................
 @cherrypy.expose
@@ -128,7 +128,7 @@ class MapBISON(_MapSvc):
             else:
                 return self.get_itis_taxon(namestr)
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[e])
+            return self.get_failure(query_term=namestr, errors=[str(e)])
 
 
 # .............................................................................
@@ -143,7 +143,7 @@ class MapTentacles(_MapSvc):
         try:
             lmoutput = api.get_gbif_matching_taxon(namestr, gbif_status, gbif_count)
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[e])
+            return self.get_failure(query_term=namestr, errors=[str(e)])
         else:
             allrecs.append(lmoutput)
 
@@ -181,7 +181,7 @@ class MapTentacles(_MapSvc):
                     namestr, usr_params['gbif_status'], usr_params['gbif_count'],
                     usr_params['status'], usr_params['kingdom'])
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[e])
+            return self.get_failure(query_term=namestr, errors=[str(e)])
 
 # .............................................................................
 if __name__ == '__main__':

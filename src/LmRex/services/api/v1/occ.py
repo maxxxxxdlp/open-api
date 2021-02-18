@@ -53,7 +53,7 @@ class OccGBIF(_OccurrenceSvc):
             else:
                 return self.get_records(occurrence_id, usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[e])
+            return self.get_failure(query_term=occid, errors=[str(e)])
 
 # .............................................................................
 @cherrypy.expose
@@ -89,7 +89,7 @@ class OccIDB(_OccurrenceSvc):
             else:
                 return self.get_records(occurrence_id, usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[e])
+            return self.get_failure(query_term=occid, errors=[str(e)])
 
 # .............................................................................
 @cherrypy.expose
@@ -133,7 +133,7 @@ class OccSpecify(_OccurrenceSvc):
             try:
                 out = SpecifyPortalAPI.get_specify_record(occid, url, count_only)
             except Exception as e:
-                out = self.get_failure(query_term=occid, errors=[e])
+                out = self.get_failure(query_term=occid, errors=[str(e)])
 
         full_out = S2nOutput(
             out.count, occid, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME],
@@ -168,7 +168,7 @@ class OccSpecify(_OccurrenceSvc):
                 return self.get_records(
                     usr_params['url'], usr_params['occid'], count_only)
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[e])
+            return self.get_failure(query_term=occid, errors=[str(e)])
 
 # .............................................................................
 @cherrypy.expose
@@ -238,7 +238,7 @@ class OccTentacles(_OccurrenceSvc):
                 occid=occid, count_only=count_only)
             return self.get_records(usr_params)
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[e])
+            return self.get_failure(query_term=occid, errors=[str(e)])
 
 # .............................................................................
 if __name__ == '__main__':

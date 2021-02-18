@@ -58,7 +58,7 @@ class DatasetGBIF(_DatasetSvc):
             else:
                 return self.get_records(dataset_key, usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(query_term=dataset_key, errors=[e])
+            return self.get_failure(query_term=dataset_key, errors=[str(e)])
 
 
 # # .............................................................................
@@ -111,7 +111,7 @@ class DatasetGBIF(_DatasetSvc):
 #             else:
 #                 return self._get_records(dataset_key, usr_params['count_only'])
 #         except Exception as e:
-#             return self.get_failure(query_term=dataset_key, errors=[e])
+#             return self.get_failure(query_term=dataset_key, errors=[str(e)])
 
 # .............................................................................
 @cherrypy.expose
@@ -166,7 +166,7 @@ class DatasetTentacles(_DatasetSvc):
             return self._get_records(
                 usr_params['dataset_key'], usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(errors=[e])
+            return self.get_failure(errors=[str(e)])
 
 # .............................................................................
 if __name__ == '__main__':

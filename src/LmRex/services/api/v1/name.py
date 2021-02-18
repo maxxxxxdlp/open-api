@@ -78,7 +78,7 @@ class NameGBIF(_NameSvc):
                 output = self.get_gbif_matching_taxon(
                     namestr, usr_params['gbif_status'], usr_params['gbif_count'])
         except Exception as e:
-            output = self.get_failure(query_term=namestr, errors=[e])
+            output = self.get_failure(query_term=namestr, errors=[str(e)])
 
         return output.response
     
@@ -123,13 +123,9 @@ class NameITISSolr(_NameSvc):
     PROVIDER = ServiceProvider.ITISSolr
     # ...............................................
     def get_itis_accepted_taxon(self, namestr, itis_accepted, kingdom):
-        output = ItisAPI.match_name(
+        std_output = ItisAPI.match_name(
             namestr, itis_accepted=itis_accepted, kingdom=kingdom)
-#         full_out = S2nOutput(
-#             out.count, namestr, out, self.PROVIDER[S2nKey.NAME], 
-#             provider_query=out.provider_query, record_format=out.record_format,  
-#             records=out.provider_query, errors=out.errors)
-        return output
+        return std_output
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -164,7 +160,7 @@ class NameITISSolr(_NameSvc):
                 output = self.get_itis_accepted_taxon(
                     namestr, usr_params['itis_accepted'], usr_params['kingdom'])
         except Exception as e:
-            output = self.get_failure(query_term=namestr, errors=[e])
+            output = self.get_failure(query_term=namestr, errors=[str(e)])
 
         return output.response
     
@@ -232,7 +228,7 @@ class NameTentacles(_NameSvc):
             else:
                 output = self.get_records(usr_params)
         except Exception as e:
-            output = self.get_failure(query_term=namestr, errors=[e])
+            output = self.get_failure(query_term=namestr, errors=[str(e)])
             
         return output.response
 
@@ -241,19 +237,25 @@ if __name__ == '__main__':
 
     # test
     test_names = TST_VALUES.NAMES[:5]
-    test_names.append(TST_VALUES.GUIDS_W_SPECIFY_ACCESS[0])
+#     test_names.append(TST_VALUES.GUIDS_W_SPECIFY_ACCESS[0])
     
-    test_names = ['Acer obtusifolium Sibthorp & Smith']
+#     test_names = ['Acer obtusifolium Sibthorp & Smith']
     for namestr in test_names:
-        for gparse in [False]:
+        for gparse in [True, False]:
             print('Name = {}  GBIF parse = {}'.format(namestr, gparse))
-            s2napi = NameTentacles()
-            all_output  = s2napi.GET(
-                namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
-                gbif_count=True, itis_accepted=True, kingdom=None)
+            s2napi = NameITISSolr()
+            response_dict = s2napi.GET(
+                namestr=namestr, gbif_parse=gparse, itis_accepted=True)
               
-            for response_dict in all_output['records']:
-                print_s2n_output(response_dict)
+            print_s2n_output(response_dict)
+                
+#             s2napi = NameTentacles()
+#             all_output  = s2napi.GET(
+#                 namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
+#                 gbif_count=True, itis_accepted=True, kingdom=None)
+#               
+#             for response_dict in all_output['records']:
+#                 print_s2n_output(response_dict)
 #
 #             api = NameGBIF()
 #             std_output  = api.GET(
