@@ -187,7 +187,7 @@ class NameTentacles(_NameSvc):
         allrecs.append(isoutput.response)
 
         full_out = S2nOutput(
-            len(allrecs), namestr, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME], 
+            len(allrecs), usr_params['namestr'], self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME], 
             records=allrecs)
 
         return full_out
@@ -239,23 +239,23 @@ if __name__ == '__main__':
     test_names = TST_VALUES.NAMES[:5]
 #     test_names.append(TST_VALUES.GUIDS_W_SPECIFY_ACCESS[0])
     
-#     test_names = ['Acer obtusifolium Sibthorp & Smith']
+    test_names = ['Acer saccharum Marshall']
     for namestr in test_names:
         for gparse in [True, False]:
-            print('Name = {}  GBIF parse = {}'.format(namestr, gparse))
-            s2napi = NameITISSolr()
-            response_dict = s2napi.GET(
-                namestr=namestr, gbif_parse=gparse, itis_accepted=True)
-              
-            print_s2n_output(response_dict)
-                
-#             s2napi = NameTentacles()
-#             all_output  = s2napi.GET(
-#                 namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
-#                 gbif_count=True, itis_accepted=True, kingdom=None)
+#             print('Name = {}  GBIF parse = {}'.format(namestr, gparse))
+#             s2napi = NameITISSolr()
+#             response_dict = s2napi.GET(
+#                 namestr=namestr, gbif_parse=gparse, itis_accepted=True)
 #               
-#             for response_dict in all_output['records']:
-#                 print_s2n_output(response_dict)
+#             print_s2n_output(response_dict)
+                
+            s2napi = NameTentacles()
+            all_output  = s2napi.GET(
+                namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
+                gbif_count=True, itis_accepted=True, kingdom=None)
+               
+            for response_dict in all_output['records']:
+                print_s2n_output(response_dict)
 #
 #             api = NameGBIF()
 #             std_output  = api.GET(

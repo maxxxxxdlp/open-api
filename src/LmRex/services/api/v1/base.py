@@ -4,7 +4,7 @@ from LmRex.common.lmconstants import (
     APIService, Lifemapper, VALID_MAP_REQUESTS)
 from LmRex.tools.provider.gbif import GbifAPI
 from LmRex.tools.provider.itis import ItisAPI
-from LmRex.services.api.v1.s2n_type import S2nOutput
+from LmRex.services.api.v1.s2n_type import S2nOutput, S2nKey
 
 # .............................................................................
 class _S2nService:
@@ -36,7 +36,7 @@ class _S2nService:
             LmRex.services.api.v1.S2nOutput object
         """
         if not provider:
-            provider = cls.PROVIDER
+            provider = cls.PROVIDER[S2nKey.NAME]
         if not service: 
             service = cls.SERVICE_TYPE
         all_output = S2nOutput(
