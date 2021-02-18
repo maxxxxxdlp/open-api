@@ -49,11 +49,12 @@ class OccGBIF(_OccurrenceSvc):
             usr_params = self._standardize_params(occid=occid, count_only=count_only)
             occurrence_id = usr_params['occid']
             if occurrence_id is None:
-                return self._show_online()
+                output = self._show_online()
             else:
-                return self.get_records(occurrence_id, usr_params['count_only'])
+                output = self.get_records(occurrence_id, usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[str(e)])
+            output = self.get_failure(query_term=occid, errors=[str(e)])
+        return output.response
 
 # .............................................................................
 @cherrypy.expose
@@ -85,12 +86,13 @@ class OccIDB(_OccurrenceSvc):
             usr_params = self._standardize_params(occid=occid, count_only=count_only)
             occurrence_id = usr_params['occid']
             if occurrence_id is None:
-                return self._show_online()
+                output = self._show_online()
             else:
-                return self.get_records(occurrence_id, usr_params['count_only'])
+                output = self.get_records(occurrence_id, usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[str(e)])
-
+            output = self.get_failure(query_term=occid, errors=[str(e)])
+        return output.response
+    
 # .............................................................................
 @cherrypy.expose
 class OccMopho(_OccurrenceSvc):
@@ -108,12 +110,13 @@ class OccMopho(_OccurrenceSvc):
             usr_params = self._standardize_params(occid=occid, count_only=count_only)
             occurrence_id = usr_params['occid']
             if occurrence_id is None:
-                return self._show_online()
+                output = self._show_online()
             else:
-                return self.get_records(occurrence_id, usr_params['count_only'])
+                output = self.get_records(occurrence_id, usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[str(e)])
-
+            output = self.get_failure(query_term=occid, errors=[str(e)])
+        return output.response
+    
 # .............................................................................
 @cherrypy.expose
 class OccSpecify(_OccurrenceSvc):
@@ -128,18 +131,18 @@ class OccSpecify(_OccurrenceSvc):
             (url, msg) = spark.get_url_from_meta(solr_output)
                 
         if url is None:
-            out = self.get_failure(query_term=occid, errors=[msg])
+            output = self.get_failure(query_term=occid, errors=[msg])
         else:
             try:
-                out = SpecifyPortalAPI.get_specify_record(occid, url, count_only)
+                output = SpecifyPortalAPI.get_specify_record(occid, url, count_only)
             except Exception as e:
-                out = self.get_failure(query_term=occid, errors=[str(e)])
+                output = self.get_failure(query_term=occid, errors=[str(e)])
 
-        full_out = S2nOutput(
-            out.count, occid, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME],
-            provider_query=out.provider_query, record_format=out.record_format, 
-            records=out.records, errors=out.errors)
-        return full_out
+#         full_out = S2nOutput(
+#             out.count, occid, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME],
+#             provider_query=out.provider_query, record_format=out.record_format, 
+#             records=out.records, errors=out.errors)
+        return output
     
     # ...............................................
     @cherrypy.tools.json_out()
@@ -163,13 +166,14 @@ class OccSpecify(_OccurrenceSvc):
         try:
             usr_params = self._standardize_params(occid=occid, url=url)
             if usr_params['url'] is None and usr_params['occid'] is None:
-                return self._show_online()
+                output = self._show_online()
             else:
-                return self.get_records(
+                output = self.get_records(
                     usr_params['url'], usr_params['occid'], count_only)
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[str(e)])
-
+            output = self.get_failure(query_term=occid, errors=[str(e)])
+        return output.response
+    
 # .............................................................................
 @cherrypy.expose
 class OccTentacles(_OccurrenceSvc):
@@ -236,9 +240,10 @@ class OccTentacles(_OccurrenceSvc):
         try:
             usr_params = self._standardize_params(
                 occid=occid, count_only=count_only)
-            return self.get_records(usr_params)
+            output = self.get_records(usr_params)
         except Exception as e:
-            return self.get_failure(query_term=occid, errors=[str(e)])
+            output = self.get_failure(query_term=occid, errors=[str(e)])
+        return output.response
 
 # .............................................................................
 if __name__ == '__main__':
@@ -252,19 +257,19 @@ if __name__ == '__main__':
 #         output = spocc.GET(url=None, occid=occid, count_only=False)
 #         print_s2n_output(output)
 #     
-    print('*** Return birds from mopho')         
-    for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS:
-        for cls in [OccMopho]:
+#     print('*** Return birds from mopho')         
+#     for occid in TST_VALUES.GUIDS_WO_SPECIFY_ACCESS:
+#         for cls in [OccMopho]:
+#             api = cls()
+#             response_dict = api.GET(occid=occid, count_only=False)
+#             print_s2n_output(response_dict)
+
+    print('*** Return valid URL')
+    for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS:
+        for cls in [OccMopho, OccGBIF, OccIDB, OccSpecify]:
             api = cls()
             output = api.GET(occid=occid, count_only=False)
             print_s2n_output(output)
-
-#     print('*** Return valid URL')
-#     for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS:
-#         for cls in [OccGBIF, OccIDB, OccSpecify]:
-#             api = cls()
-#             output = api.GET(occid=occid, count_only=False)
-#             print_s2n_output(output)
 
 #         # Queries all services
 #         s2napi = OccTentacles()

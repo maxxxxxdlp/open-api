@@ -54,12 +54,12 @@ class DatasetGBIF(_DatasetSvc):
                 dataset_key=dataset_key, count_only=count_only)
             dataset_key = usr_params['dataset_key']
             if not dataset_key:
-                return {'spcoco.message': 'S^n GBIF dataset query is online'}
+                output = self._show_online()
             else:
-                return self.get_records(dataset_key, usr_params['count_only'])
+                output = self.get_records(dataset_key, usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(query_term=dataset_key, errors=[str(e)])
-
+            output = self.get_failure(query_term=dataset_key, errors=[str(e)])
+        return output.response
 
 # # .............................................................................
 # @cherrypy.expose
@@ -163,11 +163,12 @@ class DatasetTentacles(_DatasetSvc):
         try:
             usr_params = self._standardize_params(
                 dataset_key=dataset_key, count_only=count_only)
-            return self._get_records(
+            output = self._get_records(
                 usr_params['dataset_key'], usr_params['count_only'])
         except Exception as e:
-            return self.get_failure(errors=[str(e)])
-
+            output = self.get_failure(errors=[str(e)])
+        return output.response
+    
 # .............................................................................
 if __name__ == '__main__':
     # test

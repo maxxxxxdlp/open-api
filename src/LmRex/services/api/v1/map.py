@@ -83,13 +83,14 @@ class MapLM(_MapSvc):
                 do_match=do_match)
             namestr = usr_params['namestr']
             if not namestr:
-                return self._show_online()
+                output = self._show_online()
             else:
-                return self.get_map_layers(
+                output = self.get_map_layers(
                     namestr,  usr_params['scenariocode'], usr_params['color'], 
                     usr_params['do_match'])
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[str(e)])
+            output = self.get_failure(query_term=namestr, errors=[str(e)])
+        return output.response
 
 # .............................................................................
 @cherrypy.expose
@@ -124,12 +125,12 @@ class MapBISON(_MapSvc):
                 namestr=namestr, gbif_parse=gbif_parse)
             namestr = usr_params['namestr']
             if not namestr:
-                return self._show_online()
+                output = self._show_online()
             else:
-                return self.get_itis_taxon(namestr)
+                output = self.get_itis_taxon(namestr)
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[str(e)])
-
+            output = self.get_failure(query_term=namestr, errors=[str(e)])
+        return output.response
 
 # .............................................................................
 @cherrypy.expose
@@ -175,13 +176,14 @@ class MapTentacles(_MapSvc):
                 gbif_count=gbif_count, status=status, kingdom=kingdom)
             namestr = usr_params['namestr']
             if not namestr:
-                return self._show_online()
+                output = self._show_online()
             else:
-                return self.get_records(
+                output = self.get_records(
                     namestr, usr_params['gbif_status'], usr_params['gbif_count'],
                     usr_params['status'], usr_params['kingdom'])
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[str(e)])
+            output = self.get_failure(query_term=namestr, errors=[str(e)])
+        return output.response
 
 # .............................................................................
 if __name__ == '__main__':
