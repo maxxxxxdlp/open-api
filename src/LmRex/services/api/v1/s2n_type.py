@@ -144,7 +144,7 @@ class S2nError(str):
 
 def print_s2n_output(out_obj):
     print('*** S^n output ***')
-    for name, attelt in out_obj._response.items():
+    for name, attelt in out_obj.response.items():
         try:
             if name == 'records':
                 print('{}: {} returned records'.format(name, len(attelt)))
@@ -152,7 +152,7 @@ def print_s2n_output(out_obj):
                 print('{}: {}'.format(name, attelt))
         except:
             pass
-    outelts = set(out_obj._response.keys())
+    outelts = set(out_obj.response.keys())
     missing = S2nKey.response_keys().difference(outelts)
     extras = outelts.difference(S2nKey.response_keys())
     if missing:

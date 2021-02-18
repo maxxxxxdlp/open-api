@@ -61,13 +61,12 @@ class _S2nService:
     
     # ...............................................
     def _show_online(self):
-        try:
-            msg = 'S^n {} {} service is online'.format(
+        msg = 'S^n {} {} service is online'.format(
                 self.SERVICE_TYPE, self.PROVIDER['name'])
-        except:
-            msg = 'S^n {} service is online'.format(
-                self.SERVICE_TYPE)
-        return {'info': msg}
+            
+        output = S2nOutput(
+            0, '', self.SERVICE_TYPE, self.PROVIDER['name'], errors=[msg])
+        return output
 
     # ...............................................
     def parse_name_with_gbif(self, namestr):

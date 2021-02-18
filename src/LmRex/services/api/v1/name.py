@@ -45,7 +45,7 @@ class NameGBIF(_NameSvc):
         all_output = S2nOutput(
             out1.count, namestr, self.SERVICE_TYPE, out1.provider, 
             provider_query=prov_query_list, record_format=out1.record_format,  
-            records=good_names, errors=out1.errors)        
+            records=good_names, errors=out1.errors)
         return all_output
 
     # ...............................................
@@ -75,7 +75,7 @@ class NameGBIF(_NameSvc):
                 namestr=namestr, gbif_accepted=gbif_accepted, gbif_count=gbif_count)
             namestr = usr_params['namestr']
             if not namestr:
-                return self._show_online()
+                output = self._show_online()
             else:
                 output = self.get_gbif_matching_taxon(
                     namestr, usr_params['gbif_status'], usr_params['gbif_count'])
@@ -124,15 +124,13 @@ class NameITISSolr(_NameSvc):
     PROVIDER = ServiceProvider.ITISSolr
     # ...............................................
     def get_itis_accepted_taxon(self, namestr, itis_accepted, kingdom):
-        out = ItisAPI.match_name(
+        output = ItisAPI.match_name(
             namestr, itis_accepted=itis_accepted, kingdom=kingdom)
-        
-        full_out = S2nOutput(
-            out.count, namestr, out, self.PROVIDER[S2nKey.NAME], 
-            provider_query=out.provider_query, record_format=out.record_format,  
-            records=out.provider_query, errors=out.errors)
-
-        return full_out
+#         full_out = S2nOutput(
+#             out.count, namestr, out, self.PROVIDER[S2nKey.NAME], 
+#             provider_query=out.provider_query, record_format=out.record_format,  
+#             records=out.provider_query, errors=out.errors)
+        return output
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -162,7 +160,7 @@ class NameITISSolr(_NameSvc):
                 namestr=namestr, itis_accepted=itis_accepted, gbif_parse=gbif_parse)
             namestr = usr_params['namestr']
             if not namestr:
-                return {'spcoco.message': 'S^n Name resolution is online'}
+                output = self._show_online()
             else:
                 output = self.get_itis_accepted_taxon(
                     namestr, usr_params['itis_accepted'], usr_params['kingdom'])
@@ -231,15 +229,14 @@ class NameTentacles(_NameSvc):
                 gbif_count=gbif_count, itis_accepted=itis_accepted, kingdom=kingdom)
             namestr = usr_params['namestr']
             if not namestr:
-                return self._show_online()
+                output = self._show_online()
             else:
-                return self.get_records(usr_params)
+                output = self.get_records(usr_params)
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[e])
-#             return self.get_failure(
-#                 count=0, record_format='', records=[], provider=self.PROVIDER, 
-#                 errors=['{}'.format(e)], provider_query='', 
-#                 service=self.SERVICE_TYPE)
+            output = self.get_failure(query_term=namestr, errors=[e])
+            
+        return output
+
 # .............................................................................
 if __name__ == '__main__':
 
