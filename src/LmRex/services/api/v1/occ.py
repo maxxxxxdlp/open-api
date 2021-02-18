@@ -265,8 +265,10 @@ if __name__ == '__main__':
 #             print_s2n_output(response_dict)
 
     print('*** Return valid URL')
-    for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS:
-        for cls in [OccMopho, OccGBIF, OccIDB, OccSpecify]:
+#     for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS:
+    for occid in ['2c1becd5-e641-4e83-b3f5-76a55206539a']:
+#         for cls in [OccMopho, OccGBIF, OccIDB, OccSpecify]:
+        for cls in [OccGBIF, OccSpecify]:
             api = cls()
             output = api.GET(occid=occid, count_only=False)
             print_s2n_output(output)

@@ -52,8 +52,9 @@ class SpecifyPortalAPI(APIQuery):
 #             Idigbio.RECORD_FORMAT, occid, APIService.Occurrence, 
 #             count_only=count_only, err=api.error)
         std_output = S2nOutput(
-            total, query_term, service, cls.PROVIDER, provider_query=[cls.url], 
-            record_format=DWC.SCHEMA, records=stdrecs, errors=errmsgs)
+            total, query_term, service, cls.PROVIDER, 
+            provider_query=provider_query, record_format=DWC.SCHEMA, 
+            records=stdrecs, errors=errmsgs)
 
         return std_output
 
