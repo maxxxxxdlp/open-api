@@ -77,11 +77,12 @@ class NameGBIF(_NameSvc):
             if not namestr:
                 return self._show_online()
             else:
-                return self.get_gbif_matching_taxon(
+                output = self.get_gbif_matching_taxon(
                     namestr, usr_params['gbif_status'], usr_params['gbif_count'])
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[e])
+            output = self.get_failure(query_term=namestr, errors=[e])
 
+        return output.response
 # # .............................................................................
 # @cherrypy.expose
 # class NameITIS(_NameSvc):
@@ -163,11 +164,13 @@ class NameITISSolr(_NameSvc):
             if not namestr:
                 return {'spcoco.message': 'S^n Name resolution is online'}
             else:
-                return self.get_itis_accepted_taxon(
+                output = self.get_itis_accepted_taxon(
                     namestr, usr_params['itis_accepted'], usr_params['kingdom'])
         except Exception as e:
-            return self.get_failure(query_term=namestr, errors=[e])
+            output = self.get_failure(query_term=namestr, errors=[e])
 
+        return output.response
+    
 # .............................................................................
 @cherrypy.expose
 class NameTentacles(_NameSvc):
@@ -194,7 +197,7 @@ class NameTentacles(_NameSvc):
             len(allrecs), namestr, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME], 
             records=allrecs)
 
-        return full_out
+        return full_out.response
 
     # ...............................................
     @cherrypy.tools.json_out()

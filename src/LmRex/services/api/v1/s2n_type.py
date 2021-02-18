@@ -103,6 +103,10 @@ class S2nOutput(object):
             S2nKey.ERRORS: errors}
      
     @property
+    def response(self):
+        return self._response
+    
+    @property
     def count(self):
         return self._response[S2nKey.COUNT]
   
