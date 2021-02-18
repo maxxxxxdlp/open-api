@@ -82,7 +82,7 @@ class S2nKey:
 #         return so
 
 # .............................................................................
-class S2nOutput(dict):
+class S2nOutput(object):
     count: int
     query_term: str
     service: str
@@ -95,46 +95,44 @@ class S2nOutput(dict):
     def __init__(
             self, count, query_term, service, provider, provider_query=[], 
             record_format='', records=[], errors=[]):
-        self.count = count
-        self.query_term = query_term 
-        self.service = service
-        self.provider = provider
-        self.provider_query = provider_query
-        self.record_format = record_format 
-        self.records = records 
-        self.errors = errors 
-#     
-#     @property
-#     def count(self):
-#         return self[S2nKey.COUNT]
-# 
-#     @property
-#     def query_term(self):
-#         return self[S2nKey.QUERY_TERM]
-# 
-#     @property
-#     def service(self):
-#         return self[S2nKey.SERVICE]
-# 
-#     @property
-#     def provider(self):
-#         return self[S2nKey.PROVIDER]
-# 
-#     @property
-#     def provider_query(self):
-#         return self[S2nKey.PROVIDER_QUERY]
-# 
-#     @property
-#     def record_format(self):
-#         return self[S2nKey.RECORD_FORMAT]
-# 
-#     @property
-#     def records(self):
-#         return self[S2nKey.RECORDS]
-# 
-#     @property
-#     def errors(self):
-#         return self[S2nKey.ERRORS]
+        self._response = {
+            S2nKey.COUNT: count, S2nKey.QUERY_TERM: query_term, 
+            S2nKey.SERVICE: service, S2nKey.PROVIDER: provider, 
+            S2nKey.PROVIDER_QUERY: provider_query, 
+            S2nKey.RECORD_FORMAT: record_format, S2nKey.RECORDS: records, 
+            S2nKey.ERRORS: errors}
+     
+    @property
+    def count(self):
+        return self._response[S2nKey.COUNT]
+  
+    @property
+    def query_term(self):
+        return self._response[S2nKey.QUERY_TERM]
+  
+    @property
+    def service(self):
+        return self._response[S2nKey.SERVICE]
+  
+    @property
+    def provider(self):
+        return self._response[S2nKey.PROVIDER]
+ 
+    @property
+    def provider_query(self):
+        return self._response[S2nKey.PROVIDER_QUERY]
+  
+    @property
+    def record_format(self):
+        return self._response[S2nKey.RECORD_FORMAT]
+  
+    @property
+    def records(self):
+        return self._response[S2nKey.RECORDS]
+  
+    @property
+    def errors(self):
+        return self._response[S2nKey.ERRORS]
 
 class S2nError(str):
     pass
@@ -142,7 +140,7 @@ class S2nError(str):
 
 def print_s2n_output(out_obj):
     print('*** S^n output ***')
-    for name, attelt in out_obj.items():
+    for name, attelt in out_obj._response.items():
         try:
             if name == 'records':
                 print('{}: {} returned records'.format(name, len(attelt)))
@@ -150,7 +148,7 @@ def print_s2n_output(out_obj):
                 print('{}: {}'.format(name, attelt))
         except:
             pass
-    outelts = set(out_obj.keys())
+    outelts = set(out_obj._response.keys())
     missing = S2nKey.response_keys().difference(outelts)
     extras = outelts.difference(S2nKey.response_keys())
     if missing:

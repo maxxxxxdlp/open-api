@@ -177,6 +177,6 @@ if __name__ == '__main__':
     for count_only in [True, False]:
         out = gocc.GET(
             TST_VALUES.DS_GUIDS_W_SPECIFY_ACCESS_RECS[0], count_only=count_only)
-        print_s2n_output(out, count_only=True)
+        print_s2n_output(out)
             
 
