@@ -20,33 +20,31 @@ class NameGBIF(_NameSvc):
     def get_gbif_matching_taxon(self, namestr, gbif_status, gbif_count):
 #         all_output = {}
         # Get name from Gbif        
-        out1 = GbifAPI.match_name(namestr, status=gbif_status)
-        try:        
-            good_names = out1.records
-        except:
-            good_names = []
-        else:
-            prov_query_list = out1.provider_query
-            # Add occurrence count to name records
-            if gbif_count is True:
-                for namerec in good_names:
-                    try:
-                        taxon_key = namerec['usageKey']
-                    except Exception as e:
-                        print('Exception on {}: {}'.format(namestr, e))
-                        print('name = {}'.format(namerec))
-                    else:
-                        # Add more info to each record
-                        outdict = GbifAPI.count_occurrences_for_taxon(taxon_key)
-                        namerec[S2nKey.OCCURRENCE_COUNT] = outdict[S2nKey.COUNT]
-                        namerec[S2nKey.OCCURRENCE_URL] = outdict[S2nKey.OCCURRENCE_URL]
-                        prov_query_list.extend(outdict[S2nKey.PROVIDER_QUERY])
+        std_output = GbifAPI.match_name(namestr, status=gbif_status)
+        prov_query_list = std_output.provider_query
+        # Add occurrence count to name records
+        if gbif_count is True:
+            for namerec in std_output.records:
+                try:
+                    taxon_key = namerec['usageKey']
+                except Exception as e:
+                    print('Exception on {}: {}'.format(namestr, e))
+                    print('name = {}'.format(namerec))
+                else:
+                    # Add more info to each record
+                    outdict = GbifAPI.count_occurrences_for_taxon(taxon_key)
+                    namerec[S2nKey.OCCURRENCE_COUNT] = outdict[S2nKey.COUNT]
+                    namerec[S2nKey.OCCURRENCE_URL] = outdict[S2nKey.OCCURRENCE_URL]
+                    prov_query_list.extend(outdict[S2nKey.PROVIDER_QUERY])
+
+            # TODO: add setters to response dictionary elements                    
+            std_output._response[S2nKey.PROVIDER_QUERY] = prov_query_list
                         
-        all_output = S2nOutput(
-            out1.count, namestr, self.SERVICE_TYPE, out1.provider, 
-            provider_query=prov_query_list, record_format=out1.record_format,  
-            records=good_names, errors=out1.errors)
-        return all_output
+#         all_output = S2nOutput(
+#             out1.count, namestr, self.SERVICE_TYPE, out1.provider, 
+#             provider_query=prov_query_list, record_format=out1.record_format,  
+#             records=good_names, errors=out1.errors)
+        return std_output
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -83,6 +81,7 @@ class NameGBIF(_NameSvc):
             output = self.get_failure(query_term=namestr, errors=[e])
 
         return output.response
+    
 # # .............................................................................
 # @cherrypy.expose
 # class NameITIS(_NameSvc):
@@ -182,20 +181,20 @@ class NameTentacles(_NameSvc):
         goutput = gacc.get_gbif_matching_taxon(
             usr_params['namestr'], usr_params['gbif_status'], 
             usr_params['gbif_count'])
-        allrecs.append(goutput)
+        allrecs.append(goutput.response)
         
         # ITIS Solr Taxon Record
         itis = NameITISSolr()
         isoutput = itis.get_itis_accepted_taxon(
             usr_params['namestr'], usr_params['itis_accepted'], 
             usr_params['kingdom'])
-        allrecs.append(isoutput)
+        allrecs.append(isoutput.response)
 
         full_out = S2nOutput(
             len(allrecs), namestr, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME], 
             records=allrecs)
 
-        return full_out.response
+        return full_out
 
     # ...............................................
     @cherrypy.tools.json_out()
@@ -235,7 +234,7 @@ class NameTentacles(_NameSvc):
         except Exception as e:
             output = self.get_failure(query_term=namestr, errors=[e])
             
-        return output
+        return output.response
 
 # .............................................................................
 if __name__ == '__main__':
@@ -253,8 +252,8 @@ if __name__ == '__main__':
                 namestr=namestr, gbif_accepted=False, gbif_parse=gparse, 
                 gbif_count=True, itis_accepted=True, kingdom=None)
               
-            for svc in all_output.records:
-                print_s2n_output(svc)
+            for response_dict in all_output['records']:
+                print_s2n_output(response_dict)
 #
 #             api = NameGBIF()
 #             std_output  = api.GET(

@@ -277,10 +277,8 @@ class APIQuery:
         if not provider:
             provider = cls.PROVIDER
         return S2nOutput(
-            count=count, record_format=record_format, 
-            records=records, provider=provider,
-            errors=errors, provider_query=provider_query,
-            query_term=query_term, service=service)
+            count, query_term, service, provider, provider_query=provider_query,
+            record_format=record_format, records=records, errors=errors)
 
     # ...............................................
     def query_by_get(self, output_type='json', verify=True):

@@ -176,7 +176,9 @@ class GbifAPI(APIQuery):
         
     # ...............................................
     @classmethod
-    def _standardize_match_output(cls, output, status, err=None):
+    def _standardize_match_output(
+            cls, output, status, query_term, service, provider_query=[], 
+            err=None):
             # Pull alternatives out of record
         stdrecs = []
         errmsgs = []
@@ -208,9 +210,9 @@ class GbifAPI(APIQuery):
         total = len(stdrecs)
         # TODO: standardize_record and provide schema link
         std_output = S2nOutput(
-            count=total, record_format=GBIF.RECORD_FORMAT_NAME, records=stdrecs, 
-            provider=cls.PROVIDER, errors=errmsgs, 
-            provider_query=None, query_term=None, service=None)
+            total, query_term, service, cls.PROVIDER, 
+            provider_query=provider_query, record_format=GBIF.RECORD_FORMAT_NAME, 
+            records=stdrecs, errors=errmsgs)
         return std_output
         
     # ...............................................
@@ -345,17 +347,18 @@ class GbifAPI(APIQuery):
         try:
             api.query()
         except Exception as e:
-            out = cls.get_failure(errors=[cls._get_error_message(err=e)])
+            std_output = cls.get_failure(errors=[cls._get_error_message(err=e)])
         else:
             # Standardize output from provider response
-            out = cls._standardize_match_output(
-                api.output, status, err=api.error)
+            std_output = cls._standardize_match_output(
+                api.output, status, namestr, APIService.Name, 
+                provider_query=[api.url], err=api.error)
             
-        full_out = S2nOutput(
-            count=out.count, record_format=out.record_format, 
-            records=out.records, provider=cls.PROVIDER, errors=out.errors, 
-            provider_query=[api.url], query_term=namestr, service=APIService.Name)
-        return full_out
+#         full_out = S2nOutput(
+#             out.count, namestr, APIService.Name, cls.PROVIDER, 
+#             provider_query=[api.url], record_format=out.record_format, 
+#             records=out.records, errors=out.errors)
+        return std_output
 
 
     # ...............................................
@@ -365,7 +368,7 @@ class GbifAPI(APIQuery):
                 
         Args:
             taxon_key: A GBIF unique identifier indicating a taxon object.
-                
+               out 
         Returns:
             A record as a dictionary containing the record count of occurrences
             with this accepted taxon, and a URL to retrieve these records.            
