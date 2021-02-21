@@ -195,22 +195,22 @@ class OccTentacles(_OccurrenceSvc):
         # Specify Record from URL in ARK
         spocc = OccSpecify()
         sp_output = spocc.get_records(url, occid, count_only)
-        allrecs.append(sp_output)
+        allrecs.append(sp_output.response)
         
         # GBIF copy/s of Specify Record
         gocc = OccGBIF()
         gbif_output = gocc.get_records(occid, count_only)
-        allrecs.append(gbif_output)
+        allrecs.append(gbif_output.response)
         
         # iDigBio copy/s of Specify Record
         idbocc = OccIDB()
         idb_output = idbocc.get_records(occid, count_only)
-        allrecs.append(idb_output)
+        allrecs.append(idb_output.response)
         
         # MorphoSource records connected to Specify Record
         mopho = OccMopho()
         mopho_output = mopho.get_records(occid, count_only)
-        allrecs.append(mopho_output)
+        allrecs.append(mopho_output.response)
 
         full_out = S2nOutput(
             len(allrecs), occid, self.SERVICE_TYPE, self.PROVIDER[S2nKey.NAME],
@@ -268,23 +268,18 @@ if __name__ == '__main__':
 #     for occid in TST_VALUES.GUIDS_W_SPECIFY_ACCESS:
     for occid in ['2c1becd5-e641-4e83-b3f5-76a55206539a']:
 #         for cls in [OccMopho, OccGBIF, OccIDB, OccSpecify]:
-        for cls in [OccGBIF, OccSpecify]:
-            api = cls()
-            output = api.GET(occid=occid, count_only=False)
-            print_s2n_output(output)
+#         for cls in [OccGBIF, OccSpecify, OccTentacles]:
+#             api = cls()
+#             output = api.GET(occid=occid, count_only=False)
+#             print_s2n_output(output)
 
-#         # Queries all services
-#         s2napi = OccTentacles()
-#         for count_only in [True, False]:
-#             required_keys = S2nKey.required_keys()
-#             if count_only is False:
-#                 required_keys = S2nKey.required_with_recs_keys()
-#   
-#             all_output = s2napi.GET(occid=occid, count_only=count_only)
-#               
-#             for svc in all_output['records']:
-#                 for name, s2nout in svc.items():
-#                     print(name)
-#                     print_s2n_output(s2nout)
-#                 print('')
+        # Queries all services
+        s2napi = OccTentacles()
+        for count_only in [True, False]:
+            all_output = s2napi.GET(occid=occid, count_only=count_only)
+            print_s2n_output(all_output)
+               
+            for one_output in all_output['records']:
+                print_s2n_output(one_output)
+                print('')
 
