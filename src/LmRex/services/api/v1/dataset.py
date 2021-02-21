@@ -124,7 +124,7 @@ class DatasetTentacles(_DatasetSvc):
         # GBIF copy/s of Specify Record
         dg = DatasetGBIF()
         gbif_output = dg.GET(dataset_key=dsid, count_only=count_only)
-        allrecs.append(gbif_output)
+        allrecs.append(gbif_output.response)
 
         full_out = S2nOutput(
             len(allrecs), dsid, APIService.Dataset, self.PROVIDER, 
