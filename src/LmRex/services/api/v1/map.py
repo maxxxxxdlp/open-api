@@ -27,7 +27,7 @@ class MapLM(_MapSvc):
             gan = NameGBIF()
             gout = gan.GET(
                 namestr=namestr, gbif_accepted=True, do_count=False, do_parse=True)
-            good_names = gout.records
+            good_names = gout['records']
             # Lifemapper uses GBIF Backbone Taxonomy accepted names
             # If none, try provided namestr
             scinames = []        
@@ -190,6 +190,7 @@ if __name__ == '__main__':
     # test    
 #     Phlox longifolia Nutt., 2927725
     names = TST_VALUES.NAMES[0:2]
+    names = ['Puntius ticto']
     for namestr in names:
         print('Name = {}'.format(namestr))
         
