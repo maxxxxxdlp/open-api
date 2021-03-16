@@ -1,0 +1,4 @@
+openapi-core==0.13.7
+Flask==1.1.2
+openapi3==1.3.0
+simplejson==3.17.2

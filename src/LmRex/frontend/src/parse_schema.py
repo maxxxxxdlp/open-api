@@ -1,9 +1,9 @@
+import yaml
 from typing import Dict, List, NamedTuple, Union
 from openapi3 import OpenAPI
-import yaml
-from LmRex.config import frontend_config as settings
+from src import config
 
-with open(settings.OPEN_API_LOCATION) as file:
+with open(config.OPEN_API_LOCATION) as file:
     spec = yaml.safe_load(file.read())
 
 api = OpenAPI(spec)

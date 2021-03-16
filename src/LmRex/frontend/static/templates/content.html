@@ -1,9 +1,15 @@
-<div class="centered">
-	<div class="content">
-		<header>
-			<a href="/routes/?tag={% block tag_name %}{% endblock %}">&#5130;</a>
-			{% block header %}{% endblock %}
-		</header>
-		{% block content %}{% endblock %}
-	</div>
-</div>
+{% extends "index.html" %}
+
+{% block root %}
+
+  <div class="centered">
+    <div class="content">
+      <header>
+        <a href="/routes/?tag={% block tag_name %}{% endblock %}">&#5130;</a>
+        {% block header %}{% endblock %}
+      </header>
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+{% endlbock %}

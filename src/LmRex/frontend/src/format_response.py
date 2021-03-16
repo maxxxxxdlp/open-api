@@ -1,11 +1,5 @@
 from typing import Dict, List
-from LmRex.frontend.src import templates
-
-field = templates.load('field.html')
-field__boolean = templates.load('field__boolean.html')
-field__dict = templates.load('field__dict.html')
-field__string = templates.load('field__string.html')
-field__text = templates.load('field__text.html')
+from flask import render_template
 
 
 def format_list(values: List[any]) -> str:
@@ -42,10 +36,12 @@ def format_string(value: str) -> str:
         str:
             formatted string
     """
-    if type(value) is str and ('\n' in value or len(value) > 80):
-        return field__text(value=value)
-    else:
-        return field__string(value=value)
+    return render_template(
+        'field__text.html' \
+        if type(value) is str and ('\n' in value or len(value) > 80) \
+        else 'field__string.html',
+        value=value
+    )
 
 
 def format_value(value: any) -> str:
@@ -59,7 +55,7 @@ def format_value(value: any) -> str:
             formatted value
     """
     if type(value) is bool:
-        return field__boolean(value=value)
+        return render_template('field__boolean.html',value=value)
     if type(value) is list:
         return format_list(values=value)
     if type(value) is dict:
@@ -83,9 +79,14 @@ def format_dict(fields: Dict[str, any], is_list_of_values: bool = False) -> str:
     if not fields:
         return '{}'
     else:
-        return field__dict(
+        return render_template(
+            'field__dict.html',
             fields=[
-                field(label=label, value=format_value(value)) for label, value
+                render_template(
+                    'field.html',
+                    label=label,
+                    value=format_value(value)
+                ) for label, value
                 in fields.items()
             ],
             is_list_of_values=is_list_of_values
