@@ -47,7 +47,7 @@ def prepare_request(request_url: str, log_errors: bool = False):
     error_response = {
       'type':         'invalid_request_url',
       'title':        'Invalid Request URL',
-      'error_status': 'Request URL does not meet the' +
+      'error_status': 'Request URL does not meet the ' +
                       'OpenAPI Schema requirements',
       'url':          request_url,
       'text':         error_message,
