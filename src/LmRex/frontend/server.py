@@ -1,41 +1,30 @@
-import cherrypy
-from LmRex.config import frontend_config as settings
-from LmRex.frontend.src import ui
-from LmRex.frontend.src import templates
-from LmRex.frontend.src import api
-
-main_template = templates.load('index.html')
+from flask import Flask, render_template
+from src.frontend.src import ui
+from src.frontend.src import api
 
 
-class Root(object):
-    @cherrypy.expose
-    def index(self) -> str:
-        return main_template(title='S^N', content=ui.menu())
-
-    @cherrypy.expose
-    def routes(self, tag: str) -> str:
-        return main_template(title=tag, content=ui.tag(tag))
-
-    @cherrypy.expose
-    def endpoint(self, tag: str, route: str) -> str:
-        return main_template(title=tag, content=ui.endpoint(tag, int(route) - 1))
+app = Flask(__name__)
 
 
-class API(object):
-    @cherrypy.expose
-    def fetch_response(self, endpoint: str, url: str) -> str:
-        return api.fetch_response(endpoint, url)
+@app.route('/')
+def index() -> str:
+    return render_template('index.html',title='S^N', content=ui.menu())
 
 
-config = {
-    '/': {
-        'tools.staticdir.on':    True,
-        'tools.staticdir.dir':   settings.FRONTEND_BASE_DIR,
-        'tools.staticdir.index': 'index.html',
-    },
-}
+@app.route('/routes/<str:tag>/')
+def routes(tag: str) -> str:
+    return render_template('index.html',title=tag, content=ui.tag(tag))
 
-cherrypy.tree.mount(Root(), '/', config)
-cherrypy.tree.mount(API(), '/api/', config)
-cherrypy.engine.start()
-cherrypy.engine.block()
+
+@app.route('/endpoint/<str:tag>/<int:route>/')
+def endpoint(tag: str, route: int) -> str:
+    return render_template(
+        'index.html',
+        title=tag,
+        content=ui.endpoint(tag, route - 1)
+    )
+
+@app.route('/api/fetch_response/<str:endpoint>/<str:url>')
+def fetch_response(endpoint: str, url: str) -> str:
+    return api.fetch_response(endpoint, url)
+

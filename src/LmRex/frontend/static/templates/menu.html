@@ -1,11 +1,17 @@
-<div class="centered">
-	<div class="menu">
-		<header>
-			{% block back_arrow %}{% endblock %}
-			{% block header %}S^N{% endblock %}
-		</header>
-		{% block content %}
+{% extends "index.html" %}
 
-		{% endblock %}
-	</div>
-</div>
+{% block root %}
+
+  <div class="centered">
+    <div class="menu">
+      <header>
+        {% block back_arrow %}{% endblock %}
+        {% block header %}S^N{% endblock %}
+      </header>
+      {% block content %}
+
+      {% endblock %}
+    </div>
+  </div>
+
+{% endblock %}

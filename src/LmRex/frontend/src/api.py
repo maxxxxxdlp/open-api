@@ -1,9 +1,7 @@
 import json
-from LmRex.frontend.src.format_response import format_response
-from LmRex.automated_testing.openapi.index import make_request
-from LmRex.frontend.src import templates
-
-error_message = templates.load('error_message.html')
+from flask import render_template
+from src.frontend.src.format_response import format_response
+from src.automated_testing.openapi.index import make_request
 
 
 def fetch_response(endpoint: str, request_url: str) -> str:
@@ -21,7 +19,11 @@ def fetch_response(endpoint: str, request_url: str) -> str:
     response = make_request(request_url)
 
     error = '' if response['type'] == 'success' else \
-        error_message(title=response['title'], message=response['error_status'])
+        render_template(
+            'error_message.html',
+            title=response['title'],
+            message=response['error_status']
+        )
 
     if response['type'] == 'invalid_request_url':
         return error

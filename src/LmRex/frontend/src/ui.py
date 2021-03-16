@@ -1,10 +1,6 @@
-from LmRex.frontend.src import parse_schema
-from LmRex.frontend.src import templates
+from flask import render_template
+from src.frontend.src import parse_schema
 import simplejson as json
-
-tags_menu = templates.load('tags_menu.html')
-routes_menu = templates.load('routes_menu.html')
-endpoint_template = templates.load('endpoint.html')
 
 
 def menu() -> str:
@@ -14,7 +10,7 @@ def menu() -> str:
         str:
             main screen HTML
     """
-    return tags_menu(tags=parse_schema.tags)
+    return render_template('tags_menu.html', tags=parse_schema.tags)
 
 
 def tag(tag_name: str) -> str:
@@ -27,7 +23,8 @@ def tag(tag_name: str) -> str:
         str:
             tags screen HTML
     """
-    return routes_menu(
+    return render_template(
+        'routes_menu.html',
         tag_name=tag_name,
         paths=parse_schema.get_routes_for_tag(tag_name)
     )
@@ -47,7 +44,8 @@ def endpoint(tag_name: str, path_index: int) -> str:
     """
     path_detailed_info = parse_schema.get_data_for_route(tag_name, path_index)
     path_detailed_info_json = json.dumps(path_detailed_info).replace('`', '\`')
-    return endpoint_template(
+    return render_template(
+        'endpoint.html',
         tag_name=tag_name,
         path_detailed_info=path_detailed_info,
         path_detailed_info_json=path_detailed_info_json
