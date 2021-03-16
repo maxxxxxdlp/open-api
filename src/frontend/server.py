@@ -28,4 +28,3 @@ def endpoint(tag: str, route: int) -> str:
 def fetch_response() -> str:
     content = request.json
     return api.fetch_response(content['endpoint'], content['requestUrl'])
-

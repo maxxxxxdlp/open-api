@@ -204,7 +204,7 @@ def test() -> None:
         colored('Fetching response from %s' % request_url, 'blue'))
             )
 
-      response = make_request(request_url, log_client_error=False)
+      response = make_request(request_url, log_client_error=True)
 
       if response['type'] != 'success':
         print(colored(json.dumps(response, indent=4, default=str),
