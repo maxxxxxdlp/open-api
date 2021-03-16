@@ -1,14 +1,8 @@
-import yaml
 from typing import Dict, List, NamedTuple, Union
-from openapi3 import OpenAPI
-from src import config
+from src.common.parse_schema import schema
 
-with open(config.OPEN_API_LOCATION) as file:
-    spec = yaml.safe_load(file.read())
 
-api = OpenAPI(spec)
-
-tags = [[tag.name, tag.description] for tag in api.tags]
+tags = [[tag.name, tag.description] for tag in schema.tags]
 
 
 class RouteInfo(NamedTuple):
@@ -30,7 +24,7 @@ def get_routes_for_tag(tag: str) -> List[RouteInfo]:
     """
     return [
         RouteInfo(path, path_data.get.summary, path_data.get.description)
-        for path, path_data in api.paths.items() if tag in path_data.get.tags
+        for path, path_data in schema.paths.items() if tag in path_data.get.tags
     ]
 
 
@@ -67,7 +61,7 @@ def get_data_for_route(tag: str, route_index: int) -> RouteDetailedInfo:
     route: RouteInfo = get_routes_for_tag(tag)[route_index]
     return RouteDetailedInfo(
         route.path,
-        api.servers[0].url,
+        schema.servers[0].url,
         route.summary,
         route.description,
         [
@@ -86,6 +80,6 @@ def get_data_for_route(tag: str, route_index: int) -> RouteDetailedInfo:
                 else { },
                 parameter.schema.type,
                 parameter.in_,
-            ) for parameter in api.paths[route.path].get.parameters
+            ) for parameter in schema.paths[route.path].get.parameters
         ],
     )

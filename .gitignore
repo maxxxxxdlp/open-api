@@ -1,5 +1,5 @@
 .idea
 .DS_Store
 ./logs
-./config/open_api.yaml
 venv
+__pycache__

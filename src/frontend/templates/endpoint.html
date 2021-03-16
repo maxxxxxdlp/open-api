@@ -4,28 +4,28 @@
 {% block header %}{{ path_detailed_info.path }}{% endblock %}
 {% block content %}
   <div class="container">
-    <div class="tag_description">{{ path_detailed_info.summary }}</div>
-    <div class="tag_description_long">{{ path_detailed_info.description }}</div>
+    <div class="tag-description">{{ path_detailed_info.summary }}</div>
+    <div class="tag-description-long">{{ path_detailed_info.description }}</div>
     <div class="parameters">
       <h2>Parameters: </h2>
       <span></span>
       {% for parameter in path_detailed_info.parameters %}
         <div class="parameter">
-          <div class="parameter_info">
-            <div class="tag_name">
+          <div class="parameter-info">
+            <div class="tag-name">
               {{ parameter.name }}
               {% if parameter.required %}
-                <span class="parameter_required">(required)</span>
+                <span class="parameter-required">(required)</span>
               {% endif %}
             </div>
-            <div class="tag_description_long">{{ parameter.description }}</div>
+            <div class="tag-description-long">{{ parameter.description }}</div>
           </div>
-          <div class="parameter_example">
+          <div class="parameter-example">
             {% if parameter.type == 'string' %}
               {% if parameter.examples %}
                 <label>
                   <span>Select an example value:</span>
-                  <select class="parameter_examples">
+                  <select class="parameter-examples">
                     <option value="0" disabled selected>Example values:</option>
                     {% for example_name, example_value in parameter.examples.items() %}
                       <option
@@ -39,7 +39,7 @@
                 <input type="text">
               </label>
             {% elif parameter.type == 'boolean' %}
-              <label class="checkbox_with_indicator">
+              <label class="checkbox-with-indicator">
                 <input
                   type="checkbox"
                   {%- if parameter.default -%}
@@ -53,17 +53,19 @@
         </div>
       {% endfor %}
     </div>
-    <button type="button" class="execute_button">Try it out!</button>
-    <label class="request_url hidden">
+    <button type="button" class="execute-button">Try it out!</button>
+    <label class="request-url hidden">
       Request URL:
       <input type="text" readonly>
     </label>
     <div id="response" class="hidden">
       <h3>Response:</h3>
-      <div class="response_content"></div>
+      <div class="response-content"></div>
     </div>
   </div>
   <script>
-    const path_detailed_info = JSON.parse(`{{ path_detailed_info_json }}`.replace('\\`', '`'));
+    const pathDetailedInfo = JSON.parse(
+      `{{ path_detailed_info_json|safe }}`.replace('\\`', '`')
+    );
   </script>
 {% endblock %}

@@ -83,22 +83,21 @@ header a {
   background: var(--b1);
 }
 
-.tag_name {
+.tag-name {
   font-size: 2rem;
 }
 
-.tag_description {
+.tag-description {
   color: var(--t3);
 }
 
-.tag_description_long {
+.tag-description-long {
   color: var(--t2);
   padding-top: 0.5rem;
 }
 
 .content {
   width: 80vw;
-  /*max-width: 1000px;*/
   margin: 0 6vw;
   height: 92vh;
   background: var(--b2);
@@ -113,7 +112,7 @@ header a {
 
 .parameters {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(auto, 70%) 1fr;
   grid-auto-rows: auto;
   row-gap: 1rem;
 }
@@ -132,20 +131,20 @@ header a {
   padding-bottom: 1rem;
 }
 
-.parameter_example {
+.parameter-example {
   display: flex;
   flex-direction: column;
   row-gap: 1rem;
   padding-left: 1rem;
 }
 
-.parameter_example select,
-.parameter_example input[type="text"] {
+.parameter-example select,
+.parameter-example input[type="text"] {
   width: 100%;
   padding: 0.3rem;
 }
 
-.execute_button {
+.execute-button {
   margin-top: 2rem;
   border: none;
   padding: 1rem;
@@ -155,25 +154,25 @@ header a {
   cursor: pointer;
 }
 
-.execute_button:hover {
+.execute-button:hover {
   background: var(--b3);
 }
 
-.parameter_required {
+.parameter-required {
   color: var(--red);
 }
 
-.checkbox_with_indicator input:checked ~ span::before {
+.checkbox-with-indicator input:checked ~ span::before {
   content: "True";
   color: var(--green);
 }
 
-.checkbox_with_indicator input:not(:checked) ~ span::before {
+.checkbox-with-indicator input:not(:checked) ~ span::before {
   content: "False";
   color: var(--red);
 }
 
-.request_url {
+.request-url {
   margin-top: 2rem;
   background: var(--b1);
   padding: 1rem;
@@ -181,7 +180,7 @@ header a {
   column-gap: 1rem;
 }
 
-.request_url input {
+.request-url input {
   background: none;
   border: none;
   outline: none;
@@ -238,71 +237,71 @@ header a {
   display: none !important;
 }
 
-.error_iframe {
+.error-iframe {
   height: 500px;
   width: 100%;
 }
 
-.list_of_fields {
+.list-of-fields {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-auto-rows: auto;
   row-gap: 1rem;
 }
 
-.list_of_values > .field:not(:last-child) > * {
+.list-of-values > .field:not(:last-child) > * {
   border-bottom: 1px solid var(--b3);
   padding-bottom: 1rem;
 }
 
-.response_content .field {
+.response-content .field {
   display: contents;
 }
 
-.response_content .label {
+.response-content .label {
   line-height: 2rem;
   padding-right: 1rem;
 }
 
-.response_content .string,
-.response_content .text {
+.response-content .string,
+.response-content .text {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid var(--b3);
   border-radius: 3px;
 }
 
-.response_content .text {
+.response-content .text {
   resize: vertical;
 }
 
-.response_content .value {
+.response-content .value {
   display: flex;
   align-items: center;
 }
 
-.response_content .value > * {
+.response-content .value > * {
   flex: 1;
 }
 
-.dictionary_label {
+.dictionary-label {
   cursor: pointer;
 }
 
-.dictionary_label::after {
+.dictionary-label::after {
   content: "\25BC";
   padding-left: 0.5rem;
 }
 
-.collapsed > .dictionary_label::after {
+.collapsed > .dictionary-label::after {
   content: "\25BA";
 }
 
-.dictionary_label:hover::after {
+.dictionary-label:hover::after {
   color: var(--t1);
 }
 
-.error_message {
+.error-message {
   background: var(--red);
   padding: 1rem;
   margin-bottom: 1rem;
