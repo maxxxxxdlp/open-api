@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, request
 from src.frontend.src import ui
 from src.frontend.src import api
 
@@ -8,23 +8,24 @@ app = Flask(__name__)
 
 @app.route('/')
 def index() -> str:
-    return render_template('index.html',title='S^N', content=ui.menu())
+    return ui.menu()
 
 
-@app.route('/routes/<str:tag>/')
+@app.route('/routes/<string:tag>/')
 def routes(tag: str) -> str:
-    return render_template('index.html',title=tag, content=ui.tag(tag))
+    return ui.tag(tag)
 
 
-@app.route('/endpoint/<str:tag>/<int:route>/')
+@app.route('/endpoint/<string:tag>/<int:route>/')
 def endpoint(tag: str, route: int) -> str:
-    return render_template(
-        'index.html',
-        title=tag,
-        content=ui.endpoint(tag, route - 1)
-    )
+    return ui.endpoint(tag, route - 1)
 
-@app.route('/api/fetch_response/<str:endpoint>/<str:url>')
-def fetch_response(endpoint: str, url: str) -> str:
-    return api.fetch_response(endpoint, url)
+
+@app.route(
+    '/api/fetch_response/',
+    methods=['POST']
+)
+def fetch_response() -> str:
+    content = request.json
+    return api.fetch_response(content['endpoint'], content['requestUrl'])
 

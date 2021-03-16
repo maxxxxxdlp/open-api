@@ -1,5 +1,5 @@
-<div class="list_of_fields {% if is_list_of_values %}list_of_values{% endif %}">
+<div class="list-of-fields {% if is_list_of_values %}list-of-values{% endif %}">
   {%- for field in fields -%}
-    {{- field -}}
+    {{- field|safe -}}
   {%- endfor -%}
 </div>

@@ -1,7 +1,6 @@
-import json
 from flask import render_template
 from src.frontend.src.format_response import format_response
-from src.automated_testing.openapi.index import make_request
+from src.validate.index import make_request
 
 
 def fetch_response(endpoint: str, request_url: str) -> str:

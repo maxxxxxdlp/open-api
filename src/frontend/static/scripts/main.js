@@ -1,44 +1,44 @@
-const get_parameter_value = (parameter_element, parameter_type) =>
-  parameter_type === 'string' ?
-    parameter_element.getElementsByTagName('input')[0].value :
+const getParameterValue = (parameterElement, parameterType) =>
+  parameterType === 'string' ?
+    parameterElement.getElementsByTagName('input')[0].value :
     (
-      parameter_element.getElementsByTagName('input')[0].checked
+      parameterElement.getElementsByTagName('input')[0].checked
     ).toString();
 
-const fetch_parameters_data = (parameters) =>
-  path_detailed_info.parameters.forEach((parameter, index) => (
-    path_detailed_info.parameters[index].value =
-      get_parameter_value(parameters[index], parameter.type)
+const fetchParametersData = (parameters) =>
+  pathDetailedInfo.parameters.forEach((parameter, index) => (
+    pathDetailedInfo.parameters[index].value =
+      getParameterValue(parameters[index], parameter.type)
   ));
 
-const create_request_url = () =>
-  path_detailed_info.parameters.reduce((request_url, parameter_data) =>
-      parameter_data.location === 'path' ?
-        request_url.replace(
-          `{${parameter_data.name}}`,
-          encodeURIComponent(parameter_data.value),
+const createRequestUrl = () =>
+  pathDetailedInfo.parameters.reduce((requestUrl, parameterData) =>
+      parameterData.location === 'path' ?
+        requestUrl.replace(
+          `{${parameterData.name}}`,
+          encodeURIComponent(parameterData.value),
         ) :
-        `${request_url}${parameter_data.name}=${encodeURIComponent(
-          parameter_data.value,
+        `${requestUrl}${parameterData.name}=${encodeURIComponent(
+          parameterData.value,
         )}&`,
-    `${path_detailed_info.server}${path_detailed_info.path}?`);
+    `${pathDetailedInfo.server}${pathDetailedInfo.path}?`);
 
-const expose_request_url = (request_url_element, request_url) =>
-  request_url_element.classList.remove('hidden') ||
+const exposeRequestUrl = (requestUrlElement, requestUrl) =>
+  requestUrlElement.classList.remove('hidden') ||
   (
-    request_url_element.getElementsByTagName('input')[0].value = request_url
+    requestUrlElement.getElementsByTagName('input')[0].value = requestUrl
   );
 
-const show_loading_animation = (response_container) =>
-  response_container.classList.remove('hidden') ||
-  response_container.classList.add('loading');
+const showLoadingAnimation = (responseContainer) =>
+  responseContainer.classList.remove('hidden') ||
+  responseContainer.classList.add('loading');
 
-const show_response = (response_container, response) =>
-  response_container.classList.remove('loading') ||
-  response.text().then(response_html => (
-    response_container.getElementsByClassName(
-      'response_content',
-    )[0].innerHTML = response_html
+const showResponse = (responseContainer, response) =>
+  responseContainer.classList.remove('loading') ||
+  response.text().then(responseHtml => (
+    responseContainer.getElementsByClassName(
+      'response-content',
+    )[0].innerHTML = responseHtml
   ));
 
 (
@@ -47,37 +47,45 @@ const show_response = (response_container, response) =>
     const parameters = Object.values(
       document.getElementsByClassName('parameter'),
     );
-    const request_url_element =
-      document.getElementsByClassName('request_url')[0];
-    const response_container = document.getElementById('response');
+    const requestUrlElement =
+      document.getElementsByClassName('request-url')[0];
+    const responseContainer = document.getElementById('response');
 
     document.body.addEventListener('change', (event) => {
 
-      const parameter_examples = event.target.closest('.parameter_examples');
-      if (parameter_examples !== null && parameter_examples.value !== '0')
-        parameter_examples.parentElement.nextElementSibling.
+      const parameterExamples = event.target.closest('.parameter-examples');
+      if (parameterExamples !== null && parameterExamples.value !== '0')
+        parameterExamples.parentElement.nextElementSibling.
           getElementsByTagName('input')[0].value =
-          parameter_examples.value;
+          parameterExamples.value;
 
     });
 
     document.body.addEventListener('click', (event) => {
 
-      if (event.target.closest('.execute_button')) {
-        fetch_parameters_data(parameters);
-        const request_url = create_request_url();
-        expose_request_url(request_url_element, request_url);
-        show_loading_animation(response_container);
+      if (event.target.closest('.execute-button')) {
+        fetchParametersData(parameters);
+        const requestUrl = createRequestUrl();
+        exposeRequestUrl(requestUrlElement, requestUrl);
+        showLoadingAnimation(responseContainer);
         fetch(
-          `/api/fetch_response/?endpoint=${
-            encodeURIComponent(path_detailed_info.path)
-          }&url=${encodeURIComponent(request_url)}`,
-        ).then(show_response.bind(null, response_container));
+          '/api/fetch_response/',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              endpoint: pathDetailedInfo.path,
+              requestUrl
+            })
+          }
+        ).then(showResponse.bind(null, responseContainer));
       }
 
-      const dictionary_label = event.target.closest('.dictionary_label');
-      if (dictionary_label !== null)
-        dictionary_label.parentElement.classList.toggle('collapsed');
+      const dictionaryLabel = event.target.closest('.dictionary-label');
+      if (dictionaryLabel !== null)
+        dictionaryLabel.parentElement.classList.toggle('collapsed');
       else {
         const collapsed = event.target.closest('.collapsed');
         if (collapsed !== null)

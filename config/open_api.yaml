@@ -1,9 +1,8 @@
-
 openapi: 3.0.0
 info:
   title: S^N services
-  description: '**description_needed_here**'
-  version: 0.0.1 pre-release buggy alpha beta 
+  description: API services for returning biological metadata from available data providers
+  version: 0.0.1 pre-release buggy alpha beta
   termsOfService: 'https://lifemapper.ku.edu/?page_id=1096'
   contact:
     name: S^N
@@ -34,8 +33,8 @@ paths:
     get:
       tags:
         - name
-      summary: 'Tentacles : Get species determination information'
-      description: '**description_needed_here**'
+      summary: 'Tentacles : Get taxonomy information Get specimen occurrence tific name'
+      description: Get taxonomy information for a scientific name from available providers
       operationId: nameTentacles
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -53,8 +52,10 @@ paths:
     get:
       tags:
         - name
-      summary: 'GBIF : Get species determination information'
-      description: '**description_needed_here**'
+      summary: 'GBIF : Get taxonomy information for a scientific name'
+      description: >-
+        Get taxonomy information for a scientific name from the Global
+        Biodiversity Information Facility (GBIF) Backbone Taxonomy
       operationId: nameGBIF
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -81,7 +82,9 @@ paths:
       tags:
         - name
       summary: 'ITIS : Get species determination information'
-      description: '**description_needed_here**'
+      description: >-
+        Get taxonomy information for a scientific name from the Integrated
+        Taxonomic Information System (ITIS)
       operationId: nameITIS
       parameters:
         - $ref: '#/components/parameters/namestr'
@@ -101,8 +104,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'Tentacles : Get occurence information'
-      description: '**description_needed_here**'
+      summary: 'Tentacles : Get specimen occurrence information'
+      description: Get specimen occurrence information from available services
       operationId: occTentacles
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -125,8 +128,10 @@ paths:
     get:
       tags:
         - occ
-      summary: 'ITIS : Get occurence information'
-      description: '**description_needed_here**'
+      summary: 'ITIS : Get specimen occurrence information'
+      description: >-
+        Get specimen occurrence information from the Global Biodiversity
+        Information Facility (GBIF)
       operationId: occGBIF
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -149,8 +154,10 @@ paths:
     get:
       tags:
         - occ
-      summary: 'iDigBio : Get occurence information'
-      description: '**description_needed_here**'
+      summary: 'iDigBio : Get specimen occurrence information'
+      description: >-
+        Get specimen occurrence information from the Integrated Digitized
+        Biocollections (iDigBio)
       operationId: occIdb
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -173,8 +180,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'MorphoSource : Get occurence information'
-      description: '**description_needed_here**'
+      summary: 'MorphoSource : Get specimen occurrence information'
+      description: Get information related to specimen occurrences from MorphoSource
       operationId: occMopho
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -197,8 +204,8 @@ paths:
     get:
       tags:
         - occ
-      summary: 'Specify : Get dataset occurences information'
-      description: '**description_needed_here**'
+      summary: 'Specify : Get specimen occurrence information'
+      description: Get specimen occurrence information from Specify
       operationId: occSpecify
       parameters:
         - $ref: '#/components/parameters/occurrenceid'
@@ -217,8 +224,8 @@ paths:
     get:
       tags:
         - dataset
-      summary: 'ITIS : Get a list of occurences in a dataset'
-      description: '**description_needed_here**'
+      summary: 'GBIF : Get a list of occurrences for a dataset'
+      description: Get a list of occurrences in GBIF for a dataset
       operationId: datasetGBIF
       parameters:
         - $ref: '#/components/parameters/datasetguid'
@@ -288,7 +295,9 @@ components:
     gbif_parse:
       name: gbif_parse
       in: query
-      description: 'whether to parse the scientific name (removing author and date information)'
+      description: >-
+        whether to parse the scientific name (removing author and date
+        information)
       required: false
       schema:
         type: boolean
@@ -297,8 +306,9 @@ components:
       name: gbif_count
       in: query
       description: >-
-        Whether to include `occurrence_count` and `occurrence_url` in the
-        response
+        Whether to include in the response `occurrence_count` for a count of
+        specimen occurrences in GBIF and and `occurrence_url` for a query to
+        retrieve those specimen occurrences
       required: false
       schema:
         type: boolean
@@ -366,9 +376,11 @@ components:
         type: boolean
         default: true
   schemas:
-    count: 
+    count:
       type: integer
-      description: Number of records that matched the query. Usually 0 or 1
+      description: >-
+        Number of records that matched the query. For specimen occurrence IDs,
+        there are usually 0 or 1 matches
       minimum: 0
       example: 1
     guid:
@@ -393,7 +405,6 @@ components:
           type: array
           items:
             type: string
-            format: uri
         errors:
           type: array
           items: {}
@@ -519,7 +530,6 @@ components:
               example: 926
             occurrences_url:
               type: string
-              format: uri
               example: 'https://www.gbif.org/species/1004151'
         - $ref: '#/components/schemas/names_gbif_record'
     names_itis:
@@ -804,11 +814,9 @@ components:
           example: 2021-01-13T13:39:04.411Z
         references:
           type: string
-          format: uri
           example: 'http://portal.vertnet.org/o/ku/birds?id=127237'
         license:
           type: string
-          format: uri
           example: 'http://creativecommons.org/licenses/by/4.0/legalcode'
         identifiers:
           type: array
@@ -878,7 +886,6 @@ components:
           example: ICZN
         institutionID:
           type: string
-          format: uri
           example: 'http://grbio.org/cool/iakn-125z'
         higherGeography:
           type: string
@@ -936,12 +943,10 @@ components:
           example: KU
         accessRights:
           type: string
-          format: uri
           example: >-
             http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
         collectionID:
           type: string
-          format: uri
           example: 'http://grbio.org/cool/v9yz-imvc'
         higherClassification:
           type: string
@@ -1000,11 +1005,12 @@ components:
               example: Passeriformes
             'dcterms:references':
               type: string
-              format: uri
               example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
             'dcterms:accessRights':
               type: string
-              format: uri
+              example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
+            'dcterms:accessRights':
+              type: string
               example: >-
                 http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
             'dwc:occurrenceID':
@@ -1026,7 +1032,6 @@ components:
               example: 1972-06-11T00:00:00.000Z
             'dwc:collectionID':
               type: string
-              format: uri
               example: 'http://grbio.org/cool/v9yz-imvc'
             'dwc:country':
               type: string
@@ -1062,7 +1067,6 @@ components:
                 Perisoreus
             'dcterms:license':
               type: string
-              format: uri
               example: 'http://creativecommons.org/licenses/by/4.0/'
             'dwc:phylum':
               type: string
@@ -1072,7 +1076,6 @@ components:
               example: 'Ward, 2.5 mi. W'
             'dwc:institutionID':
               type: string
-              format: uri
               example: 'http://grbio.org/cool/iakn-125z'
             'dwc:institutionCode':
               type: string
@@ -1231,7 +1234,6 @@ components:
                 perisoreus
             collectionid:
               type: string
-              format: uri
               example: 'http://grbio.org/cool/v9yz-imvc'
             taxonid:
               type: string
@@ -1274,14 +1276,12 @@ components:
                   example: Passeriformes
                 'dcterms:references':
                   type: string
-                  format: uri
                   example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
                 flag_gbif_reference_added:
                   type: boolean
                   example: true
                 'dcterms:accessRights':
                   type: string
-                  format: uri
                   example: >-
                     http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
                 'idigbio:recordIds':
@@ -1500,7 +1500,6 @@ components:
                   example: 1972-06-11T00:00:00.000Z
                 'dwc:collectionID':
                   type: string
-                  format: uri
                   example: 'http://grbio.org/cool/v9yz-imvc'
                 'dwc:country':
                   type: string
@@ -1516,7 +1515,6 @@ components:
                             example: gnu free documentation license
                           'dcterms:references':
                             type: string
-                            format: uri
                             example: >-
                               http://commons.wikimedia.org/wiki/file:perisoreus_canadensis_mercier2.jpg
                           coreid:
@@ -1524,7 +1522,6 @@ components:
                             example: 2482436
                           'dcterms:identifier':
                             type: string
-                            format: uri
                             example: >-
                               http://upload.wikimedia.org/wikipedia/commons/b/bf/perisoreus_canadensis_mercier2.jpg
                           'dcterms:source':
@@ -1668,7 +1665,6 @@ components:
                   example: usa
                 'dcterms:license':
                   type: string
-                  format: uri
                   example: 'http://creativecommons.org/licenses/by/4.0/'
                 'idigbio:siblings':
                   type: object
@@ -1692,7 +1688,6 @@ components:
                   example: 'Ward, 2.5 mi. W'
                 'dwc:institutionID':
                   type: string
-                  format: uri
                   example: 'http://grbio.org/cool/iakn-125z'
                 flag_gbif_vernacularname_added:
                   type: boolean
@@ -1791,7 +1786,6 @@ components:
               $ref: '#/components/schemas/guid'
             institutionid:
               type: string
-              format: uri
               example: 'http://grbio.org/cool/iakn-125z'
             country:
               type: string
@@ -1954,7 +1948,6 @@ components:
           example: 'Yes'
         specimen.url:
           type: string
-          format: uri
           example: 'http://portal.vertnet.org/o/ku/birds?id=66968'
         specimen.uuid:
           $ref: '#/components/schemas/guid'
@@ -2058,11 +2051,6 @@ components:
         core:
           type: array
           items: {}
-            # oneOf:
-            #   - type: string
-            #     format: uri
-            #     example: http://rs.tdwg.org/dwc/terms/occurrenceID
-            #   - $ref: '#/components/schemas/guid'
         extensions:
           type: array
           items:
@@ -2070,18 +2058,12 @@ components:
             properties:
               class:
                 type: string
-                format: uri
-                example: http://data.ggbn.org/schemas/ggbn/terms/Amplification
+                example: 'http://data.ggbn.org/schemas/ggbn/terms/Amplification'
               records:
                 type: array
                 items:
                   type: array
                   items: {}
-                    # oneOf:
-                    #   - type: string
-                    #     format: uri
-                    #     example: http://rs.tdwg.org/dwc/terms/occurrenceID
-                    #   - $ref: '#/components/schemas/guid'
     occ_ark:
       type: object
       properties:
@@ -2116,12 +2098,18 @@ components:
           example: 6-20
         where:
           type: string
-          format: uri
           example: http://spcoco.org/ark:/2c1becd5-e641-4e83-b3f5-76a55206539a
         url:
           type: string
           format: uri
           example: http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a
+=======
+          example: 'http://spcoco.org/ark:/2c1becd5-e641-4e83-b3f5-76a55206539a'
+        url:
+          type: string
+          example: >-
+            http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a
+>>>>>>> d287810 (Resolve paths, fix bugs and refactor code)
         _version_:
           type: integer
           minimum: 0
@@ -3062,13 +3050,16 @@ components:
               - - 'http://purl.org/dc/terms/license'
                 - 'https://creativecommons.org/licenses/by/4.0/legalcode'
               - - 'http://purl.org/dc/terms/accessRights'
-                - 'http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms'
+                - >-
+                  http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
               - - 'http://rs.tdwg.org/dwc/terms/collectionCode'
                 - KUIT
               - - 'http://rs.tdwg.org/dwc/terms/basisOfRecord'
                 - MaterialSample
               - - 'http://rs.tdwg.org/dwc/terms/datasetName'
-                - University of Kansas Biodiversity Institute Fish Tissue Collection
+                - >-
+                  University of Kansas Biodiversity Institute Fish Tissue
+                  Collection
               - - 'http://rs.tdwg.org/dwc/terms/catalogNumber'
                 - '15'
               - - 'http://purl.org/dc/terms/modified'
@@ -3168,7 +3159,8 @@ components:
                 records:
                   - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
                       - 2c1becd5-e641-4e83-b3f5-76a55206539a
-                    - - 'http://data.ggbn.org/schemas/ggbn/terms/materialSampleType'
+                    - - >-
+                        http://data.ggbn.org/schemas/ggbn/terms/materialSampleType
                       - Tissue
               - class: 'http://data.ggbn.org/schemas/ggbn/terms/Preparation'
                 records:
@@ -3183,7 +3175,8 @@ components:
                     - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
                       - 2c1becd5-e641-4e83-b3f5-76a55206539a
                     - - 'http://rs.tdwg.org/dwc/terms/relatedResourceID'
-                      - 'institutionCode=KU&collectionCode=KUI&catalogNumber=22956&accesspoint=http://ipt.nhm.ku.edu:8080/ipt/archive.do?r=kubi_ichthyology&guid=dc72bcd1-1ed3-11e3-bfac-90b11c41863e'
+                      - >-
+                        institutionCode=KU&collectionCode=KUI&catalogNumber=22956&accesspoint=http://ipt.nhm.ku.edu:8080/ipt/archive.do?r=kubi_ichthyology&guid=dc72bcd1-1ed3-11e3-bfac-90b11c41863e
               - class: 'http://rs.tdwg.org/ac/terms/Multimedia'
                 records:
                   - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
@@ -3203,11 +3196,13 @@ components:
                     - - 'http://rs.tdwg.org/ac/terms/subjectOrientation'
                       - null
                     - - 'http://rs.tdwg.org/ac/terms/accessURI'
-                      - 'http://biimages.biodiversity.ku.edu/static/Ichthyology/originals/sp68854446198103814691.att.pdf'
+                      - >-
+                        http://biimages.biodiversity.ku.edu/static/Ichthyology/originals/sp68854446198103814691.att.pdf
                     - - 'http://purl.org/dc/terms/license'
                       - 'https://creativecommons.org/licenses/by/4.0/legalcode'
                     - - 'http://purl.org/dc/terms/accessRights'
-                      - 'http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms'
+                      - >-
+                        http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
                     - - 'http://ns.adobe.com/xap/1.0/rights/Owner'
                       - University of Kansas Biodiversity Institute
                     - - 'http://ns.adobe.com/photoshop/1.0/Credit'
@@ -3221,11 +3216,14 @@ components:
           docs:
             - id: 2c1becd5-e641-4e83-b3f5-76a55206539a
               dataset_guid: 56caf05f-1364-4f24-85f6-0c82520c2792
-              who: University of Kansas Biodiversity Institute Fish Tissue Collection
+              who: >-
+                University of Kansas Biodiversity Institute Fish Tissue
+                Collection
               what: MaterialSample
               when: 6-20
               where: 'http://spcoco.org/ark:/2c1becd5-e641-4e83-b3f5-76a55206539a'
-              url: 'http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a'
+              url: >-
+                http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a
               _version_: 1684258724397449200
           count: 1
         Specify Record:
@@ -3242,11 +3240,14 @@ components:
           docs:
             - id: 2c1becd5-e641-4e83-b3f5-76a55206539a
               dataset_guid: 56caf05f-1364-4f24-85f6-0c82520c2792
-              who: University of Kansas Biodiversity Institute Fish Tissue Collection
+              who: >-
+                University of Kansas Biodiversity Institute Fish Tissue
+                Collection
               what: MaterialSample
               when: 6-20
               where: 'http://spcoco.org/ark:/2c1becd5-e641-4e83-b3f5-76a55206539a'
-              url: 'http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a'
+              url: >-
+                http://preview.specifycloud.org/export/record/56caf05f-1364-4f24-85f6-0c82520c2792/2c1becd5-e641-4e83-b3f5-76a55206539a
               _version_: 1684258724397449200
           count: 1
         Specify Record:
@@ -3261,13 +3262,16 @@ components:
               - - 'http://purl.org/dc/terms/license'
                 - 'https://creativecommons.org/licenses/by/4.0/legalcode'
               - - 'http://purl.org/dc/terms/accessRights'
-                - 'http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms'
+                - >-
+                  http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
               - - 'http://rs.tdwg.org/dwc/terms/collectionCode'
                 - KUIT
               - - 'http://rs.tdwg.org/dwc/terms/basisOfRecord'
                 - MaterialSample
               - - 'http://rs.tdwg.org/dwc/terms/datasetName'
-                - University of Kansas Biodiversity Institute Fish Tissue Collection
+                - >-
+                  University of Kansas Biodiversity Institute Fish Tissue
+                  Collection
               - - 'http://rs.tdwg.org/dwc/terms/catalogNumber'
                 - '15'
               - - 'http://purl.org/dc/terms/modified'
@@ -3382,7 +3386,8 @@ components:
                   - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
                     - 2c1becd5-e641-4e83-b3f5-76a55206539a
                   - - 'http://rs.tdwg.org/dwc/terms/relatedResourceID'
-                    - 'institutionCode=KU&collectionCode=KUI&catalogNumber=22956&accesspoint=http://ipt.nhm.ku.edu:8080/ipt/archive.do?r=kubi_ichthyology&guid=dc72bcd1-1ed3-11e3-bfac-90b11c41863e'
+                    - >-
+                      institutionCode=KU&collectionCode=KUI&catalogNumber=22956&accesspoint=http://ipt.nhm.ku.edu:8080/ipt/archive.do?r=kubi_ichthyology&guid=dc72bcd1-1ed3-11e3-bfac-90b11c41863e
             - class: 'http://rs.tdwg.org/ac/terms/Multimedia'
               records:
                 - - - 'http://rs.tdwg.org/dwc/terms/occurrenceID'
@@ -3402,11 +3407,13 @@ components:
                   - - 'http://rs.tdwg.org/ac/terms/subjectOrientation'
                     - null
                   - - 'http://rs.tdwg.org/ac/terms/accessURI'
-                    - 'http://biimages.biodiversity.ku.edu/static/Ichthyology/originals/sp68854446198103814691.att.pdf'
+                    - >-
+                      http://biimages.biodiversity.ku.edu/static/Ichthyology/originals/sp68854446198103814691.att.pdf
                   - - 'http://purl.org/dc/terms/license'
                     - 'https://creativecommons.org/licenses/by/4.0/legalcode'
                   - - 'http://purl.org/dc/terms/accessRights'
-                    - 'http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms'
+                    - >-
+                      http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
                   - - 'http://ns.adobe.com/xap/1.0/rights/Owner'
                     - University of Kansas Biodiversity Institute
                   - - 'http://ns.adobe.com/photoshop/1.0/Credit'
@@ -3506,7 +3513,9 @@ components:
                 "weight":"33.1 g" }
               georeferenceVerificationStatus: requires verification
               locality: 'Taveuni, Mount Manuka'
-              datasetName: University of Kansas Biodiversity Institute Ornithology Collection
+              datasetName: >-
+                University of Kansas Biodiversity Institute Ornithology
+                Collection
               fieldNumber: MJA 701
               gbifID: '1309911159'
               language: en
@@ -3863,13 +3872,13 @@ components:
                     - coreid: '2482436'
                       'dcterms:source': catalogue of life
                       'dcterms:bibliographiccitation': >-
-                        gill, frank, and minturn wright (2006) birds of the world:
-                        recommended english names
+                        gill, frank, and minturn wright (2006) birds of the
+                        world: recommended english names
                     - coreid: '2482436'
                       'dcterms:source': catalogue of life
                       'dcterms:bibliographiccitation': >-
-                        gill, frank, and minturn wright (2006) birds of the world:
-                        recommended english names
+                        gill, frank, and minturn wright (2006) birds of the
+                        world: recommended english names
                   'dwc:basisOfRecord': PreservedSpecimen
                   'dwc:taxonomicstatus': accepted
                   'dwc:genus': Perisoreus
@@ -4008,12 +4017,14 @@ components:
       value:
         count: 123915
         provider: GBIF
-        query: http://api.gbif.org/v1/occurrence/search?occurrenceID=2c1becd5-e641-4e83-b3f5-76a55206539a
+        query: >-
+          http://api.gbif.org/v1/occurrence/search?occurrenceID=2c1becd5-e641-4e83-b3f5-76a55206539a
     dataset_gbif:
       value:
         count: 123915
         provider: GBIF
-        query: http://api.gbif.org/v1/occurrence/search?occurrenceID=2c1becd5-e641-4e83-b3f5-76a55206539a
+        query: >-
+          http://api.gbif.org/v1/occurrence/search?occurrenceID=2c1becd5-e641-4e83-b3f5-76a55206539a
         records:
           - key: 1309911159
             datasetKey: e635240a-3cb1-4d26-ab87-57d8c7afdfdb
@@ -4394,4 +4405,3 @@ components:
               http://biodiversity.ku.edu/research/university-kansas-biodiversity-institute-data-publication-and-use-norms
             higherClassification: Animalia | Chordata | Aves | Passeriformes | Cisticolidae | Prinia
             collectionID: 'http://grbio.org/cool/v9yz-imvc'
-

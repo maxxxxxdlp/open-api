@@ -2,9 +2,9 @@
 
 {% block content %}
   {% for tag_name, tag_description in tags %}
-    <a class="tag" href="/routes/?tag={{ tag_name }}">
-      <div class="tag_name">{{ tag_name }}</div>
-      <div class="tag_description">{{ tag_description }}</div>
+    <a class="tag" href="/routes/{{ tag_name }}">
+      <div class="tag-name">{{ tag_name }}</div>
+      <div class="tag-description">{{ tag_description }}</div>
     </a>
   {% endfor %}
 {% endblock %}
