@@ -1,7 +1,7 @@
 import simplejson as json
 from flask import render_template
 
-from src.frontend.src import read_schema
+from open_api_tools.frontend.src import read_schema
 
 
 def menu() -> str:
