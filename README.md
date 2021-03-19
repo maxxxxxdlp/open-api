@@ -20,8 +20,10 @@ Install the dependencies
 ./venv/bin/pip install -r requirements.txt
 ```
 
-# Config
-Put your OpenAPI schema into `config/open_api.yaml`
+Install this package locally
+```bash
+pip install -e .
+```
 
 # Testing API
 
@@ -44,9 +46,21 @@ whether the response object is as expected
 ## Run the test
 
 Run the test
-```bash
-./venv/bin/python -m src.test.full_test
+```python
+import open_api_tools.test.full_test as full_test
+
+def error_callback(*error_message):
+  print(error_message)
+
+full_test.test(
+  open_api_schema_location='open_api.yaml',
+  error_callback=error_callback,
+  max_urls_per_endpoint=50,
+  failed_request_limit=10,
+  parameter_constraints={}
+)
 ```
+
 This script would automatically generate test URLs based on
 your API schema.
 
@@ -56,7 +70,7 @@ specified in the `servers` part of the API schema.
 # Generating API documentation
 Run the flask web server
 ```bash
-FLASK_APP=src.frontend.server ./venv/bin/python -m flask run
+FLASK_APP=src.frontend.server SCHEMA_LOCATION=open_api.yaml ./venv/bin/python -m flask run
 ```
 
 The web server is now available at http://127.0.0.1:5000/

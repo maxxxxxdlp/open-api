@@ -3,3 +3,4 @@
 logs
 venv
 __pycache__
+specify_open_api.egg-info
