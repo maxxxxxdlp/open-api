@@ -1,10 +1,10 @@
 # TODO: compare results between explicit and implicit default params
-from typing import Callable, List, Dict
+from typing import Callable, Dict, List
 
 
 def get_gbif_records(
-        path: str,
-        response: Dict[str, any]
+    path: str,
+    response: Dict[str, any]
 ) -> List[Dict[str, any]]:
     """
     Get GBIF response from the response object
@@ -22,9 +22,9 @@ def get_gbif_records(
 
 
 def gbif_count(
-        parameter_value: bool,
-        path: str,
-        response: Dict[str, any]
+    parameter_value: bool,
+    path: str,
+    response: Dict[str, any]
 ) -> bool:
     """
     Check that `gbif_count` parameter affected the response object in an
@@ -45,20 +45,20 @@ def gbif_count(
                 'occurrence_url' in record
             )
         ) or \
-        (
-            parameter_value and (
-                'occurrence_count' not in record or
-                'occurrence_url' not in record
-            )
+            (
+                parameter_value and (
+                    'occurrence_count' not in record or
+                    'occurrence_url' not in record
+                )
         ):
             return False
     return True
 
 
 def gbif_accepted(
-        parameter_value: bool,
-        path: str,
-        response: Dict[str, any]
+    parameter_value: bool,
+    path: str,
+    response: Dict[str, any]
 ) -> bool:
     """
     Check that `gbif_accepted` parameter affected the response object in an
@@ -80,9 +80,9 @@ def gbif_accepted(
 
 # TODO: finish this one once `occ` endpoints are fixed
 def count_only(
-        parameter_value: bool,
-        path: str,
-        response: Dict[str, any]
+    parameter_value: bool,
+    path: str,
+    response: Dict[str, any]
 ) -> bool:
     """
     Check that `count_only` parameter affected the response object in an

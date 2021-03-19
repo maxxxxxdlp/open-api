@@ -1,4 +1,5 @@
 from typing import Dict, List
+
 from flask import render_template
 
 
@@ -37,8 +38,8 @@ def format_string(value: str) -> str:
             formatted string
     """
     return render_template(
-        'field__text.html' \
-        if type(value) is str and ('\n' in value or len(value) > 80) \
+        'field__text.html'
+        if type(value) is str and ('\n' in value or len(value) > 80)
         else 'field__string.html',
         value=value
     )
@@ -55,7 +56,7 @@ def format_value(value: any) -> str:
             formatted value
     """
     if type(value) is bool:
-        return render_template('field__boolean.html',value=value)
+        return render_template('field__boolean.html', value=value)
     if type(value) is list:
         return format_list(values=value)
     if type(value) is dict:
@@ -64,7 +65,10 @@ def format_value(value: any) -> str:
         return format_string(value=value)
 
 
-def format_dict(fields: Dict[str, any], is_list_of_values: bool = False) -> str:
+def format_dict(
+    fields: Dict[str, any],
+    is_list_of_values: bool = False
+) -> str:
     """
     Formats a dict
     Args:

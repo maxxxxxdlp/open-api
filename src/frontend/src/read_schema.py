@@ -1,6 +1,6 @@
 from typing import Dict, List, NamedTuple, Union
-from src.common.parse_schema import schema
 
+from src.common.parse_schema import schema
 
 tags = [[tag.name, tag.description] for tag in schema.tags]
 
@@ -77,7 +77,7 @@ def get_data_for_route(tag: str, route_index: int) -> RouteDetailedInfo:
                 else {
                     parameter.example: parameter.example
                 } if parameter.example
-                else { },
+                else {},
                 parameter.schema.type,
                 parameter.in_,
             ) for parameter in schema.paths[route.path].get.parameters

@@ -1,6 +1,7 @@
-from flask import render_template
-from src.frontend.src import read_schema
 import simplejson as json
+from flask import render_template
+
+from src.frontend.src import read_schema
 
 
 def menu() -> str:
@@ -48,7 +49,8 @@ def endpoint(tag_name: str, path_index: int) -> str:
 
     """
     path_detailed_info = read_schema.get_data_for_route(tag_name, path_index)
-    path_detailed_info_json = json.dumps(path_detailed_info).replace('`', '\`')
+    path_detailed_info_json =\
+        json.dumps(path_detailed_info).replace('`', '\\`')
     return render_template(
         'endpoint.html',
         title=tag,

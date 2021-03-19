@@ -1,7 +1,5 @@
 from flask import Flask, request
-from src.frontend.src import ui
-from src.frontend.src import api
-
+from src.frontend.src import api, ui
 
 app = Flask(__name__)
 

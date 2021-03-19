@@ -1,4 +1,5 @@
 from flask import render_template
+
 from src.frontend.src.format_response import format_response
 from src.validate.index import make_request
 
