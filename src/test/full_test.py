@@ -3,23 +3,14 @@ import itertools
 import json
 import random
 import urllib
+import sys
+import yaml
 from dataclasses import dataclass
-from typing import Dict, List, Union
-
+from typing import Dict, List, Union, Callable
 from termcolor import colored
-
-from src.common.parse_schema import schema
-from src.common.report_error import report_error
-from src.validate.index import make_request
-from src.validate.parameter_constraints import parameter_constraints
-
-base_url = schema.servers[0].url
-
-# max amount test URLs to use at any single endpoint
-max_urls_per_endpoint = 50
-# stop testing the API after this many errors
-# (useful if multiple tested URLs return the same error message)
-failed_request_limit = 100
+from open_api_tools.validate.index import ErrorMessage, make_request,\
+    yaml_to_openapi_core
+from openapi3 import OpenAPI
 
 
 @dataclass
@@ -90,8 +81,12 @@ def validate_parameter_data(
             '%s (%s -> %s)' % (str(e), endpoint_name, parameter_data.name))
 
 
-def create_request_url(endpoint_name: str, parameters: List[ParameterData],
-                       variation: List[any]) -> str:
+def create_request_url(
+    endpoint_name: str,
+    parameters: List[ParameterData],
+    variation: List[any],
+    base_url: str
+) -> str:
     """
     Fills the parameters into the endpoint URL
 
@@ -99,6 +94,7 @@ def create_request_url(endpoint_name: str, parameters: List[ParameterData],
         endpoint_name (str): the name of the endpoint
         parameters (List[ParameterData]): list of parameters for the endpoint
         variation: (List[any]): the values for the parameters
+        base_url (str): base API url address
 
     Returns:
         str:
@@ -121,7 +117,22 @@ def create_request_url(endpoint_name: str, parameters: List[ParameterData],
     )
 
 
-def test() -> None:
+def test(
+    # Location of the OpenAPI yaml schema file
+    open_api_schema_location: str,
+    # error_callback
+    error_callback: Callable[[ErrorMessage], None],
+    # max amount test URLs to use at any single endpoint
+    max_urls_per_endpoint: int = 50,
+    # stop testing the API after this many errors
+    # (useful if multiple tested URLs return the same error message)
+    failed_request_limit: int = 100,
+    # described in `README.md`
+    parameter_constraints: Union[None, Dict[
+        str,
+        Callable[[bool, str, Dict[str, any]], bool]
+    ]] = None
+) -> None:
     """
     Runs a comprehensive test on all API endpoints
 
@@ -133,6 +144,17 @@ def test() -> None:
         Exception - if generated URL does not meet the API schema requirements
 
     """
+
+    print(open_api_schema_location)
+    with open(open_api_schema_location) as spec_file:
+        yaml_spec = yaml.safe_load(spec_file.read())
+
+    schema = OpenAPI(yaml_spec)
+
+    open_api_core = yaml_to_openapi_core(yaml_spec)
+
+    base_url = schema.servers[0].url
+
     failed_requests = 0
 
     for endpoint_name, endpoint_data in schema.paths.items():
@@ -160,7 +182,7 @@ def test() -> None:
                 parameter_data.examples = [True, False]
 
             if not parameter_data.required and \
-                '' not in parameter_data.examples:
+                    '' not in parameter_data.examples:
                 parameter_data.examples.append('')
 
             parameters.append(parameter_data)
@@ -170,8 +192,12 @@ def test() -> None:
         parameter_variations = list(
             itertools.product(*map(lambda p: p.examples, parameters)))
         urls = list(map(
-            lambda variation: create_request_url(endpoint_name, parameters,
-                                                 variation),
+            lambda variation: create_request_url(
+                endpoint_name,
+                parameters,
+                variation,
+                base_url
+            ),
             parameter_variations
         ))
 
@@ -199,7 +225,7 @@ def test() -> None:
         # testing all url variations for validness
         # fetching all the responses
         # validating responses against schema
-        responses: Dict[int, object] = { }
+        responses: Dict[int, object] = {}
         for index, request_url in enumerate(urls):
 
             print('%s %s' % (
@@ -207,15 +233,23 @@ def test() -> None:
                 colored('Fetching response from %s' % request_url, 'blue'))
                   )
 
-            response = make_request(request_url, log_client_error=True)
+            response = make_request(
+                request_url,
+                error_callback,
+                open_api_core
+            )
 
-            if response['type'] != 'success':
-                print(colored(json.dumps(response, indent=4, default=str),
-                              'yellow'))
+            if response.type != 'success':
+                print(
+                    colored(
+                        json.dumps(response._asdict(), indent=4, default=str),
+                        'yellow'
+                    )
+                )
                 failed_requests += 1
 
-            if response['type'] == 'invalid_request_url':
-                raise Exception(response['type'])
+            if response.type == 'invalid_request_url':
+                raise Exception(response.type)
 
             if failed_requests > failed_request_limit:
                 print(
@@ -227,8 +261,8 @@ def test() -> None:
                 )
                 exit(1)
 
-            if 'parsed_response' in response:
-                responses[index] = response['parsed_response']
+            if 'parsed_response' in response._asdict():
+                responses[index] = response.parsed_response
 
         # running tests though constraints
         defined_constraints = {
@@ -250,23 +284,26 @@ def test() -> None:
 
                     if not constraint_function(parameter_value, endpoint_name,
                                                response_data):
-                        error_message = {
-                            'type': 'failed_test_constraint',
-                            'title': 'Testing constraint failed',
-                            'error_status': (
+                        error_message = ErrorMessage(
+                            type='failed_test_constraint',
+                            title='Testing constraint failed',
+                            error_status=(
                                                 'Constraint on the %s based ' +
                                                 'on a parameter %s failed'
                                             ) % (
                                                 endpoint_name,
                                                 parameter_name
                                             ),
-                            'url': urls[request_index],
-                            'parsed_response': response_data,
-                        }
-                        report_error(error_message)
+                            url=urls[request_index],
+                            extra={
+                                'parsed_response': response_data
+                            },
+                        )
+                        error_callback(error_message)
                         print(colored(
                             json.dumps(error_message, indent=4, default=str),
                             'yellow'))
 
 
-test()
+if __name__ == "__main__":
+    test(*sys.argv)

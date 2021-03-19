@@ -1,6 +1,6 @@
 from typing import Dict, List, NamedTuple, Union
 
-from src.common.parse_schema import schema
+from open_api_tools.common.parse_schema import schema
 
 tags = [[tag.name, tag.description] for tag in schema.tags]
 
