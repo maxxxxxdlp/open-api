@@ -68,9 +68,12 @@ All requests would be sent to the first server
 specified in the `servers` part of the API schema.
 
 # Generating API documentation
+TODO: update this section of the documentation
+
 Run the flask web server
 ```bash
-FLASK_APP=src.frontend.server SCHEMA_LOCATION=open_api.yaml ./venv/bin/python -m flask run
+export SCHEMA_LOCATION=open_api.yaml
+FLASK_APP=open_api_tools.frontend.server ./venv/bin/python -m flask run
 ```
 
 The web server is now available at http://127.0.0.1:5000/

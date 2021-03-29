@@ -1,7 +1,6 @@
 import json
 import urllib.parse as urlparse
 from json import JSONDecodeError
-from operator import itemgetter
 from typing import Callable, Dict, NamedTuple, Union
 from urllib.parse import parse_qs
 from openapi_core import create_spec
