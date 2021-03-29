@@ -4,13 +4,12 @@ import json
 import random
 import urllib
 import sys
-import yaml
 from dataclasses import dataclass
 from typing import Dict, List, Union, Callable
 from termcolor import colored
-from open_api_tools.validate.index import ErrorMessage, make_request,\
-    yaml_to_openapi_core
-from openapi3 import OpenAPI
+
+from open_api_tools.frontend.common.load_schema import load_schema
+from open_api_tools.validate.index import ErrorMessage, make_request
 
 
 @dataclass
@@ -117,15 +116,7 @@ def create_request_url(
     )
 
 
-def load_schema(open_api_schema_location):
-    with open(open_api_schema_location) as spec_file:
-        yaml_spec = yaml.safe_load(spec_file.read())
 
-    schema = OpenAPI(yaml_spec)
-
-    open_api_core = yaml_to_openapi_core(yaml_spec)
-
-    return [schema, open_api_core]
 
 
 def test(

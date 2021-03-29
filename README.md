@@ -76,6 +76,8 @@ export SCHEMA_LOCATION=open_api.yaml
 FLASK_APP=open_api_tools.frontend.server ./venv/bin/python -m flask run
 ```
 
+SCHEMA_LOCATION can also be specified as a URL
+
 The web server is now available at http://127.0.0.1:5000/
 
 For production, use a production WSGI server -

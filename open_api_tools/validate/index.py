@@ -3,7 +3,6 @@ import urllib.parse as urlparse
 from json import JSONDecodeError
 from typing import Callable, Dict, NamedTuple, Union
 from urllib.parse import parse_qs
-from openapi_core import create_spec
 from openapi_core.contrib.requests import RequestsOpenAPIRequest, \
     RequestsOpenAPIResponseFactory
 from openapi_core.validation.request.validators import RequestValidator
@@ -12,11 +11,6 @@ from requests import Request, Session
 
 
 session = Session()
-
-
-def yaml_to_openapi_core(yaml_schema):
-    serializable_spec = json.loads(json.dumps(yaml_schema, default=str))
-    return create_spec(serializable_spec)
 
 
 class ErrorMessage(NamedTuple):
