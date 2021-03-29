@@ -117,6 +117,17 @@ def create_request_url(
     )
 
 
+def load_schema(open_api_schema_location):
+    with open(open_api_schema_location) as spec_file:
+        yaml_spec = yaml.safe_load(spec_file.read())
+
+    schema = OpenAPI(yaml_spec)
+
+    open_api_core = yaml_to_openapi_core(yaml_spec)
+
+    return [schema, open_api_core]
+
+
 def test(
     # Location of the OpenAPI yaml schema file
     open_api_schema_location: str,
@@ -145,13 +156,7 @@ def test(
 
     """
 
-    print(open_api_schema_location)
-    with open(open_api_schema_location) as spec_file:
-        yaml_spec = yaml.safe_load(spec_file.read())
-
-    schema = OpenAPI(yaml_spec)
-
-    open_api_core = yaml_to_openapi_core(yaml_spec)
+    schema, open_api_core = load_schema(open_api_schema_location)
 
     base_url = schema.servers[0].url
 

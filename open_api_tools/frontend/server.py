@@ -1,22 +1,32 @@
 from flask import Flask, request
+from openapi3 import OpenAPI
 from open_api_tools.frontend.src import api, ui
+import os
+from open_api_tools.test.full_test import load_schema
+
+
+if 'SCHEMA_LOCATION' not in os.environ:
+    raise RuntimeError('Please specify the location of the schema via' +
+                       'the `SCHEMA_LOCATION` environmental variable')
+
+schema, core_spec = load_schema(os.environ['SCHEMA_LOCATION'])
 
 app = Flask(__name__)
 
 
 @app.route('/')
 def index() -> str:
-    return ui.menu()
+    return ui.menu(schema)
 
 
 @app.route('/routes/<string:tag>/')
 def routes(tag: str) -> str:
-    return ui.tag(tag)
+    return ui.tag(schema, tag)
 
 
 @app.route('/endpoint/<string:tag>/<int:route>/')
 def endpoint(tag: str, route: int) -> str:
-    return ui.endpoint(tag, route - 1)
+    return ui.endpoint(schema, tag, route - 1)
 
 
 @app.route(
@@ -25,4 +35,8 @@ def endpoint(tag: str, route: int) -> str:
 )
 def fetch_response() -> str:
     content = request.json
-    return api.fetch_response(content['endpoint'], content['requestUrl'])
+    return api.fetch_response(
+        core_spec,
+        content['endpoint'],
+        content['requestUrl']
+    )

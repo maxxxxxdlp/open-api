@@ -1,9 +1,5 @@
 from typing import Dict, List, NamedTuple, Union
 
-from open_api_tools.common.parse_schema import schema
-
-tags = [[tag.name, tag.description] for tag in schema.tags]
-
 
 class RouteInfo(NamedTuple):
     """Short description of an API Endpoint"""
@@ -12,10 +8,11 @@ class RouteInfo(NamedTuple):
     description: str
 
 
-def get_routes_for_tag(tag: str) -> List[RouteInfo]:
+def get_routes_for_tag(schema, tag: str) -> List[RouteInfo]:
     """
     Fetches a list of routes available for a particular tag
     Args:
+        schema: OpenAPI schema
         tag(str): tag to fetch routes for
 
     Returns:
@@ -24,7 +21,8 @@ def get_routes_for_tag(tag: str) -> List[RouteInfo]:
     """
     return [
         RouteInfo(path, path_data.get.summary, path_data.get.description)
-        for path, path_data in schema.paths.items() if tag in path_data.get.tags
+        for path, path_data in schema.paths.items()
+        if tag in path_data.get.tags
     ]
 
 
@@ -48,17 +46,18 @@ class RouteDetailedInfo(NamedTuple):
     parameters: List[RouteParameter]
 
 
-def get_data_for_route(tag: str, route_index: int) -> RouteDetailedInfo:
+def get_data_for_route(schema, tag: str, route_index: int) -> RouteDetailedInfo:
     """
     Fetches the data needed to display the API endpoint
     Args:
+        schema: OpenAPI schema
         tag(str): name of the current tag
         route_index(int): index of a route among the routes for a tag
 
     Returns:
 
     """
-    route: RouteInfo = get_routes_for_tag(tag)[route_index]
+    route: RouteInfo = get_routes_for_tag(schema, tag)[route_index]
     return RouteDetailedInfo(
         route.path,
         schema.servers[0].url,
