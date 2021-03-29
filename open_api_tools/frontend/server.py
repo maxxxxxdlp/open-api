@@ -1,8 +1,7 @@
 from flask import Flask, request
-from openapi3 import OpenAPI
+from open_api_tools.frontend.common.load_schema import load_schema
 from open_api_tools.frontend.src import api, ui
 import os
-from open_api_tools.test.full_test import load_schema
 
 
 if 'SCHEMA_LOCATION' not in os.environ:
