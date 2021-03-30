@@ -2,7 +2,7 @@
 A collection of useful tools powered by Open API schema
 
 # Installation
-Install Python 3.9 (other versions may be compatible)
+Install Python 3.6 (other versions may be compatible)
 
 Clone this repository
 ```bash
