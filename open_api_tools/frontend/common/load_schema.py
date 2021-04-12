@@ -11,7 +11,7 @@ def load_schema(open_api_schema_location):
     try:
         urllib.parse.urlparse(open_api_schema_location)
         schema_string = requests.get(open_api_schema_location).content
-    except:
+    except Exception:
         with open(open_api_schema_location) as spec_file:
             schema_string = spec_file.read()
 

@@ -14,16 +14,14 @@ def format_list(values: List[any]) -> str:
             formatted list
     """
     if not values:
-        return '[]'
+        return "[]"
     else:
         return format_dict(
-            fields=dict(
-                [
-                    ('[%d]' % index, value) for index, value in
-                    enumerate(values)
-                ]
-            ),
-            is_list_of_values=True
+            fields={
+                "[%d]" % index: value
+                for index, value in enumerate(values)
+            },
+            is_list_of_values=True,
         )
 
 
@@ -38,10 +36,10 @@ def format_string(value: str) -> str:
             formatted string
     """
     return render_template(
-        'field__text.html'
-        if type(value) is str and ('\n' in value or len(value) > 80)
-        else 'field__string.html',
-        value=value
+        "field__text.html"
+        if type(value) is str and ("\n" in value or len(value) > 80)
+        else "field__string.html",
+        value=value,
     )
 
 
@@ -56,7 +54,7 @@ def format_value(value: any) -> str:
             formatted value
     """
     if type(value) is bool:
-        return render_template('field__boolean.html', value=value)
+        return render_template("field__boolean.html", value=value)
     if type(value) is list:
         return format_list(values=value)
     if type(value) is dict:
@@ -66,8 +64,7 @@ def format_value(value: any) -> str:
 
 
 def format_dict(
-    fields: Dict[str, any],
-    is_list_of_values: bool = False
+    fields: Dict[str, any], is_list_of_values: bool = False
 ) -> str:
     """
     Formats a dict
@@ -81,19 +78,17 @@ def format_dict(
             formatted list
     """
     if not fields:
-        return '{}'
+        return "{}"
     else:
         return render_template(
-            'field__dict.html',
+            "field__dict.html",
             fields=[
                 render_template(
-                    'field.html',
-                    label=label,
-                    value=format_value(value)
-                ) for label, value
-                in fields.items()
+                    "field.html", label=label, value=format_value(value)
+                )
+                for label, value in fields.items()
             ],
-            is_list_of_values=is_list_of_values
+            is_list_of_values=is_list_of_values,
         )
 
 

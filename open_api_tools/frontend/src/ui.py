@@ -15,11 +15,7 @@ def menu(schema) -> str:
             main screen HTML
     """
     tags = [[tag.name, tag.description] for tag in schema.tags]
-    return render_template(
-        'tags_menu.html',
-        title='S^N',
-        tags=tags
-    )
+    return render_template("tags_menu.html", title="S^N", tags=tags)
 
 
 def tag(schema, tag_name: str) -> str:
@@ -34,10 +30,10 @@ def tag(schema, tag_name: str) -> str:
             tags screen HTML
     """
     return render_template(
-        'routes_menu.html',
+        "routes_menu.html",
         title=tag_name,
         tag_name=tag_name,
-        paths=read_schema.get_routes_for_tag(schema, tag_name)
+        paths=read_schema.get_routes_for_tag(schema, tag_name),
     )
 
 
@@ -55,16 +51,15 @@ def endpoint(schema, tag_name: str, path_index: int) -> str:
 
     """
     path_detailed_info = read_schema.get_data_for_route(
-        schema,
-        tag_name,
-        path_index
+        schema, tag_name, path_index
     )
-    path_detailed_info_json =\
-        json.dumps(path_detailed_info).replace('`', '\\`')
+    path_detailed_info_json = json.dumps(path_detailed_info).replace(
+        "`", "\\`"
+    )
     return render_template(
-        'endpoint.html',
+        "endpoint.html",
         title=tag,
         tag_name=tag_name,
         path_detailed_info=path_detailed_info,
-        path_detailed_info_json=path_detailed_info_json
+        path_detailed_info_json=path_detailed_info_json,
     )

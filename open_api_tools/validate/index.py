@@ -3,10 +3,14 @@ import urllib.parse as urlparse
 from json import JSONDecodeError
 from typing import Callable, Dict, NamedTuple, Union
 from urllib.parse import parse_qs
-from openapi_core.contrib.requests import RequestsOpenAPIRequest, \
-    RequestsOpenAPIResponseFactory
+from openapi_core.contrib.requests import (
+    RequestsOpenAPIRequest,
+    RequestsOpenAPIResponseFactory,
+)
 from openapi_core.validation.request.validators import RequestValidator
-from openapi_core.validation.response.validators import ResponseValidator
+from openapi_core.validation.response.validators import (
+    ResponseValidator,
+)
 from requests import Request, Session
 
 
@@ -30,7 +34,7 @@ class PreparedRequest(NamedTuple):
 def prepare_request(
     request_url: str,
     error_callback: Callable[[ErrorMessage], None],
-    core_spec
+    core_spec,
 ) -> Union[PreparedRequest, ErrorMessage]:
     """
     Prepare request and validate the request URL
@@ -45,30 +49,30 @@ def prepare_request(
     """
     request_validator = RequestValidator(core_spec)
     parsed_url = urlparse.urlparse(request_url)
-    base_url = request_url.split('?')[0]
+    base_url = request_url.split("?")[0]
     query_params_dict = parse_qs(parsed_url.query)
 
-    request = Request('GET', base_url, params=query_params_dict)
+    request = Request("GET", base_url, params=query_params_dict)
     openapi_request = RequestsOpenAPIRequest(request)
     request_url_validator = request_validator.validate(openapi_request)
 
     if request_url_validator.errors:
         error_message = request_url_validator.errors
         error_response = ErrorMessage(
-            type='invalid_request_url',
-            title='Invalid Request URL',
-            error_status='Request URL does not meet the ' +
-                         'OpenAPI Schema requirements',
+            type="invalid_request_url",
+            title="Invalid Request URL",
+            error_status="Request URL does not meet the "
+            + "OpenAPI Schema requirements",
             url=request_url,
             extra={
-                'text': error_message,
-            }
+                "text": error_message,
+            },
         )
         error_callback(error_response)
         return error_response
 
     return PreparedRequest(
-        type='success',
+        type="success",
         request=request,
         openapi_request=openapi_request,
     )
@@ -106,14 +110,14 @@ def file_request(
     # make sure that the server did not return an error
     if response.status_code != 200:
         error_response = ErrorMessage(
-            type='invalid_response_code',
-            title='Invalid Response',
-            error_status='Response status code indicates an error has ' +
-                         'occurred',
+            type="invalid_response_code",
+            title="Invalid Response",
+            error_status="Response status code indicates an error has "
+            + "occurred",
             url=request_url,
             extra={
-                'status_code': response.status_code,
-                'text': response.text
+                "status_code": response.status_code,
+                "text": response.text,
             },
         )
         error_callback(error_response)
@@ -124,13 +128,13 @@ def file_request(
         parsed_response = json.loads(response.text)
     except JSONDecodeError:
         error_response = ErrorMessage(
-            type='invalid_response_mime_type',
-            title='Invalid response',
-            error_status='Unable to parse JSON response',
+            type="invalid_response_mime_type",
+            title="Invalid response",
+            error_status="Unable to parse JSON response",
             url=request_url,
             extra={
-                'status_code': response.status_code,
-                'text': response.text
+                "status_code": response.status_code,
+                "text": response.text,
             },
         )
         error_callback(error_response)
@@ -139,40 +143,37 @@ def file_request(
     # validate the response against the schema
     formatted_response = RequestsOpenAPIResponseFactory.create(response)
     response_content_validator = response_validator.validate(
-        openapi_request,
-        formatted_response
+        openapi_request, formatted_response
     )
 
     if response_content_validator.errors:
         error_message = list(
             map(
-                lambda e: e.schema_errors, response_content_validator.errors
+                lambda e: e.schema_errors,
+                response_content_validator.errors,
             )
         )
         error_response = ErrorMessage(
-            type='invalid_response_schema',
-            title='Invalid response schema',
-            error_status='Response content does not meet the OpenAPI ' +
-                         'Schema requirements',
+            type="invalid_response_schema",
+            title="Invalid response schema",
+            error_status="Response content does not meet the OpenAPI "
+            + "Schema requirements",
             url=request_url,
             extra={
-                'text': error_message,
-                'parsed_response': parsed_response
+                "text": error_message,
+                "parsed_response": parsed_response,
             },
         )
         error_callback(error_response)
         return error_response
 
-    return FiledRequest(
-        type='success',
-        parsed_response=parsed_response
-    )
+    return FiledRequest(type="success", parsed_response=parsed_response)
 
 
 def make_request(
     request_url: str,
     error_callback: Callable[[ErrorMessage], None],
-    core_spec
+    core_spec,
 ):
     """
     Prepares a request and sends it, while running validation on each step
@@ -188,7 +189,7 @@ def make_request(
 
     response = prepare_request(request_url, error_callback, core_spec)
 
-    if response.type != 'success':
+    if response.type != "success":
         return response
 
     return file_request(
@@ -196,5 +197,5 @@ def make_request(
         response.openapi_request,
         request_url,
         error_callback,
-        core_spec
+        core_spec,
     )

@@ -3,6 +3,7 @@ from typing import Dict, List, NamedTuple, Union
 
 class RouteInfo(NamedTuple):
     """Short description of an API Endpoint"""
+
     path: str
     summary: str
     description: str
@@ -20,7 +21,9 @@ def get_routes_for_tag(schema, tag: str) -> List[RouteInfo]:
             list of routes
     """
     return [
-        RouteInfo(path, path_data.get.summary, path_data.get.description)
+        RouteInfo(
+            path, path_data.get.summary, path_data.get.description
+        )
         for path, path_data in schema.paths.items()
         if tag in path_data.get.tags
     ]
@@ -28,6 +31,7 @@ def get_routes_for_tag(schema, tag: str) -> List[RouteInfo]:
 
 class RouteParameter(NamedTuple):
     """API Endpoint parameter"""
+
     name: str
     description: str
     required: bool
@@ -39,6 +43,7 @@ class RouteParameter(NamedTuple):
 
 class RouteDetailedInfo(NamedTuple):
     """API endpoint"""
+
     path: str
     server: str
     summary: str
@@ -46,7 +51,9 @@ class RouteDetailedInfo(NamedTuple):
     parameters: List[RouteParameter]
 
 
-def get_data_for_route(schema, tag: str, route_index: int) -> RouteDetailedInfo:
+def get_data_for_route(
+    schema, tag: str, route_index: int
+) -> RouteDetailedInfo:
     """
     Fetches the data needed to display the API endpoint
     Args:
@@ -72,13 +79,14 @@ def get_data_for_route(schema, tag: str, route_index: int) -> RouteDetailedInfo:
                 {
                     name: list(value.values())[0]
                     for name, value in parameter.examples.items()
-                } if parameter.examples
-                else {
-                    parameter.example: parameter.example
-                } if parameter.example
+                }
+                if parameter.examples
+                else {parameter.example: parameter.example}
+                if parameter.example
                 else {},
                 parameter.schema.type,
                 parameter.in_,
-            ) for parameter in schema.paths[route.path].get.parameters
+            )
+            for parameter in schema.paths[route.path].get.parameters
         ],
     )

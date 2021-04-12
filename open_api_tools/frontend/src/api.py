@@ -23,23 +23,30 @@ def fetch_response(core_spec, endpoint: str, request_url: str) -> str:
         core_spec,
     )
 
-    error = '' if response.type == 'success' else \
-        render_template(
-            'error_message.html',
+    error = (
+        ""
+        if response.type == "success"
+        else render_template(
+            "error_message.html",
             title=response.title,
-            message=response.error_status
+            message=response.error_status,
         )
+    )
 
-    if response.type == 'invalid_request_url':
+    if response.type == "invalid_request_url":
         return error
 
-    if response.type == 'invalid_response_code' \
-            or response.type == 'invalid_response_mime_type':
-        return '<iframe class="error_iframe" srcdoc="%s"></iframe>' \
-               % response.text.replace('&', '&amp;').replace('"', '&quot;')
+    if (
+        response.type == "invalid_response_code"
+        or response.type == "invalid_response_mime_type"
+    ):
+        return (
+            '<iframe class="error_iframe" srcdoc="%s"></iframe>'
+            % response.text.replace("&", "&amp;").replace('"', "&quot;")
+        )
 
-    if response.type == 'invalid_response_schema':
-        parsed_response = response.extra['parsed_response']
+    if response.type == "invalid_response_schema":
+        parsed_response = response.extra["parsed_response"]
     else:
         parsed_response = response.parsed_response
 
