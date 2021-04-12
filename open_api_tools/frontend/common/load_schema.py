@@ -1,3 +1,5 @@
+"""Load the OpenAPI schema `.yaml` file."""
+
 import json
 import yaml
 from openapi3 import OpenAPI
@@ -7,7 +9,7 @@ import requests
 
 
 def load_schema(open_api_schema_location):
-
+    """Load the OpenAPI schema `.yaml` file."""
     try:
         urllib.parse.urlparse(open_api_schema_location)
         schema_string = requests.get(open_api_schema_location).content

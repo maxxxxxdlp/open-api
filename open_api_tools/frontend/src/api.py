@@ -1,3 +1,5 @@
+"""Interact with a remote API server."""
+
 from flask import render_template
 
 from open_api_tools.frontend.src.format_response import format_response
@@ -6,8 +8,11 @@ from open_api_tools.validate.index import make_request
 
 def fetch_response(core_spec, endpoint: str, request_url: str) -> str:
     """
-    Fetches a response for an endpoint and formats the response
+    Send a request and formats it.
+
+    Fetch a response for an endpoint and formats the response
     Also, handles possible errors
+
     Args:
         core_spec: OpenAPI spec
         endpoint(str): name of the endpoint

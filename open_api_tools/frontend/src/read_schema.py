@@ -1,8 +1,10 @@
+"""Extract useful information from the parsed OpenAPI schema."""
+
 from typing import Dict, List, NamedTuple, Union
 
 
 class RouteInfo(NamedTuple):
-    """Short description of an API Endpoint"""
+    """Short description of an API Endpoint."""
 
     path: str
     summary: str
@@ -11,7 +13,8 @@ class RouteInfo(NamedTuple):
 
 def get_routes_for_tag(schema, tag: str) -> List[RouteInfo]:
     """
-    Fetches a list of routes available for a particular tag
+    Fetch a list of routes available for a particular tag.
+
     Args:
         schema: OpenAPI schema
         tag(str): tag to fetch routes for
@@ -30,7 +33,7 @@ def get_routes_for_tag(schema, tag: str) -> List[RouteInfo]:
 
 
 class RouteParameter(NamedTuple):
-    """API Endpoint parameter"""
+    """API Endpoint parameter."""
 
     name: str
     description: str
@@ -42,7 +45,7 @@ class RouteParameter(NamedTuple):
 
 
 class RouteDetailedInfo(NamedTuple):
-    """API endpoint"""
+    """API endpoint."""
 
     path: str
     server: str
@@ -55,13 +58,15 @@ def get_data_for_route(
     schema, tag: str, route_index: int
 ) -> RouteDetailedInfo:
     """
-    Fetches the data needed to display the API endpoint
+    Fetch the data needed to display the API endpoint.
+
     Args:
         schema: OpenAPI schema
         tag(str): name of the current tag
         route_index(int): index of a route among the routes for a tag
 
-    Returns:
+    Return:
+        RouteDetailedInfo
 
     """
     route: RouteInfo = get_routes_for_tag(schema, tag)[route_index]

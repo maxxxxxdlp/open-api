@@ -1,3 +1,5 @@
+"""Format different parts of the response object."""
+
 from typing import Dict, List
 
 from flask import render_template
@@ -5,7 +7,8 @@ from flask import render_template
 
 def format_list(values: List[any]) -> str:
     """
-    Formats a list
+    Format a list.
+
     Args:
         values: list
 
@@ -27,7 +30,8 @@ def format_list(values: List[any]) -> str:
 
 def format_string(value: str) -> str:
     """
-    Formats a string
+    Format a string.
+
     Args:
         value: str
 
@@ -45,7 +49,8 @@ def format_string(value: str) -> str:
 
 def format_value(value: any) -> str:
     """
-    Formats a value, depending on its type
+    Format a value, depending on its type.
+
     Args:
         value: any
 
@@ -67,7 +72,8 @@ def format_dict(
     fields: Dict[str, any], is_list_of_values: bool = False
 ) -> str:
     """
-    Formats a dict
+    Format a dict.
+
     Args:
         fields (Dict[str,any]): dictionary to format
         is_list_of_values (bool):
@@ -94,7 +100,8 @@ def format_dict(
 
 def format_response(_endpoint: str, response: Dict[str, any]) -> str:
     """
-    Formats the response object
+    Format the response object.
+
     Args:
         _endpoint (str): name of the endpoint
         response (Dict[str,any]): response object

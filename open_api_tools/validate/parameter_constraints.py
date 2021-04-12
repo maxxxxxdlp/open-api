@@ -1,3 +1,5 @@
+"""Definitions for the manual constraints for the response object."""
+
 # TODO: compare results between explicit and implicit default params
 from typing import Callable, Dict, List
 
@@ -6,15 +8,17 @@ def get_gbif_records(
     path: str, response: Dict[str, any]
 ) -> List[Dict[str, any]]:
     """
+    Extract gbif records.
+
     Get GBIF response from the response object
-    that may include other providers
+    that may include other providers.
+
     Args:
         path (str): path of the current endpoint
         response (Dict[str,any]): response object
 
     Returns:
         GBIF response object
-
     """
     return (
         response["records"]
@@ -27,8 +31,11 @@ def gbif_count(
     parameter_value: bool, path: str, response: Dict[str, any]
 ) -> bool:
     """
+    Validate the `gbif_count` parameter.
+
     Check that `gbif_count` parameter affected the response object in an
-    expected way
+    expected way.
+
     Args:
         parameter_value (bool): the value of the `gbif_count` parameter
         path (str): path of the current endpoint
@@ -60,8 +67,11 @@ def gbif_accepted(
     parameter_value: bool, path: str, response: Dict[str, any]
 ) -> bool:
     """
+    Validate the `gbif_accepted` parameter.
+
     Check that `gbif_accepted` parameter affected the response object in an
-    expected way
+    expected way.
+
     Args:
         parameter_value (bool): the value of the `gbif_accepted` parameter
         path (str): path of the current endpoint
@@ -82,8 +92,11 @@ def count_only(
     parameter_value: bool, path: str, response: Dict[str, any]
 ) -> bool:
     """
+    Validate the `count_only` parameter.
+
     Check that `count_only` parameter affected the response object in an
-    expected way
+    expected way.
+
     Args:
         parameter_value (bool): the value of the `count_only` parameter
         path (str): path of the current endpoint

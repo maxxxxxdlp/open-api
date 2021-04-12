@@ -1,3 +1,5 @@
+"""Render templates for common UI components."""
+
 import simplejson as json
 from flask import render_template
 
@@ -6,7 +8,8 @@ from open_api_tools.frontend.src import read_schema
 
 def menu(schema) -> str:
     """
-    Render main screen
+    Render main screen.
+
     Args:
         schema: OpenAPI schema
 
@@ -20,7 +23,8 @@ def menu(schema) -> str:
 
 def tag(schema, tag_name: str) -> str:
     """
-    Render endpoints for a tag
+    Render endpoints for a tag.
+
     Args:
         schema: OpenAPI schema
         tag_name(str): tag to render endpoints for
@@ -39,7 +43,8 @@ def tag(schema, tag_name: str) -> str:
 
 def endpoint(schema, tag_name: str, path_index: int) -> str:
     """
-    Render UI for an endpoint
+    Render UI for an endpoint.
+
     Args:
         schema: OpenAPI schema
         tag_name(str): name of the tag the endpoint belongs to

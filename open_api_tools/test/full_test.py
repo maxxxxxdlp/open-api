@@ -1,3 +1,4 @@
+"""Run a comprehensive test on all defined endpoints."""
 import functools
 import itertools
 import json
@@ -14,7 +15,7 @@ from open_api_tools.validate.index import ErrorMessage, make_request
 
 @dataclass
 class ParameterData:
-    """Parsed API endpoint's parameter"""
+    """Parsed API endpoint's parameter."""
 
     name: str
     location: str
@@ -28,7 +29,10 @@ def validate_parameter_data(
     endpoint_name: str, parameter_data: ParameterData
 ) -> Union[str, None]:
     """
-    Validate that the API schema has correct parameter properties specified
+    Validate OpenAPI schema's `parameters` section of an entrypoint.
+
+    Validate that the API schema has correct parameter properties
+    specified.
 
     Args:
         endpoint_name (str): The name of the endpoint parameter belongs too
@@ -41,7 +45,6 @@ def validate_parameter_data(
 
     Raises:
         AssertionError: on validation issue
-
     """
     try:
         if (
@@ -105,8 +108,7 @@ def create_request_url(
     variation: List[any],
     base_url: str,
 ) -> str:
-    """
-    Fills the parameters into the endpoint URL
+    """Fill the parameters into the endpoint URL.
 
     Args:
         endpoint_name (str): the name of the endpoint
@@ -117,7 +119,6 @@ def create_request_url(
     Returns:
         str:
             The endpoint request URL with embedded parameters
-
     """
     return functools.reduce(
         lambda request_url, index: (
@@ -157,8 +158,7 @@ def test(
         None, Dict[str, Callable[[bool, str, Dict[str, any]], bool]]
     ] = None,
 ) -> None:
-    """
-    Runs a comprehensive test on all API endpoints
+    """Run a comprehensive test on all API endpoints.
 
     Returns:
         None
@@ -166,9 +166,7 @@ def test(
     Raises:
         AssertionError - if API schema is incorrect
         Exception - if generated URL does not meet the API schema requirements
-
     """
-
     schema, open_api_core = load_schema(open_api_schema_location)
 
     base_url = schema.servers[0].url

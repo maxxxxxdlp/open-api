@@ -1,3 +1,5 @@
+"""A validator for request/response objects powered by OpenAPI schema."""
+
 import json
 import urllib.parse as urlparse
 from json import JSONDecodeError
@@ -18,6 +20,8 @@ session = Session()
 
 
 class ErrorMessage(NamedTuple):
+    """An error returned by the validator."""
+
     type: str
     title: str
     error_status: str
@@ -26,6 +30,8 @@ class ErrorMessage(NamedTuple):
 
 
 class PreparedRequest(NamedTuple):
+    """A successful prepared request."""
+
     type: str
     request: object
     openapi_request: object
@@ -36,8 +42,8 @@ def prepare_request(
     error_callback: Callable[[ErrorMessage], None],
     core_spec,
 ) -> Union[PreparedRequest, ErrorMessage]:
-    """
-    Prepare request and validate the request URL
+    """Prepare request and validate the request URL.
+
     Args:
         request_url (str): request URL
         error_callback: function to call in case of an error
@@ -45,7 +51,6 @@ def prepare_request(
 
     Returns:
         object: Prepared request or error message
-
     """
     request_validator = RequestValidator(core_spec)
     parsed_url = urlparse.urlparse(request_url)
@@ -79,6 +84,8 @@ def prepare_request(
 
 
 class FiledRequest(NamedTuple):
+    """A successful filed request with a response."""
+
     type: str
     parsed_response: object
 
@@ -91,7 +98,8 @@ def file_request(
     core_spec,
 ) -> Union[ErrorMessage, FiledRequest]:
     """
-    Send a prepared request and validate the response
+    Send a prepared request and validate the response.
+
     Args:
         request: request object
         openapi_request: openapi request object
@@ -101,7 +109,6 @@ def file_request(
 
     Returns:
         Request response or error message
-
     """
     response_validator = ResponseValidator(core_spec)
     prepared_request = request.prepare()
@@ -176,7 +183,11 @@ def make_request(
     core_spec,
 ):
     """
-    Prepares a request and sends it, while running validation on each step
+    Combine `prepared_request` and `file_request`.
+
+    Prepare a request and send it, while running validation on each
+    step.
+
     Args:
         request_url (str): request error
         error_callback: function to call in case of an error
@@ -184,9 +195,7 @@ def make_request(
 
     Returns:
         Request response or error message
-
     """
-
     response = prepare_request(request_url, error_callback, core_spec)
 
     if response.type != "success":
