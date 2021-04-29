@@ -159,7 +159,7 @@ def test(
         None, Dict[str, Callable[[bool, str, Dict[str, any]], bool]]
     ] = None,
     parameter_values_generator: Union[
-        None, Callable[[str, Dict[str, any]], List[any]]
+        None, Callable[[str, Dict[str, any], List[any]], List[any]]
     ] = None,
 ) -> None:
     """Run a comprehensive test on all API endpoints.
@@ -208,39 +208,41 @@ def test(
             ):
                 continue
 
+
+            if not parameter.examples:
+                letters = None
+                length = 8
+                if parameter.schema.type == "string":
+                    letters = string.ascii_letters
+                    length = 8
+                elif parameter.schema.type == "integer":
+                    letters = string.digits
+                    length = 2
+
+                if letters:
+                    parameter_data.examples = [
+                        "".join(
+                            random.choice(letters)
+                            for _i in range(10)
+                        )
+                        for _ii in range(length)
+                    ]
+
+            if parameter_data.type == "boolean":
+                parameter_data.examples = [True, False]
+
+            if (
+                not parameter_data.required
+                and "" not in parameter_data.examples
+            ):
+                parameter_data.examples.append("")
+
             if parameter_values_generator:
                 parameter_data.examples = parameter_values_generator(
-                    endpoint_name, parameter.raw_element
+                    endpoint_name,
+                    parameter.raw_element,
+                    parameter_data.examples
                 )
-            else:
-
-                if not parameter.examples:
-                    letters = None
-                    length = 8
-                    if parameter.schema.type == "string":
-                        letters = string.ascii_letters
-                        length = 8
-                    elif parameter.schema.type == "integer":
-                        letters = string.digits
-                        length = 2
-
-                    if letters:
-                        parameter_data.examples = [
-                            "".join(
-                                random.choice(letters)
-                                for _i in range(10)
-                            )
-                            for _ii in range(length)
-                        ]
-
-                if parameter_data.type == "boolean":
-                    parameter_data.examples = [True, False]
-
-                if (
-                    not parameter_data.required
-                    and "" not in parameter_data.examples
-                ):
-                    parameter_data.examples.append("")
 
             parameters.append(parameter_data)
         parameter_names = list(map(lambda p: p.name, parameters))
