@@ -59,14 +59,14 @@ Run the test
 import open_api_tools.test.full_test as full_test
 
 def error_callback(*error_message):
-  print(error_message)
+    print(error_message)
 
 full_test.test(
-  open_api_schema_location='open_api.yaml',
-  error_callback=error_callback,
-  max_urls_per_endpoint=50,
-  failed_request_limit=10,
-  parameter_constraints={}
+    open_api_schema_location='open_api.yaml',
+    error_callback=error_callback,
+    max_urls_per_endpoint=50,
+    failed_request_limit=10,
+    parameter_constraints={}
 )
 ```
 
@@ -75,3 +75,38 @@ your API schema.
 
 All requests would be sent to the first server
 specified in the `servers` part of the API schema.
+
+### Supplying test values for parameters
+
+By default, the test reads the `examples` object
+[in the schema](https://swagger.io/specification/#example-object) to generate
+request parameters. If `examples` wasn't provided, it would try to create some
+test values based on the parameter type.
+
+If you would like more customization, an optional `parameter_values_generator`
+parameter can be provided to the `full_test.test` method.
+`parameter_values_generator` must be a function that accept endpoint name as
+the first parameter and
+[the parameter object](https://swagger.io/specification/#parameter-object)
+as the second parameter (it would vary depending on how it is defined
+in your schema). In turn, the function must return a list of valid examples.
+
+Example usage:
+
+```python
+import open_api_tools.test.full_test as full_test
+
+def error_callback(*error_message):
+    print(error_message)
+
+def parameter_values_generator(endpoint_name, parameter):
+    return [parameter.name, endpoint_name, *parameter.examples]
+
+full_test.test(
+    open_api_schema_location='open_api.yaml',
+    error_callback=error_callback,
+    max_urls_per_endpoint=50,
+    failed_request_limit=10,
+    parameter_constraints={}
+)
+```
