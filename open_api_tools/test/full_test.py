@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Union, Callable
 from termcolor import colored
 
-from open_api_tools.frontend.common.load_schema import load_schema
+from open_api_tools.common.load_schema import load_schema
 from open_api_tools.validate.index import ErrorMessage, make_request
 
 

@@ -75,25 +75,3 @@ your API schema.
 
 All requests would be sent to the first server
 specified in the `servers` part of the API schema.
-
-## Generating API documentation
-
-TODO: update this section of the documentation
-
-Run the flask web server
-
-```bash
-export SCHEMA_LOCATION=open_api.yaml
-FLASK_APP=open_api_tools.frontend.server ./venv/bin/python -m flask run
-```
-
-SCHEMA_LOCATION can also be specified as a URL
-
-The web server is now available at
-[http://127.0.0.1:5000/](http://127.0.0.1:5000/)
-
-For production, use [a production WSGI server](https://flask.palletsprojects.com/en/1.1.x/tutorial/deploy/#run-with-a-production-server)
-
-API Requests sent from this webserver are also going through validation
-of both the request URL and the response object. All validation errors
-are saved into the `logs` directory
