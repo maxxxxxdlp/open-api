@@ -15,6 +15,7 @@ from openapi_core.validation.response.validators import (
 )
 from requests import Request, Session
 
+from open_api_tools.common.load_schema import Schema
 
 session = Session()
 
@@ -39,25 +40,29 @@ class PreparedRequest(NamedTuple):
 
 def prepare_request(
     request_url: str,
+    method: str,
+    body: Union[Dict, None],
     error_callback: Callable[[ErrorMessage], None],
-    core_spec,
+    schema: Schema,
 ) -> Union[PreparedRequest, ErrorMessage]:
     """Prepare request and validate the request URL.
 
     Args:
         request_url (str): request URL
+        method (str): HTTP method name
+        body (Union[Dict, None]: payload to send along with the request
         error_callback: function to call in case of an error
-        core_spec (Spec): result of running `yaml_to_openapi_core`
+        schema (Schema): OpenAPI schema
 
     Returns:
         object: Prepared request or error message
     """
-    request_validator = RequestValidator(core_spec)
+    request_validator = RequestValidator(schema.schema)
     parsed_url = urlparse.urlparse(request_url)
     base_url = request_url.split("?")[0]
     query_params_dict = parse_qs(parsed_url.query)
 
-    request = Request("GET", base_url, params=query_params_dict)
+    request = Request(method, base_url, params=query_params_dict, data=body)
     openapi_request = RequestsOpenAPIRequest(request)
     request_url_validator = request_validator.validate(openapi_request)
 
@@ -95,7 +100,7 @@ def file_request(
     openapi_request,
     request_url: str,
     error_callback: Callable[[ErrorMessage], None],
-    core_spec,
+    schema: Schema,
 ) -> Union[ErrorMessage, FiledRequest]:
     """
     Send a prepared request and validate the response.
@@ -105,12 +110,12 @@ def file_request(
         openapi_request: openapi request object
         request_url (str): request url
         error_callback: function to call in case of an error
-        core_spec (Spec): result of running `yaml_to_openapi_core`
+        schema (Schema): OpenAPI schema
 
     Returns:
         Request response or error message
     """
-    response_validator = ResponseValidator(core_spec)
+    response_validator = ResponseValidator(schema.schema)
     prepared_request = request.prepare()
     response = session.send(prepared_request)
 
@@ -179,8 +184,10 @@ def file_request(
 
 def make_request(
     request_url: str,
+    method: str,
+    body: Union[Dict, None],
     error_callback: Callable[[ErrorMessage], None],
-    core_spec,
+    schema: Schema,
 ):
     """
     Combine `prepared_request` and `file_request`.
@@ -190,13 +197,21 @@ def make_request(
 
     Args:
         request_url (str): request error
+        method (str): HTTP method name
+        body (Union[Dict, None]: payload to send along with the request
         error_callback: function to call in case of an error
-        core_spec (Spec): result of running `yaml_to_openapi_core`
+        schema (Schema): OpenAPI schema
 
     Returns:
         Request response or error message
     """
-    response = prepare_request(request_url, error_callback, core_spec)
+    response = prepare_request(
+        request_url,
+        method,
+        body,
+        error_callback,
+        schema
+    )
 
     if response.type != "success":
         return response
@@ -206,5 +221,5 @@ def make_request(
         response.openapi_request,
         request_url,
         error_callback,
-        core_spec,
+        schema,
     )

@@ -1,6 +1,7 @@
 """Load the OpenAPI schema `.yaml` file."""
 
 import json
+from dataclasses import dataclass
 import yaml
 from openapi3 import OpenAPI
 from openapi_core import create_spec
@@ -8,7 +9,14 @@ import urllib
 import requests
 
 
-def load_schema(open_api_schema_location):
+@dataclass
+class Schema:
+    """Parsed OpenAPI schema."""
+    schema: any
+    open_api_core: any
+
+
+def load_schema(open_api_schema_location)->Schema:
     """Load the OpenAPI schema `.yaml` file."""
     try:
         urllib.parse.urlparse(open_api_schema_location)
@@ -24,4 +32,4 @@ def load_schema(open_api_schema_location):
     serializable_spec = json.loads(json.dumps(yaml_spec, default=str))
     open_api_core = create_spec(serializable_spec)
 
-    return [schema, open_api_core]
+    return Schema(schema=schema, open_api_core=open_api_core)
