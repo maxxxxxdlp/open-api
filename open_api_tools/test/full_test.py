@@ -8,7 +8,7 @@ from open_api_tools.validate.index import ErrorMessage
 from open_api_tools.test.test_endpoint import test_endpoint
 
 
-def test(
+def full_test(
     schema: Schema,
     max_urls_per_endpoint: int = 50,
     failed_request_limit: int = 100,

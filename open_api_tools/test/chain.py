@@ -1,7 +1,8 @@
 """Allow to test a chain of requests."""
 import json
-from typing import Any, Callable, List, Tuple, Union
+from typing import Callable, List, Dict, Union
 
+from dataclasses import dataclass
 from termcolor import colored
 
 from open_api_tools.common.load_schema import Schema
@@ -10,18 +11,38 @@ from open_api_tools.test.utils import create_request_payload
 from open_api_tools.validate.index import make_request
 
 
-# FIXME: add support for changing the request object
-# FIXME: test chain
+@dataclass
+class Request:
+    """Chain's request defintion."""
+
+    method: str
+    endpoint: str
+    parameters: Union[
+        None,
+        Dict[str,any], Callable[[any, List[any]],Dict[str,any]]
+    ] = None
+
+
+@dataclass
+class Validate:
+    """Chain's validator defintion."""
+
+    validate: Callable[[any],bool]
+
+
 def chain(
     schema: Schema,
-    definition: List[Union[Tuple[str, str], Callable[[Any], Any]]],
+    definition: List[Union[Request, Validate]],
+    before_request_send: Union[Callable[[str, any],any],None] = None
 ):
     """Create a chain of requests.
 
     params:
+        schema: A schema object
         defintion:
             Chain defintion. More info in `README.md`
-        open_api_schema:
+        before_request_send:
+            A pre-hook that allows to amend the request object
     """
 
     response = None
@@ -30,23 +51,35 @@ def chain(
     base_url = schema.schema.servers[0].url
 
     for index, line in enumerate(definition):
-        if type(line) is tuple:
-            method, endpoint_name = line
+        if type(line) is Request:
             print(
-                colored(f"[{index}/{len(definition)}]", "cyan")
-                + " "
+                colored(f"[{index}/{len(definition)}] ", "cyan")
                 + colored(
-                    f"Fetching data from [{method}] {endpoint_name}",
+                    f"Fetching data from [{line.method}] {line.endpoint}",
                     "blue",
                 )
             )
 
+            if line.endpoint not in schema.schema.paths:
+                raise Exception(
+                    f"{line.endpoint} endpoint does not exist in your OpenAPI "
+                    f"schema. Make sure to provide a URL without parameters "
+                    f"and with a trailing '/' if it is present in the "
+                    f"definition"
+                )
+
             parameters = parse_parameters(
-                endpoint_name,
-                schema.schema.paths[endpoint_name],
-                method,
-                False,
+                endpoint_name=line.endpoint,
+                endpoint_data=schema.schema.paths[line.endpoint],
+                method=line.method.lower(),
+                generate_examples=False,
             )
+
+            if type(line.parameters) is dict:
+                request = line.parameters
+            elif callable(line.parameters):
+                request = line.parameters(parameters, response, request)
+
             variation = [
                 request[parameter.name]
                 if parameter.name in request
@@ -55,33 +88,41 @@ def chain(
             ]
 
             body, request_url = create_request_payload(
-                endpoint_name, parameters, variation, base_url
+                line.endpoint, parameters, variation, base_url
             )
 
             response = make_request(
                 request_url=request_url,
-                method=method,
+                method=line.method,
                 body=body,
                 schema=schema,
+                before_request_send= lambda request:
+                    before_request_send(line.endpoint, request)
             )
 
             if response.type != "success":
-                print(
-                    colored(
-                        json.dumps(
-                            response._asdict(), indent=4, default=str
-                        ),
-                        "yellow",
-                    )
+                raise Exception(json.dumps(
+                    response._asdict() \
+                        if hasattr(response,'_asdict') \
+                        else response,
+                    indent=4,
+                    default=str
+                ))
+
+            response = response.raw_response
+
+        elif type(line) is Validate:
+            print(
+                colored(f"[{index}/{len(definition)}] ", "cyan")
+                + colored(
+                    f"Validating the response",
+                    "blue",
                 )
+            )
+            if not line.validate(response):
                 return
-
-            if response.type == "invalid_request_url":
-                raise Exception(response.type)
-
-            if "parsed_response" in response._asdict():
-                response = response.parsed_response
         else:
-            request = line(response)
-            if not request:
-                return
+            raise Exception(
+                f'Invalid chain line detected at index {index}:"'
+                f' {str(line)}'
+            )

@@ -3,7 +3,8 @@
 import json
 import urllib.parse as urlparse
 from json import JSONDecodeError
-from typing import Callable, Dict, NamedTuple, Tuple, Union
+from typing import Callable, Dict, Tuple, Union
+from dataclasses import dataclass
 from urllib.parse import parse_qs
 from openapi_core.contrib.requests import (
     RequestsOpenAPIRequest,
@@ -20,7 +21,8 @@ from open_api_tools.common.load_schema import Schema
 session = Session()
 
 
-class ErrorMessage(NamedTuple):
+@dataclass
+class ErrorMessage:
     """An error returned by the validator."""
 
     type: str
@@ -30,7 +32,8 @@ class ErrorMessage(NamedTuple):
     extra: Dict
 
 
-class PreparedRequest(NamedTuple):
+@dataclass
+class PreparedRequest:
     """A successful prepared request."""
 
     type: str
@@ -113,11 +116,13 @@ def prepare_request(
     )
 
 
-class FiledRequest(NamedTuple):
+@dataclass
+class FiledRequest:
     """A successful filed request with a response."""
 
     type: str
     parsed_response: object
+    raw_response: object
 
 
 def file_request(
@@ -215,7 +220,11 @@ def file_request(
         after_error_occurred(error_response)
         return error_response
 
-    return FiledRequest(type="success", parsed_response=parsed_response)
+    return FiledRequest(
+        type="success",
+        parsed_response=parsed_response,
+        raw_response=response
+    )
 
 
 def make_request(

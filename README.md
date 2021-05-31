@@ -252,7 +252,7 @@ schema = load_schema('open_api.yaml')
 
 post_id = 345
 
-def create_post(_response):
+def create_post(_arguments, _response, _previous_values):
     return {
         "requestBody": [
             'application/json',
@@ -270,7 +270,7 @@ chain(
         Request(method='GET', endpoint='/api/posts/'),
         Validate(
             validate=\
-                lambda response: post_id not in response.parsed_respose.posts
+                lambda response: post_id not in response.json().posts
         ),
         Request(
             method='POST',
@@ -278,7 +278,7 @@ chain(
             parameters=create_post
         ),
         Validate(
-            validate=lambda response: post_id in response.parsed_response.posts
+            validate=lambda response: post_id in response.json().posts
         ),
         Request(
             method='DELETE',
@@ -287,17 +287,27 @@ chain(
         ),
         Validate(
             validate= \
-                lambda response: post_id not in response.parsed_respose.posts
+                lambda response: post_id not in response.json().posts
         ),
     ],
 )
 ```
 
+The response object for the validation function [is described
+here](https://docs.python-requests.org/en/master/api/#requests.Response).
+
 Keep in mind that the `endpoint` string in the `Request` class should be
 identical to one of the endpoints in your OpenAPI schema. For example, you
-should specify `/api/user/<user_id>` instead of `/api/user/1`. Both path
+should specify `/api/user/{user_id}/` instead of `/api/user/1/`. Both path
 parameters and query parameters should be supplied in the `parameters`
-dictionary or returned by the `parameters` function. Additionally, you can
+dictionary or returned by the `parameters` function.
+
+Also, `Request` can omit `parameters` if there aren't any to define.
+Alternatively, you can supply a dictionary, or a function that would get called
+with three arguments:
+(list_of_parameter_objects, previous_response, previous_parameter_values).
+
+Additionally, you can
 supply a `requestBody` parameter. Unlike most parameters, `requestBody` must be
 a `Tuple[str,str]` where the first string is a MIME type and the second string
 is a serialized version of the request body.

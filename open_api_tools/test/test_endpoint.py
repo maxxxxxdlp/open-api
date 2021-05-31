@@ -36,7 +36,7 @@ def parse_parameters(
     parameters: List[ParameterData] = [
         InlineClass(
             {
-                "name": "requestData",
+                "name": "requestBody",
                 "examples": after_examples_generated(
                     endpoint_name, { "name": "requestBody" }, [None, None]
                 )
@@ -61,37 +61,38 @@ def parse_parameters(
 
         validate_parameter_data(endpoint_name, parameter_data)
 
-        if generate_examples and not parameter.examples:
-            letters = None
-            length = 8
-            if parameter.schema.type == "string":
-                letters = string.ascii_letters
+        if generate_examples:
+            if not parameter.examples:
+                letters = None
                 length = 8
-            elif parameter.schema.type == "integer":
-                letters = string.digits
-                length = 2
+                if parameter.schema.type == "string":
+                    letters = string.ascii_letters
+                    length = 8
+                elif parameter.schema.type == "integer":
+                    letters = string.digits
+                    length = 2
 
-            if letters:
-                parameter_data.examples = [
-                    "".join(random.choice(letters) for _i in range(10))
-                    for _ii in range(random.randint(1,length))
-                ]
+                if letters:
+                    parameter_data.examples = [
+                        "".join(random.choice(letters) for _i in range(10))
+                        for _ii in range(random.randint(1,length))
+                    ]
 
-        if parameter_data.type == "boolean":
-            parameter_data.examples = [True, False]
+            if parameter_data.type == "boolean":
+                parameter_data.examples = [True, False]
 
-        if (
-            not parameter_data.required
-            and "" not in parameter_data.examples
-        ):
-            parameter_data.examples.append("")
+            if (
+                not parameter_data.required
+                and "" not in parameter_data.examples
+            ):
+                parameter_data.examples.append("")
 
-        if after_examples_generated:
-            parameter_data.examples = after_examples_generated(
-                endpoint_name,
-                parameter.raw_element,
-                parameter_data.examples,
-            )
+            if after_examples_generated:
+                parameter_data.examples = after_examples_generated(
+                    endpoint_name,
+                    parameter.raw_element,
+                    parameter_data.examples,
+                )
 
         parameters.append(parameter_data)
 
@@ -116,12 +117,17 @@ def test_endpoint(
 ):
     print(colored("Testing [{}] `{}`".format(method, endpoint_name), "red"))
 
+    method=method.lower()
+
     if base_url is None or base_url == '' or base_url == '/':
         raise Exception(
             'Invalid base_url. Make sure the first server in the OpenAPI\'s '
             '"servers" section has a valid URL (relative path\'s are not "'
             'accepted)'
         )
+
+    if parameter_constraints is None:
+        parameter_constraints = {}
 
     parameters = parse_parameters(
         endpoint_name=endpoint_name,
