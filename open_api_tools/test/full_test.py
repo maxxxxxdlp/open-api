@@ -3,31 +3,30 @@
 from typing import Dict, List, Union, Callable
 from termcolor import colored
 
-from open_api_tools.common.load_schema import Schema, load_schema
+from open_api_tools.common.load_schema import Schema
 from open_api_tools.validate.index import ErrorMessage
 from open_api_tools.test.test_endpoint import test_endpoint
 
 
 def test(
     schema: Schema,
-    error_callback: Callable[[ErrorMessage], None],
     max_urls_per_endpoint: int = 50,
     failed_request_limit: int = 100,
     methods_to_test=None,
     parameter_constraints: Union[
         None, Dict[str, Callable[[bool, str, Dict[str, any]], bool]]
     ] = None,
-    parameter_values_generator: Union[
+    after_error_occurred: Callable[[ErrorMessage], None] = None,
+    after_examples_generated: Union[
         None, Callable[[str, Dict[str, any], List[any]], List[any]]
     ] = None,
+    before_request_send: Union[Callable[[str, any],any],None] = None
 ) -> None:
     """Run a comprehensive test on all API endpoints.
 
     Params:
         schema:
             The schema object
-        error_callback:
-            Function that would be called in case of any errors
         max_urls_per_endpoint:
             Max amount of test URLs to create for any single endpoint
         failed_request_limit:
@@ -41,8 +40,12 @@ def test(
             some JSON payload
         parameter_constraints:
             Described in `README.md`
-        parameter_values_generator:
+        after_examples_generated:
             Described in `README.md`
+        after_error_occurred:
+            Function that would be called in case of any errors
+        before_request_send:
+            A pre-hook that allows to amend the request object
 
     Returns:
         None
@@ -83,15 +86,22 @@ def test(
                 and getattr(endpoint_data, method) is not None
             ):
                 test_endpoint(
-                    endpoint_name,
-                    method,
-                    base_url,
-                    should_continue_on_fail,
-                    schema,
-                    max_urls_per_endpoint,
-                    error_callback,
-                    parameter_constraints,
-                    parameter_values_generator,
+                    endpoint_name=endpoint_name,
+                    method=method,
+                    base_url=base_url,
+                    should_continue_on_fail=should_continue_on_fail,
+                    schema=schema,
+                    max_urls_per_endpoint=max_urls_per_endpoint,
+                    parameter_constraints=parameter_constraints,
+                    after_error_occurred=after_error_occurred,
+                    after_examples_generated=after_examples_generated,
+                    before_request_send=
+                        None if before_request_send is None else
+                            lambda request_object:
+                                before_request_send(
+                                    endpoint_name,
+                                    request_object,
+                                ),
                 )
 
                 if failed_requests > failed_request_limit:

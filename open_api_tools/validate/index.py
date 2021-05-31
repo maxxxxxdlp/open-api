@@ -3,7 +3,7 @@
 import json
 import urllib.parse as urlparse
 from json import JSONDecodeError
-from typing import Callable, Dict, NamedTuple, Union
+from typing import Callable, Dict, NamedTuple, Tuple, Union
 from urllib.parse import parse_qs
 from openapi_core.contrib.requests import (
     RequestsOpenAPIRequest,
@@ -41,9 +41,10 @@ class PreparedRequest(NamedTuple):
 def prepare_request(
     request_url: str,
     method: str,
-    body: Union[Dict, None],
-    error_callback: Callable[[ErrorMessage], None],
+    body: Union[Tuple[str, str], None],
     schema: Schema,
+    after_error_occurred: Callable[[ErrorMessage], None] = None,
+    before_request_send: Union[Callable[[any],any],None] = None
 ) -> Union[PreparedRequest, ErrorMessage]:
     """Prepare request and validate the request URL.
 
@@ -51,18 +52,41 @@ def prepare_request(
         request_url (str): request URL
         method (str): HTTP method name
         body (Union[Dict, None]: payload to send along with the request
-        error_callback: function to call in case of an error
         schema (Schema): OpenAPI schema
+        after_error_occurred: function to call in case of an error
+        before_request_send: A pre-hook that allows to amend the request object
 
     Returns:
         object: Prepared request or error message
     """
-    request_validator = RequestValidator(schema.schema)
+
+    if after_error_occurred is None:
+        after_error_occurred = lambda _error: None
+
+    if before_request_send is None:
+        before_request_send = lambda request: request
+
+    request_validator = RequestValidator(schema.open_api_core)
     parsed_url = urlparse.urlparse(request_url)
     base_url = request_url.split("?")[0]
     query_params_dict = parse_qs(parsed_url.query)
 
-    request = Request(method, base_url, params=query_params_dict, data=body)
+    if body is None:
+        headers = {}
+        request_body = ''
+    else:
+        mime_type, request_body = body
+        headers = { 'Content-type': mime_type }
+
+    request = Request(
+        method=method,
+        url=base_url,
+        params=query_params_dict,
+        data=request_body,
+        headers=headers
+    )
+    if before_request_send:
+        request = before_request_send(request)
     openapi_request = RequestsOpenAPIRequest(request)
     request_url_validator = request_validator.validate(openapi_request)
 
@@ -71,14 +95,15 @@ def prepare_request(
         error_response = ErrorMessage(
             type="invalid_request_url",
             title="Invalid Request URL",
-            error_status="Request URL does not meet the "
-            + "OpenAPI Schema requirements",
+            error_status=(
+                "Request URL does not meet the OpenAPI Schema Requirements"
+            ),
             url=request_url,
             extra={
                 "text": error_message,
             },
         )
-        error_callback(error_response)
+        after_error_occurred(error_response)
         return error_response
 
     return PreparedRequest(
@@ -99,8 +124,8 @@ def file_request(
     request,
     openapi_request,
     request_url: str,
-    error_callback: Callable[[ErrorMessage], None],
     schema: Schema,
+    after_error_occurred: Callable[[ErrorMessage], None] = None,
 ) -> Union[ErrorMessage, FiledRequest]:
     """
     Send a prepared request and validate the response.
@@ -109,15 +134,26 @@ def file_request(
         request: request object
         openapi_request: openapi request object
         request_url (str): request url
-        error_callback: function to call in case of an error
+        after_error_occurred: function to call in case of an error
         schema (Schema): OpenAPI schema
 
     Returns:
         Request response or error message
     """
-    response_validator = ResponseValidator(schema.schema)
+
+    if after_error_occurred is None:
+        after_error_occurred = lambda _error: None
+
+    response_validator = ResponseValidator(schema.open_api_core)
     prepared_request = request.prepare()
     response = session.send(prepared_request)
+
+    # FIXME:
+    # test response code is in schema
+    # test response type in in response code
+    # validate the schema using jsonschema
+    # delete the lines below:
+
 
     # make sure that the server did not return an error
     if response.status_code != 200:
@@ -132,7 +168,7 @@ def file_request(
                 "text": response.text,
             },
         )
-        error_callback(error_response)
+        after_error_occurred(error_response)
         return error_response
 
     # make sure the response is a valid JSON object
@@ -149,7 +185,7 @@ def file_request(
                 "text": response.text,
             },
         )
-        error_callback(error_response)
+        after_error_occurred(error_response)
         return error_response
 
     # validate the response against the schema
@@ -161,7 +197,7 @@ def file_request(
     if response_content_validator.errors:
         error_message = list(
             map(
-                lambda e: e.schema_errors,
+                lambda e: str(e),
                 response_content_validator.errors,
             )
         )
@@ -176,7 +212,7 @@ def file_request(
                 "parsed_response": parsed_response,
             },
         )
-        error_callback(error_response)
+        after_error_occurred(error_response)
         return error_response
 
     return FiledRequest(type="success", parsed_response=parsed_response)
@@ -185,9 +221,10 @@ def file_request(
 def make_request(
     request_url: str,
     method: str,
-    body: Union[Dict, None],
-    error_callback: Callable[[ErrorMessage], None],
+    body: Union[Tuple[str, str], None],
     schema: Schema,
+    after_error_occurred: Callable[[ErrorMessage], None] = None,
+    before_request_send: Union[Callable[[any],any],None] = None
 ):
     """
     Combine `prepared_request` and `file_request`.
@@ -199,27 +236,30 @@ def make_request(
         request_url (str): request error
         method (str): HTTP method name
         body (Union[Dict, None]: payload to send along with the request
-        error_callback: function to call in case of an error
         schema (Schema): OpenAPI schema
+        after_error_occurred: function to call in case of an error
+        before_request_send: A pre-hook that allows to amend the request object
 
     Returns:
         Request response or error message
     """
+
     response = prepare_request(
-        request_url,
-        method,
-        body,
-        error_callback,
-        schema
+        request_url=request_url,
+        method=method,
+        body=body,
+        schema=schema,
+        after_error_occurred=after_error_occurred,
+        before_request_send=before_request_send
     )
 
     if response.type != "success":
         return response
 
     return file_request(
-        response.request,
-        response.openapi_request,
-        request_url,
-        error_callback,
-        schema,
+        request=response.request,
+        openapi_request=response.openapi_request,
+        request_url=request_url,
+        schema=schema,
+        after_error_occurred=after_error_occurred,
     )

@@ -19,9 +19,11 @@ class Schema:
 def load_schema(open_api_schema_location)->Schema:
     """Load the OpenAPI schema `.yaml` file."""
     try:
+        # Try to parse the location as a URL and send a request
         urllib.parse.urlparse(open_api_schema_location)
         schema_string = requests.get(open_api_schema_location).content
     except Exception:
+        # Try to read the schema from a local file
         with open(open_api_schema_location) as spec_file:
             schema_string = spec_file.read()
 

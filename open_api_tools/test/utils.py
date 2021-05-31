@@ -20,7 +20,7 @@ class ParameterData:
 
 def validate_parameter_data(
     endpoint_name: str, parameter_data: ParameterData
-) -> Union[str, None]:
+) -> None:
     """
     Validate OpenAPI schema's `parameters` section of an entrypoint.
 
@@ -39,15 +39,16 @@ def validate_parameter_data(
     Raises:
         AssertionError: on validation issue
     """
+    signature = f"({endpoint_name} -> {parameter_data.name})"
     try:
         if (
             parameter_data.type != "boolean"
             and not parameter_data.examples
         ):
-            if not parameter_data.required:
-                return "continue"
-            raise AssertionError(
-                "Non-bool required parameters must have examples defined"
+            print(
+                f"Warning: Non-bool parameters should have examples "
+                f"defined. Otherwise, example values would be auto generated "
+                f"{signature}"
             )
 
         if (
@@ -90,8 +91,7 @@ def validate_parameter_data(
             )
     except AssertionError as e:
         raise AssertionError(
-            "%s (%s -> %s)"
-            % (str(e), endpoint_name, parameter_data.name)
+            f"{e} {signature}"
         )
 
 
@@ -100,7 +100,7 @@ def create_request_payload(
     parameters: List[ParameterData],
     variation: List[any],
     base_url: str,
-) -> Tuple[any, str]:
+) -> Tuple[Tuple[str, str], str]:
     """Fill the parameters into the endpoint URL.
 
     Args:

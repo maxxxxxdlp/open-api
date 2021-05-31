@@ -10,6 +10,8 @@ from open_api_tools.test.utils import create_request_payload
 from open_api_tools.validate.index import make_request
 
 
+# FIXME: add support for changing the request object
+# FIXME: test chain
 def chain(
     schema: Schema,
     definition: List[Union[Tuple[str, str], Callable[[Any], Any]]],
@@ -57,7 +59,10 @@ def chain(
             )
 
             response = make_request(
-                request_url, method, body, lambda _error: None, schema
+                request_url=request_url,
+                method=method,
+                body=body,
+                schema=schema,
             )
 
             if response.type != "success":
