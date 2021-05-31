@@ -37,7 +37,7 @@ repos:
   # - repo: https://github.com/pre-commit/mirrors-eslint
   # global hooks:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -46,29 +46,39 @@ repos:
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-json
+      - id: check-xml
+      - id: check-shebang-scripts-are-executable
       - id: check-merge-conflict
       - id: check-symlinks
       - id: detect-private-key
       - id: mixed-line-ending
       - id: requirements-txt-fixer
+      - id: fix-byte-order-marker
+      - id: fix-encoding-pragma
+      - id: forbid-new-submodules
 
   - repo: https://github.com/maxxxxxdlp/pre-commit
-    rev: v1.0.5
+    rev: v1.0.6
     hooks:
       - id: tsc
       - id: regex-blacklist
         args:
-          - /Users/mambo/site/git/dotfiles/git/regex-blacklist.txt
+          - ~/site/git/dotfiles/git/regex-blacklist.txt
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.0.0
+    hooks:
+      - id: codespell
 
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 21.5b1
     hooks:
       - id: black
         args:
           - --line-length=72
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.0
+    rev: 3.9.2
     hooks:
       - id: flake8
         additional_dependencies: [flake8-bugbear]
@@ -86,7 +96,7 @@ repos:
           - -v 2
 
   - repo: https://github.com/PyCQA/pydocstyle
-    rev: 6.0.0
+    rev: 6.1.1
     hooks:
       - id: pydocstyle
 
@@ -97,7 +107,7 @@ repos:
         exclude: ^docs/
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.12.0
+    rev: v2.18.3
     hooks:
       - id: pyupgrade
 
@@ -117,14 +127,14 @@ repos:
       - id: python-safety-dependencies-check
 
   - repo: https://github.com/lovesegfault/beautysh
-    rev: 6.0.1
+    rev: v6.1.0
     hooks:
       - id: beautysh
         args:
           - --indent-size=2
 
   - repo: https://github.com/jorisroovers/gitlint
-    rev: v0.15.0
+    rev: v0.15.1
     hooks:
       - id: gitlint
 
@@ -137,6 +147,7 @@ repos:
     rev: v0.11.0
     hooks:
       - id: markdownlint
+        files: \.md$
         args:
           - --git-recurse
 
