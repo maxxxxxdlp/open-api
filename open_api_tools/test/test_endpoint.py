@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from typing import Dict, List, Union, Callable
 from termcolor import colored
 import string
@@ -31,6 +32,15 @@ def parse_parameters(
     """Parse endpoint's parameters.
 
     Parse parameters, validate them and generate test values for each.
+
+    Args:
+        endpoint_name: Endpoint name
+        endpoint_data: Endpoint data
+        method: HTTP method
+        generate_examples: Whether to autogenerate examples
+        after_examples_generated:
+            An examples generated post-hook
+            (described in `README.md`)
     """
 
     parameters: List[ParameterData] = [
@@ -38,7 +48,7 @@ def parse_parameters(
             {
                 "name": "requestBody",
                 "examples": after_examples_generated(
-                    endpoint_name, { "name": "requestBody" }, [None, None]
+                    endpoint_name, {"name": "requestBody"}, [None, None]
                 )
                 if after_examples_generated
                 else [None, None],
@@ -46,8 +56,10 @@ def parse_parameters(
         )
     ]
 
-    for parameter in [*endpoint_data.parameters,
-                      *getattr(endpoint_data, method).parameters]:
+    for parameter in [
+        *endpoint_data.parameters,
+        *getattr(endpoint_data, method).parameters,
+    ]:
         parameter_data = ParameterData(
             parameter.name,
             parameter.in_,
@@ -74,8 +86,10 @@ def parse_parameters(
 
                 if letters:
                     parameter_data.examples = [
-                        "".join(random.choice(letters) for _i in range(10))
-                        for _ii in range(random.randint(1,length))
+                        "".join(
+                            random.choice(letters) for _i in range(10)
+                        )
+                        for _ii in range(random.randint(1, length))
                     ]
 
             if parameter_data.type == "boolean":
@@ -113,17 +127,46 @@ def test_endpoint(
     after_examples_generated: Union[
         None, Callable[[str, Dict[str, any], List[any]], List[any]]
     ] = None,
-    before_request_send: Union[Callable[[any], any], None] = None
-):
-    print(colored("Testing [{}] `{}`".format(method, endpoint_name), "red"))
+    before_request_send: Union[Callable[[any], any], None] = None,
+) -> None:
+    """Full test for a single endpoint.
 
-    method=method.lower()
+    Generates test URLs and validates the responses
 
-    if base_url is None or base_url == '' or base_url == '/':
+    Args:
+        endpoint_name: Endpoint name
+        method: HTTP method
+        base_url: Server URL
+        should_continue_on_fail:
+            function that would say whether to continue testing
+        schema: the schema object
+        max_urls_per_endpoint: max number of URLs to test
+        parameter_constraints:
+            Parameter Constraints dictionary
+            (described in `README.md`)
+        after_error_occurred:
+            After error occurred hook
+            (described in `README.md`)
+        after_examples_generated:
+            After examples generated hook
+            (described in `README.md`)
+        before_request_send:
+            Before request send hook
+            (described in `README.md`)
+    """
+    print(
+        colored(
+            "Testing [{}] `{}`".format(method, endpoint_name), "red"
+        )
+    )
+
+    method = method.lower()
+
+    if base_url is None or base_url == "" or base_url == "/":
         raise Exception(
-            'Invalid base_url. Make sure the first server in the OpenAPI\'s '
+            "Invalid base_url. Make sure the first server in the OpenAPI's "
             '"servers" section has a valid URL (relative path\'s are not "'
-            'accepted)'
+            "accepted)"
         )
 
     if parameter_constraints is None:
@@ -174,7 +217,7 @@ def test_endpoint(
     # testing all url variations for validness
     # fetching all the responses
     # validating responses against schema
-    responses: Dict[int, object] = { }
+    responses: Dict[int, object] = {}
     for index, payload in enumerate(payloads):
 
         body, request_url = payload
@@ -246,13 +289,11 @@ def test_endpoint(
                         type="failed_test_constraint",
                         title="Testing constraint failed",
                         error_status=f"Constraint on the {endpoint_name} based "
-                                     + f"on a parameter {parameter_name} failed",
+                        + f"on a parameter {parameter_name} failed",
                         url=payloads[request_index][1],
                         extra={
                             "response": json.dumps(
-                                response,
-                                indent=4,
-                                default=str
+                                response, indent=4, default=str
                             )
                         },
                     )

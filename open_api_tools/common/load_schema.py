@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Load the OpenAPI schema `.yaml` file."""
 
 import json
@@ -12,12 +13,19 @@ import requests
 @dataclass
 class Schema:
     """Parsed OpenAPI schema."""
+
     schema: any
     open_api_core: any
 
 
-def load_schema(open_api_schema_location)->Schema:
-    """Load the OpenAPI schema `.yaml` file."""
+def load_schema(open_api_schema_location: str) -> Schema:
+    """Load the OpenAPI schema `.yaml` file.
+
+    Args:
+        open_api_schema_location:
+            Relative path / absolute path / URLs to a JSON/Yaml OpenAPI
+            schema 3.0 file
+    """
     try:
         # Try to parse the location as a URL and send a request
         urllib.parse.urlparse(open_api_schema_location)

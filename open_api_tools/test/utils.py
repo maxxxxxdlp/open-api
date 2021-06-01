@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Utility functions for running the tests."""
 
 import functools
@@ -90,9 +91,7 @@ def validate_parameter_data(
                 + "validation!"
             )
     except AssertionError as e:
-        raise AssertionError(
-            f"{e} {signature}"
-        )
+        raise AssertionError(f"{e} {signature}")
 
 
 def create_request_payload(

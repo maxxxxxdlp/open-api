@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Run a comprehensive test on all defined endpoints."""
 
 from typing import Dict, List, Union, Callable
@@ -20,11 +21,11 @@ def full_test(
     after_examples_generated: Union[
         None, Callable[[str, Dict[str, any], List[any]], List[any]]
     ] = None,
-    before_request_send: Union[Callable[[str, any],any],None] = None
+    before_request_send: Union[Callable[[str, any], any], None] = None,
 ) -> None:
     """Run a comprehensive test on all API endpoints.
 
-    Params:
+    Args:
         schema:
             The schema object
         max_urls_per_endpoint:
@@ -95,13 +96,12 @@ def full_test(
                     parameter_constraints=parameter_constraints,
                     after_error_occurred=after_error_occurred,
                     after_examples_generated=after_examples_generated,
-                    before_request_send=
-                        None if before_request_send is None else
-                            lambda request_object:
-                                before_request_send(
-                                    endpoint_name,
-                                    request_object,
-                                ),
+                    before_request_send=None
+                    if before_request_send is None
+                    else lambda request_object: before_request_send(
+                        endpoint_name,
+                        request_object,
+                    ),
                 )
 
                 if failed_requests > failed_request_limit:

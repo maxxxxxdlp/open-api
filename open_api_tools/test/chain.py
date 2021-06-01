@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Allow to test a chain of requests."""
 import json
 from typing import Callable, List, Dict, Union
@@ -13,34 +14,33 @@ from open_api_tools.validate.index import make_request
 
 @dataclass
 class Request:
-    """Chain's request defintion."""
+    """Chain's request definition."""
 
     method: str
     endpoint: str
     parameters: Union[
-        None,
-        Dict[str,any], Callable[[any, List[any]],Dict[str,any]]
+        None, Dict[str, any], Callable[[any, List[any]], Dict[str, any]]
     ] = None
 
 
 @dataclass
 class Validate:
-    """Chain's validator defintion."""
+    """Chain's validator definition."""
 
-    validate: Callable[[any],bool]
+    validate: Callable[[any], bool]
 
 
 def chain(
     schema: Schema,
     definition: List[Union[Request, Validate]],
-    before_request_send: Union[Callable[[str, any],any],None] = None
+    before_request_send: Union[Callable[[str, any], any], None] = None,
 ):
     """Create a chain of requests.
 
-    params:
+    Args:
         schema: A schema object
-        defintion:
-            Chain defintion. More info in `README.md`
+        definition:
+            Chain definition. More info in `README.md`
         before_request_send:
             A pre-hook that allows to amend the request object
     """
@@ -97,18 +97,21 @@ def chain(
                 method=line.method.lower(),
                 body=body,
                 schema=schema,
-                before_request_send= lambda request:
-                    before_request_send(line.endpoint, request)
+                before_request_send=lambda request: before_request_send(
+                    line.endpoint, request
+                ),
             )
 
             if response.type != "success":
-                raise Exception(json.dumps(
-                    response._asdict() \
-                        if hasattr(response,'_asdict') \
+                raise Exception(
+                    json.dumps(
+                        response._asdict()
+                        if hasattr(response, "_asdict")
                         else response,
-                    indent=4,
-                    default=str
-                ))
+                        indent=4,
+                        default=str,
+                    )
+                )
 
             response = response.response
 
@@ -116,7 +119,7 @@ def chain(
             print(
                 colored(f"[{index}/{len(definition)}] ", "cyan")
                 + colored(
-                    f"Validating the response",
+                    "Validating the response",
                     "blue",
                 )
             )
@@ -125,5 +128,5 @@ def chain(
         else:
             raise Exception(
                 f'Invalid chain line detected at index {index}:"'
-                f' {str(line)}'
+                f" {str(line)}"
             )
