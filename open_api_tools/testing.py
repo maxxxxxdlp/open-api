@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# from open_api_tools.test.full_test import full_test
-from open_api_tools.test.chain import chain, Request, Validate
+from open_api_tools.test.full_test import full_test
+# from open_api_tools.test.chain import chain, Request, Validate
 from open_api_tools.common.load_schema import load_schema
-import json
+# import json
 
-schema = load_schema(open_api_schema_location="specify7.json")
+schema = load_schema(open_api_schema_location="lifemapper.yaml")
 
 
 def after_error_occurred(*error_message):
@@ -24,7 +24,6 @@ def before_request_send(_endpoint, request_object):
     return request_object
 
 
-"""
 full_test(
     schema=schema,
     max_urls_per_endpoint=50,
@@ -58,3 +57,5 @@ chain(
     ],
     before_request_send=before_request_send,
 )
+
+"""

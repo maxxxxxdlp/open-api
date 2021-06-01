@@ -105,9 +105,7 @@ def chain(
             if response.type != "success":
                 raise Exception(
                     json.dumps(
-                        response._asdict()
-                        if hasattr(response, "_asdict")
-                        else response,
+                        response,
                         indent=4,
                         default=str,
                     )

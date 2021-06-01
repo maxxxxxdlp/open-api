@@ -149,7 +149,7 @@ def prepare_request(
         request = before_request_send(request)
     openapi_request = RequestsOpenAPIRequest(request)
     request_url_validator = request_validator.validate(openapi_request)
-    endpoint_schema.requestBody = request_body
+    endpoint_schema.requestBody = request_body_schema
 
     if request_url_validator.errors:
         error_message = request_url_validator.errors
@@ -217,11 +217,11 @@ def file_request(
         schema.schema.paths[endpoint_name], method
     )
 
-    response_code = str(response.status_code)
+    response_code = response.status_code
     if response_code not in endpoint_schema.responses:
         error_response = ErrorMessage(
             type="invalid_response",
-            title="Invalid Request",
+            title="Invalid Response",
             error_status=(
                 f"Response code ({response_code}) is invalid"
             ),
@@ -232,13 +232,13 @@ def file_request(
 
     response_schema = endpoint_schema.responses[response_code]
 
-    if response_code == "204":
+    if response_code == 204:
         return FiledRequest(type="success", response=response)
 
     elif not hasattr(response_schema, "content"):
         error_response = ErrorMessage(
             type="invalid_response",
-            title="Invalid Request",
+            title="Invalid Response",
             error_status=(
                 f"No response schema is defined for "
                 f"{response_code} response code."
@@ -255,7 +255,7 @@ def file_request(
     if content_type not in response_types:
         error_response = ErrorMessage(
             type="invalid_response",
-            title="Invalid Request",
+            title="Invalid Response",
             error_status=(
                 f"The response's content type ({content_type}) "
                 f"is not in the list of defined content types "
@@ -285,7 +285,7 @@ def file_request(
     except Exception as error:
         error_response = ErrorMessage(
             type="invalid_response",
-            title="Invalid response",
+            title="Invalid Response",
             error_status="Response content does not meet the OpenAPI "
             + "Schema requirements",
             url=request_url,

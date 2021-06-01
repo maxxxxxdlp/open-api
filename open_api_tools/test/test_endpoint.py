@@ -247,7 +247,7 @@ def test_endpoint(
             print(
                 colored(
                     json.dumps(
-                        response._asdict(), indent=4, default=str
+                        response, indent=4, default=str
                     ),
                     "yellow",
                 )
@@ -258,7 +258,7 @@ def test_endpoint(
         if response.type == "invalid_request":
             raise Exception(response.type)
 
-        if "parsed_response" in response._asdict():
+        if hasattr(response,'parsed_response'):
             responses[index] = response.response
 
     # running tests though constraints
