@@ -130,7 +130,7 @@ def create_request_payload(
                         parameter[0].name,
                         urllib.parse.quote(str(parameter[1])),
                     )
-                    if parameter[1] != ""
+                    if parameter[1] != "" and parameter[1] is not None
                     else request_url
                 )
             ),

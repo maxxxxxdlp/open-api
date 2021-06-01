@@ -160,10 +160,6 @@ the serialized payload that would be send with the request.
 the request object before a request is sent. This is useful if you want to edit
 the headers or add authentication cookies.
 
-Keep in mind that this hook is called AFTER request object validation, which
-means you should make sure not to make modifications that may cause the request
-to fail unnecessarily.
-
 Example usage:
 
 ```python
@@ -183,7 +179,6 @@ full_test(
     schema=schema,
     max_urls_per_endpoint=50,
     failed_request_limit=10,
-    parameter_constraints={},
     before_request_send=before_request_send
 )
 ```
@@ -204,7 +199,8 @@ Each handler function would receive the following arguments:
   works with
 * path (str): name of the current endpoint (useful if the same
   parameter is shared between multiple endpoints)
-* response (any): full response object
+* response (any): [response
+  object](https://docs.python-requests.org/en/master/api/#requests.Response).
 
 Example usage:
 
@@ -219,7 +215,7 @@ def get_popular_posts(
     endpoint: str,
     response: object
 ):
-    for post in response:
+    for post in response.json():
         if post.popularity < parameter_value:
             raise Exception(
                 f'{endpoint} failed to filter the posts by popularity'
@@ -300,7 +296,11 @@ Keep in mind that the `endpoint` string in the `Request` class should be
 identical to one of the endpoints in your OpenAPI schema. For example, you
 should specify `/api/user/{user_id}/` instead of `/api/user/1/`. Both path
 parameters and query parameters should be supplied in the `parameters`
-dictionary or returned by the `parameters` function.
+dictionary or returned by the `parameters` function. If `parameters` is a
+function, it would get called with these arguments:
+(list_of_parameter_objects, previous_response, previous_parameter_values).
+Alternatively, you can omit the `parameters` key altogether if the endpoint
+doesn't expect any.
 
 Also, `Request` can omit `parameters` if there aren't any to define.
 Alternatively, you can supply a dictionary, or a function that would get called
@@ -339,6 +339,7 @@ schema = load_schema('open_api.yaml')
 response = make_request(
   schema=schema,
   request_url='http://localhost/api/posts/1/?update_indexes=true',
+  endpoint_name='/api/posts/<post_id>',
   method='POST',
   body=('application/json', json.dumps({"name": 'New post name'})),
 )

@@ -17,6 +17,7 @@ from openapi_core.validation.response.validators import (
 from requests import Request, Session
 
 from open_api_tools.common.load_schema import Schema
+from open_api_tools.common.transform_schema import validate_object
 
 session = Session()
 
@@ -29,7 +30,7 @@ class ErrorMessage:
     title: str
     error_status: str
     url: str
-    extra: Dict
+    extra: Dict = None
 
 
 @dataclass
@@ -42,20 +43,22 @@ class PreparedRequest:
 
 
 def prepare_request(
+    schema: Schema,
     request_url: str,
+    endpoint_name: str,
     method: str,
     body: Union[Tuple[str, str], None],
-    schema: Schema,
     after_error_occurred: Callable[[ErrorMessage], None] = None,
     before_request_send: Union[Callable[[any],any],None] = None
 ) -> Union[PreparedRequest, ErrorMessage]:
     """Prepare request and validate the request URL.
 
     Args:
+        schema (Schema): OpenAPI schema
         request_url (str): request URL
+        endpoint_name (str): endpoint name
         method (str): HTTP method name
         body (Union[Dict, None]: payload to send along with the request
-        schema (Schema): OpenAPI schema
         after_error_occurred: function to call in case of an error
         before_request_send: A pre-hook that allows to amend the request object
 
@@ -76,10 +79,77 @@ def prepare_request(
 
     if body is None:
         headers = {}
+        mime_type = ''
         request_body = ''
     else:
         mime_type, request_body = body
         headers = { 'Content-type': mime_type }
+
+    endpoint_schema = getattr(schema.schema.paths[endpoint_name],method)
+    request_body_schema = endpoint_schema.requestBody
+    endpoint_schema.requestBody = None
+
+    if request_body_schema is not None:
+        if request_body_schema.required \
+            and request_body == '':
+            error_response = ErrorMessage(
+                type="invalid_request",
+                title="Invalid Request",
+                error_status=(
+                    "Required requestBody is missing"
+                ),
+                url=request_url,
+                extra={
+                    "body": body,
+                    "mime_type": mime_type
+                },
+            )
+            after_error_occurred(error_response)
+            return error_response
+
+        accepted_content_types = \
+            list(request_body_schema.content.raw_element.keys())
+        if mime_type \
+            not in accepted_content_types:
+            error_response = ErrorMessage(
+                type="invalid_request",
+                title="Invalid Request",
+                error_status=(
+                    f'Request body\'s content type '
+                    f'({mime_type}) is not in '
+                    f'the list of accepted content types '
+                    f'({accepted_content_types})'
+                ),
+                url=request_url,
+                extra={
+                    "body": body,
+                    "mime_type": mime_type
+                },
+            )
+            after_error_occurred(error_response)
+            return error_response
+
+        try:
+            validate_object(
+                getattr(
+                    request_body_schema.content.raw_element,mime_type
+                ).schema,
+                schema.schema.components.raw_element,
+                headers,
+                mime_type,
+            )
+        except Exception as error:
+            error_response = ErrorMessage(
+                type="invalid_request",
+                title="Invalid Request",
+                error_status=str(error),
+                url=request_url,
+                extra={
+                    "error_object": json.dumps(error,default=str)
+                },
+            )
+            after_error_occurred(error_response)
+            return error_response
 
     request = Request(
         method=method,
@@ -92,12 +162,13 @@ def prepare_request(
         request = before_request_send(request)
     openapi_request = RequestsOpenAPIRequest(request)
     request_url_validator = request_validator.validate(openapi_request)
+    endpoint_schema.requestBody = request_body
 
     if request_url_validator.errors:
         error_message = request_url_validator.errors
         error_response = ErrorMessage(
-            type="invalid_request_url",
-            title="Invalid Request URL",
+            type="invalid_request",
+            title="Invalid Request",
             error_status=(
                 "Request URL does not meet the OpenAPI Schema Requirements"
             ),
@@ -121,100 +192,109 @@ class FiledRequest:
     """A successful filed request with a response."""
 
     type: str
-    parsed_response: object
-    raw_response: object
+    response: object
 
 
 def file_request(
-    request,
-    openapi_request,
-    request_url: str,
     schema: Schema,
+    request_url: str,
+    endpoint_name: str,
+    request,
     after_error_occurred: Callable[[ErrorMessage], None] = None,
 ) -> Union[ErrorMessage, FiledRequest]:
     """
     Send a prepared request and validate the response.
 
     Args:
+        schema (Schema): OpenAPI schema
+        request_url (str): request url
+        endpoint_name (str): endpoint name
         request: request object
         openapi_request: openapi request object
-        request_url (str): request url
         after_error_occurred: function to call in case of an error
-        schema (Schema): OpenAPI schema
 
     Returns:
         Request response or error message
     """
 
+    method = request.method.lower()
+
     if after_error_occurred is None:
         after_error_occurred = lambda _error: None
 
-    response_validator = ResponseValidator(schema.open_api_core)
     prepared_request = request.prepare()
     response = session.send(prepared_request)
 
-    # FIXME:
-    # test response code is in schema
-    # test response type in in response code
-    # validate the schema using jsonschema
-    # delete the lines below:
-
-
     # make sure that the server did not return an error
-    if response.status_code != 200:
+    endpoint_schema = getattr(schema.schema.paths[endpoint_name], method)
+
+    response_code = str(response.status_code)
+    if response_code not in endpoint_schema.responses:
         error_response = ErrorMessage(
-            type="invalid_response_code",
-            title="Invalid Response",
-            error_status="Response status code indicates an error has "
-            + "occurred",
+            type="invalid_response",
+            title="Invalid Request",
+            error_status=(
+                f"Response code ({response_code}) is invalid"
+            ),
             url=request_url,
-            extra={
-                "status_code": response.status_code,
-                "text": response.text,
-            },
         )
         after_error_occurred(error_response)
         return error_response
 
-    # make sure the response is a valid JSON object
+    response_schema = \
+        endpoint_schema.responses[response_code]
+
+    if response_code == "204":
+        return FiledRequest(
+            type="success",
+            response=response
+        )
+
+    elif not hasattr(response_schema, 'content'):
+        error_response = ErrorMessage(
+            type="invalid_response",
+            title="Invalid Request",
+            error_status=(
+                f"No response schema is defined for "
+                f"{response_code} response code."
+            ),
+            url=request_url,
+        )
+        after_error_occurred(error_response)
+        return error_response
+
+    response_types = list(response_schema.content.keys())
+
+    content_type = response.headers["Content-Type"]
+
+    if content_type not in response_types:
+        raise Exception(
+            f"The response's content type ({content_type}) "
+            f"is not in the list of defined content types "
+            f"({', '.join(response_types)})."
+        )
+
+    # Use JSON Schema to validate a JSON response
+    openapi_response_schema = \
+        response_schema.content[content_type].raw_element['schema']
     try:
-        parsed_response = json.loads(response.text)
-    except JSONDecodeError:
+        validate_object(
+            openapi_response_schema,
+            schema.schema.components.raw_element,
+            response.content,
+            content_type,
+        )
+    except Exception as error:
         error_response = ErrorMessage(
-            type="invalid_response_mime_type",
+            type="invalid_response",
             title="Invalid response",
-            error_status="Unable to parse JSON response",
-            url=request_url,
-            extra={
-                "status_code": response.status_code,
-                "text": response.text,
-            },
-        )
-        after_error_occurred(error_response)
-        return error_response
-
-    # validate the response against the schema
-    formatted_response = RequestsOpenAPIResponseFactory.create(response)
-    response_content_validator = response_validator.validate(
-        openapi_request, formatted_response
-    )
-
-    if response_content_validator.errors:
-        error_message = list(
-            map(
-                lambda e: str(e),
-                response_content_validator.errors,
-            )
-        )
-        error_response = ErrorMessage(
-            type="invalid_response_schema",
-            title="Invalid response schema",
             error_status="Response content does not meet the OpenAPI "
-            + "Schema requirements",
+                         + "Schema requirements",
             url=request_url,
             extra={
-                "text": error_message,
-                "parsed_response": parsed_response,
+                "error": json.dumps(error,indent=4,default=str),
+                "response": json.dumps(response, indent=4, default=str),
+                "response_content": response.content,
             },
         )
         after_error_occurred(error_response)
@@ -222,16 +302,16 @@ def file_request(
 
     return FiledRequest(
         type="success",
-        parsed_response=parsed_response,
-        raw_response=response
+        response=response
     )
 
 
 def make_request(
+    schema: Schema,
     request_url: str,
+    endpoint_name: str,
     method: str,
     body: Union[Tuple[str, str], None],
-    schema: Schema,
     after_error_occurred: Callable[[ErrorMessage], None] = None,
     before_request_send: Union[Callable[[any],any],None] = None
 ):
@@ -242,10 +322,11 @@ def make_request(
     step.
 
     Args:
-        request_url (str): request error
+        schema (Schema): OpenAPI schema
+        request_url (str): full request url
+        endpoint_name (str): endpoint name
         method (str): HTTP method name
         body (Union[Dict, None]: payload to send along with the request
-        schema (Schema): OpenAPI schema
         after_error_occurred: function to call in case of an error
         before_request_send: A pre-hook that allows to amend the request object
 
@@ -254,10 +335,11 @@ def make_request(
     """
 
     response = prepare_request(
+        schema=schema,
         request_url=request_url,
+        endpoint_name=endpoint_name,
         method=method,
         body=body,
-        schema=schema,
         after_error_occurred=after_error_occurred,
         before_request_send=before_request_send
     )
@@ -266,9 +348,9 @@ def make_request(
         return response
 
     return file_request(
-        request=response.request,
-        openapi_request=response.openapi_request,
-        request_url=request_url,
         schema=schema,
+        request=response.request,
+        endpoint_name=endpoint_name,
+        request_url=request_url,
         after_error_occurred=after_error_occurred,
     )

@@ -27,8 +27,10 @@ full_test(
 )
 """
 
-def params(arg, arg1, arg2,):
-    raise Exception(arg, arg1, arg2)
+def params(arg, arg1, arg2):
+    return {
+        "ds_id": 8,
+    }
 
 chain(
     schema=schema,

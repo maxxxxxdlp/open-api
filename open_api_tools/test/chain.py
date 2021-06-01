@@ -93,7 +93,8 @@ def chain(
 
             response = make_request(
                 request_url=request_url,
-                method=line.method,
+                endpoint_name=line.endpoint,
+                method=line.method.lower(),
                 body=body,
                 schema=schema,
                 before_request_send= lambda request:
@@ -109,7 +110,7 @@ def chain(
                     default=str
                 ))
 
-            response = response.raw_response
+            response = response.response
 
         elif type(line) is Validate:
             print(

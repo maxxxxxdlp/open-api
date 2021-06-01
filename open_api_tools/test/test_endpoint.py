@@ -154,7 +154,7 @@ def test_endpoint(
     )
 
     print(
-        "Created %d test URLS for the `%s` endpoint"
+        "Created %d test URLs for the `%s` endpoint"
         % (len(payloads), endpoint_name)
     )
 
@@ -167,7 +167,7 @@ def test_endpoint(
             )
         )
         print(
-            "Downsizing the sample of test URLS to %d"
+            "Downsizing the sample of test URLs to %d"
             % max_urls_per_endpoint
         )
 
@@ -192,6 +192,7 @@ def test_endpoint(
 
         response = make_request(
             request_url=request_url,
+            endpoint_name=endpoint_name,
             method=method,
             body=body,
             schema=schema,
@@ -211,11 +212,11 @@ def test_endpoint(
             if not should_continue_on_fail():
                 return
 
-        if response.type == "invalid_request_url":
+        if response.type == "invalid_request":
             raise Exception(response.type)
 
         if "parsed_response" in response._asdict():
-            responses[index] = response.parsed_response
+            responses[index] = response.response
 
     # running tests though constraints
     defined_constraints = {
@@ -224,7 +225,7 @@ def test_endpoint(
         if parameter_name in parameter_names
     }
     if defined_constraints:
-        for request_index, response_data in responses.items():
+        for request_index, response_object in responses.items():
             for (
                 parameter_name,
                 constraint_function,
@@ -239,7 +240,7 @@ def test_endpoint(
                     ].default
 
                 if not constraint_function(
-                    parameter_value, endpoint_name, response_data
+                    parameter_value, endpoint_name, response_object
                 ):
                     error_message = ErrorMessage(
                         type="failed_test_constraint",
@@ -247,7 +248,13 @@ def test_endpoint(
                         error_status=f"Constraint on the {endpoint_name} based "
                                      + f"on a parameter {parameter_name} failed",
                         url=payloads[request_index][1],
-                        extra={ "parsed_response": response_data },
+                        extra={
+                            "response": json.dumps(
+                                response,
+                                indent=4,
+                                default=str
+                            )
+                        },
                     )
                     after_error_occurred(error_message)
                     print(

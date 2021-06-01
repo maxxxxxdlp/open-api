@@ -5,6 +5,7 @@ import re
 import json
 from jsonschema import validate
 from openapi_schema_to_json_schema import to_json_schema
+from typing import Dict
 
 
 def resolve_schema_references(open_api):
@@ -41,7 +42,12 @@ def resolve_schema_references(open_api):
     return json.loads(open_api_string)
 
 
-def validate_object(schema, components, content, mime_type):
+def validate_object(
+    schema: Dict[str,any],
+    components: Dict[str, any],
+    content: str,
+    mime_type: str
+):
     """Validate a response object or request body object.
 
     ...by transforming it to JSON schema first.
