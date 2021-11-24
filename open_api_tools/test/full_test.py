@@ -157,6 +157,8 @@ def test(
     parameter_constraints: Union[
         None, Dict[str, Callable[[bool, str, Dict[str, any]], bool]]
     ] = None,
+    # If specified, only these endpoints would be tested
+    endpoints_to_test: List[str] = None,
 ) -> None:
     """Run a comprehensive test on all API endpoints.
 
@@ -174,6 +176,9 @@ def test(
     failed_requests = 0
 
     for endpoint_name, endpoint_data in schema.paths.items():
+
+        if endpoints_to_test is not None and endpoint_name not in endpoints_to_test:
+            continue
 
         print(
             colored(
