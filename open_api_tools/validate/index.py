@@ -9,7 +9,10 @@ from urllib.parse import parse_qs
 from openapi_core.contrib.requests import (
     RequestsOpenAPIRequest,
 )
-from openapi_core.validation.request.validators import RequestValidator
+# from openapi_core.validation.request.validators import RequestValidator
+from openapi_core.validation.request.validators import (
+    V30RequestValidator, V31RequestValidator
+)
 from requests import Request, Session
 
 from open_api_tools.common.load_schema import Schema
@@ -68,7 +71,8 @@ def prepare_request(
     if before_request_send is None:
         before_request_send = lambda request: request
 
-    request_validator = RequestValidator(schema.open_api_core)
+    # TODO: find OpenAPI version in schema and use the correct validator
+    request_validator = V30RequestValidator(schema.open_api_core)
     parsed_url = urlparse.urlparse(request_url)
     base_url = request_url.split("?")[0]
     query_params_dict = parse_qs(parsed_url.query)
@@ -148,11 +152,14 @@ def prepare_request(
     if before_request_send:
         request = before_request_send(request)
     openapi_request = RequestsOpenAPIRequest(request)
-    request_url_validator = request_validator.validate(openapi_request)
+    # request_url_validator = request_validator.validate(openapi_request)
     endpoint_schema.requestBody = request_body_schema
 
-    if request_url_validator.errors:
-        error_message = request_url_validator.errors
+    try:
+        request_validator.validate(openapi_request)
+    except Exception as e:
+    # if request_url_validator.errors:
+    #     error_message = request_url_validator.errors
         error_response = ErrorMessage(
             type="invalid_request",
             title="Invalid Request",
@@ -161,7 +168,8 @@ def prepare_request(
             ),
             url=request_url,
             extra={
-                "text": error_message,
+                # "text": error_message,
+                "text": str(e)
             },
         )
         after_error_occurred(error_response)
@@ -217,8 +225,8 @@ def file_request(
         schema.schema.paths[endpoint_name], method
     )
 
-    response_code = response.status_code
-    if response_code not in endpoint_schema.responses:
+    response_code = str(response.status_code)
+    if response_code not in endpoint_schema.responses.keys():
         error_response = ErrorMessage(
             type="invalid_response",
             title="Invalid Response",
@@ -232,7 +240,7 @@ def file_request(
 
     response_schema = endpoint_schema.responses[response_code]
 
-    if response_code == 204:
+    if response_code == "204":
         return FiledRequest(type="success", response=response)
 
     elif not hasattr(response_schema, "content"):
