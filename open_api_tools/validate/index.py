@@ -2,6 +2,7 @@
 """A validator for request/response objects powered by OpenAPI schema."""
 
 import json
+from jsonschema.exceptions import RefResolutionError
 import urllib.parse as urlparse
 from typing import Callable, Dict, Tuple, Union
 from dataclasses import dataclass
@@ -72,7 +73,7 @@ def prepare_request(
         before_request_send = lambda request: request
 
     # TODO: find OpenAPI version in schema and use the correct validator
-    request_validator = V30RequestValidator(schema.open_api_core)
+    request_validator = V31RequestValidator(schema.open_api_core)
     parsed_url = urlparse.urlparse(request_url)
     base_url = request_url.split("?")[0]
     query_params_dict = parse_qs(parsed_url.query)
@@ -290,6 +291,13 @@ def file_request(
             response.content,
             content_type,
         )
+    except RefResolutionError as err:
+        error_response = ErrorMessage(
+            type="reference_resolution_error",
+            title="jsonschema RefResolutionError",
+            error_status=str(err),
+            url=request_url
+        )
     except Exception as error:
         error_response = ErrorMessage(
             type="invalid_response",
@@ -299,8 +307,8 @@ def file_request(
             url=request_url,
             extra={
                 "error": json.dumps(error, indent=4, default=str),
-                "response": json.dumps(response, indent=4, default=str),
-                "response_content": response.content,
+                # "response": json.dumps(response, indent=4, default=str),
+                # "response_content": response.content,
             },
         )
         after_error_occurred(error_response)

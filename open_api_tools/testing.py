@@ -3,10 +3,11 @@ from open_api_tools.test.full_test import full_test
 # from open_api_tools.test.chain import chain, Request, Validate
 from open_api_tools.common.load_schema import load_schema
 # import json
+schema_fname = "/home/astewart/git/sp_network/sppy/frontend/static/schema/open_api.analyst.yaml"
 
 # schema = load_schema(open_api_schema_location="lifemapper.yaml")
-schema = load_schema("/home/astewart/git/sp_network/sppy/frontend/static/schema/open_api.yaml")
-version = "3.0"
+schema = load_schema(schema_fname)
+version = "3.1"
 
 def after_error_occurred(*error_message):
     print(error_message)
